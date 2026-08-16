@@ -1,0 +1,24 @@
+{
+  "scene": "truck",
+  "method": "random",
+  "k": 10,
+  "seed": 0,
+  "llffhold": 8,
+  "images": [
+    "000005.jpg",
+    "000011.jpg",
+    "000020.jpg",
+    "000045.jpg",
+    "000067.jpg",
+    "000076.jpg",
+    "000125.jpg",
+    "000155.jpg",
+    "000205.jpg",
+    "000251.jpg"
+  ],
+  "coverage": {
+    "mean_nn_dist": 1.232704290742362,
+    "max_nn_dist": 4.66708395080453,
+    "min_pairwise_dist": 0.6378069755469195
+  }
+}

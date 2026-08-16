@@ -1,0 +1,43 @@
+diff --git a/scene/dataset_readers.py b/scene/dataset_readers.py
+index 493d98d..09eeb54 100644
+--- a/scene/dataset_readers.py
++++ b/scene/dataset_readers.py
+@@ -176,7 +176,20 @@ def readColmapSceneInfo(path, images, depths, eval, train_test_exp, llffhold=8):
+             print(f"An unexpected error occurred when trying to open depth_params.json file: {e}")
+             sys.exit(1)
+ 
+-    if eval:
++    # [few-shot-patch] An explicit split.json in the scene root overrides the
++    # llffhold rule. Needed because few-shot conditions train on an arbitrary
++    # K-image subset while the held-out test set must stay fixed across every
++    # condition. Absent the file, behaviour is exactly as upstream.
++    explicit_train_names = None
++    split_file = os.path.join(path, "split.json")
++    if eval and os.path.exists(split_file):
++        with open(split_file, 'r') as f:
++            _split = json.load(f)
++        test_cam_names_list = list(_split["test"])
++        explicit_train_names = set(_split["train"])
++        print(f"------------EXPLICIT SPLIT: {len(explicit_train_names)} train / "
++              f"{len(test_cam_names_list)} test-------------")
++    elif eval:
+         if "360" in path:
+             llffhold = 8
+         if llffhold:
+@@ -200,6 +213,16 @@ def readColmapSceneInfo(path, images, depths, eval, train_test_exp, llffhold=8):
+     train_cam_infos = [c for c in cam_infos if train_test_exp or not c.is_test]
+     test_cam_infos = [c for c in cam_infos if c.is_test]
+ 
++    # [few-shot-patch] Restrict training views to the named subset.
++    if explicit_train_names is not None:
++        train_cam_infos = [c for c in train_cam_infos if c.image_name in explicit_train_names]
++        missing = explicit_train_names - {c.image_name for c in train_cam_infos}
++        if missing:
++            raise ValueError(f"split.json lists {len(missing)} train images not in the "
++                             f"COLMAP model, e.g. {sorted(missing)[:3]}")
++        print(f"[few-shot] training on {len(train_cam_infos)} views, "
++              f"evaluating on {len(test_cam_infos)}")
++
+     nerf_normalization = getNerfppNorm(train_cam_infos)
+ 
+     ply_path = os.path.join(path, "sparse/0/points3D.ply")

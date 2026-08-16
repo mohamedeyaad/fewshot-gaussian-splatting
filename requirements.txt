@@ -1,0 +1,39 @@
+# Python 3.12. Install torch FIRST and from the CUDA 12.8 index, then the rest:
+#
+#   python3.12 -m venv venv
+#   ./venv/bin/pip install torch==2.9.1 torchvision --index-url https://download.pytorch.org/whl/cu128
+#   ./venv/bin/pip install -r requirements.txt
+#
+# Order matters: the three 3DGS CUDA submodules are built with
+# --no-build-isolation and import torch at setup.py module level, so torch has
+# to already be present in this interpreter. See README "Build the rasterizer".
+
+# --- core ---
+torch==2.9.1
+torchvision
+numpy==2.4.4
+scipy==1.18.0
+Pillow==12.2.0
+opencv-python-headless==5.0.0
+
+# --- diffusion (synthetic view generation) ---
+diffusers==0.39.0
+transformers==5.15.0
+accelerate
+safetensors
+
+# --- 3DGS training/eval support ---
+plyfile
+tqdm
+joblib
+lpips
+
+# --- figures and report ---
+matplotlib
+
+# --- built from source, NOT installable from PyPI -------------------------
+# These come from gaussian-splatting/submodules/ after applying patches/.
+# Listed here only so the dependency is documented:
+#   diff_gaussian_rasterization   (needs patches/02-rasterizer-cstdint.patch)
+#   simple_knn
+#   fused_ssim

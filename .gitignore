@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Environment (7.5 GB) - rebuild with the commands in README.md
+# ---------------------------------------------------------------------------
+venv/
+__pycache__/
+*.pyc
+
+# ---------------------------------------------------------------------------
+# Upstream 3DGS clone (391 MB). Not vendored: it is someone else's repository
+# and our two edits live in patches/ instead.
+# ---------------------------------------------------------------------------
+gaussian-splatting/
+
+# ---------------------------------------------------------------------------
+# Dataset (1.4 GB) - Tanks & Temples "truck", downloaded, not authored here
+# ---------------------------------------------------------------------------
+data/
+
+# ---------------------------------------------------------------------------
+# Training outputs (6.7 GB): checkpoints and rendered PNGs.
+# The results.json files ARE kept - they are the raw experimental record and
+# every number in the report is read back out of them.
+# ---------------------------------------------------------------------------
+runs/**
+!runs/
+!runs/*/
+!runs/*/results.json
+runs_noise/**
+!runs_noise/
+!runs_noise/*/
+!runs_noise/*/results.json
+
+# ---------------------------------------------------------------------------
+# Assembled scene directories: symlink farms with absolute paths, so they would
+# be broken on any other machine. Regenerate with src/build_scene.py.
+# ---------------------------------------------------------------------------
+scenes/
+
+# Scratch
+*.log
+.DS_Store

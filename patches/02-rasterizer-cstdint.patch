@@ -1,0 +1,12 @@
+diff --git a/cuda_rasterizer/rasterizer_impl.h b/cuda_rasterizer/rasterizer_impl.h
+index bc3f0ec..0a05488 100644
+--- a/cuda_rasterizer/rasterizer_impl.h
++++ b/cuda_rasterizer/rasterizer_impl.h
+@@ -13,6 +13,7 @@
+ 
+ #include <iostream>
+ #include <vector>
++#include <cstdint>
+ #include "rasterizer.h"
+ #include <cuda_runtime_api.h>
+ 

@@ -1,0 +1,24 @@
+{
+  "scene": "truck",
+  "method": "fps",
+  "k": 10,
+  "seed": 1,
+  "llffhold": 8,
+  "images": [
+    "000044.jpg",
+    "000080.jpg",
+    "000091.jpg",
+    "000108.jpg",
+    "000119.jpg",
+    "000128.jpg",
+    "000148.jpg",
+    "000174.jpg",
+    "000198.jpg",
+    "000228.jpg"
+  ],
+  "coverage": {
+    "mean_nn_dist": 0.9406815092669911,
+    "max_nn_dist": 1.9316259612659685,
+    "min_pairwise_dist": 2.0986337017930117
+  }
+}

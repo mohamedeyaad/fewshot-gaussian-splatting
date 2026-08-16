@@ -361,11 +361,24 @@ geometrically coherent errors at precisely known poses, so additional samples re
 rather than contradict one another.</p>
 
 <h3>Gaussian count as a mechanism</h3>
-<p>Model complexity tracks the damage. Against a baseline of 493,990 Gaussians,
-inpainting barely moves the count — it adds no new scene area — while outpainting drives it
-up by roughly a third and pose-guided further still. Multi-view inconsistency forces the
-optimiser to spawn semi-transparent Gaussians that satisfy each contradictory view
-separately, which is precisely what a floater is.</p>
+<p>Model complexity grows sharply under both geometric strategies. Against a baseline of
+493,990 Gaussians, inpainting barely moves the count — +3&ndash;5%, since it adds no
+new scene area — while outpainting and pose-guided both inflate it by roughly 60% at the
+200% ratio.</p>
+
+<p>The count alone, however, does <em>not</em> predict the damage, and that is the more
+interesting result. Outpainting reaches the <em>higher</em> of the two counts (+62% versus
++58% at the 200% ratio, and higher at every matched ratio) while costing essentially nothing
+in PSNR. Its extra primitives are earned: the widened frustum exposes real peripheral scene
+content that genuinely requires more Gaussians to represent. Pose-guided spends a comparable
+budget reconciling views that disagree with one another, and multi-view inconsistency forces
+the optimiser to spawn semi-transparent Gaussians satisfying each contradictory view
+separately — which is precisely what a floater is.</p>
+
+<p>The discriminator is therefore not how many primitives get added, but whether they explain
+real geometry or contradictory geometry. Densification statistics on their own cannot
+distinguish the two cases, which is worth knowing for anyone hoping to use Gaussian count as
+a cheap proxy for reconstruction health.</p>
 </section>
 </div>
 

@@ -1,0 +1,537 @@
+{
+  "tag": "truck_k10_seed1_fps_warponly",
+  "strategy": "warponly",
+  "scene": "truck",
+  "k": 10,
+  "seed": 1,
+  "method": "fps",
+  "source_manifest": "subsets/truck_k10_seed1_fps.json",
+  "config": {
+    "sd_model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "depth_model": "depth-anything/Depth-Anything-V2-Small-hf",
+    "steps": 25,
+    "guidance": 7.5,
+    "frac_range": [
+      0.25,
+      0.5
+    ],
+    "sd_size": [
+      704,
+      392
+    ],
+    "prompt": "a photo of a truck parked on a street, realistic, sharp focus, natural lighting",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "depth_alignment": {
+    "mean_r2": 0.9901,
+    "per_view": {
+      "000044.jpg": {
+        "n": 4256,
+        "r2": 0.9846,
+        "a": 0.065322,
+        "b": 0.023164
+      },
+      "000080.jpg": {
+        "n": 4084,
+        "r2": 0.994,
+        "a": 0.061578,
+        "b": 0.034531
+      },
+      "000091.jpg": {
+        "n": 3380,
+        "r2": 0.9876,
+        "a": 0.101139,
+        "b": 0.041049
+      },
+      "000108.jpg": {
+        "n": 3512,
+        "r2": 0.9918,
+        "a": 0.075079,
+        "b": 0.012629
+      },
+      "000119.jpg": {
+        "n": 3333,
+        "r2": 0.9876,
+        "a": 0.06538,
+        "b": 0.014805
+      },
+      "000128.jpg": {
+        "n": 3676,
+        "r2": 0.9915,
+        "a": 0.061865,
+        "b": 0.027083
+      },
+      "000148.jpg": {
+        "n": 4397,
+        "r2": 0.9882,
+        "a": 0.155566,
+        "b": 0.01788
+      },
+      "000174.jpg": {
+        "n": 3558,
+        "r2": 0.9894,
+        "a": 0.093963,
+        "b": 0.015083
+      },
+      "000198.jpg": {
+        "n": 4689,
+        "r2": 0.9947,
+        "a": 0.084481,
+        "b": 0.018483
+      },
+      "000228.jpg": {
+        "n": 3972,
+        "r2": 0.992,
+        "a": 0.086181,
+        "b": 0.035156
+      }
+    }
+  },
+  "cost": {
+    "seconds": 4.0,
+    "seconds_per_image": 0.2,
+    "peak_vram_gb": 0.01
+  },
+  "images": [
+    {
+      "name": "synth_warponly_000044_v00.jpg",
+      "source_image": "000044.jpg",
+      "neighbour_image": "000198.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.972039202872366,
+        0.03231341435910149,
+        0.2325585431445089,
+        0.0034864512352585403
+      ],
+      "tvec": [
+        -0.30860010595003723,
+        -0.7764233915725389,
+        3.3935034580366774
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.475 from 000044.jpg toward 000198.jpg",
+      "interp_frac": 0.4754,
+      "hole_fraction": 0.2162,
+      "depth_align_r2": 0.9846
+    },
+    {
+      "name": "synth_warponly_000080_v00.jpg",
+      "source_image": "000080.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        -0.02293895547620365,
+        -0.028784840494337577,
+        0.9789324937784275,
+        0.20083926385078504
+      ],
+      "tvec": [
+        0.260044522695693,
+        -1.0992805678688284,
+        4.2497718710995
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.471 from 000080.jpg toward 000174.jpg",
+      "interp_frac": 0.471,
+      "hole_fraction": 0.1661,
+      "depth_align_r2": 0.994
+    },
+    {
+      "name": "synth_warponly_000091_v00.jpg",
+      "source_image": "000091.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        -0.17648745764249701,
+        -0.07179363194089962,
+        0.9674372433576984,
+        0.16662242307708777
+      ],
+      "tvec": [
+        -0.2588880458388818,
+        -0.5932986377223523,
+        3.027052731215422
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.361 from 000091.jpg toward 000174.jpg",
+      "interp_frac": 0.3608,
+      "hole_fraction": 0.1671,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_warponly_000108_v00.jpg",
+      "source_image": "000108.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.20182877079481013,
+        -0.04361364347706245,
+        0.9676962308129085,
+        0.1446616820467741
+      ],
+      "tvec": [
+        0.3771348706604046,
+        -0.6013897465641015,
+        4.02332588036901
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.375 from 000108.jpg toward 000174.jpg",
+      "interp_frac": 0.3753,
+      "hole_fraction": 0.0494,
+      "depth_align_r2": 0.9918
+    },
+    {
+      "name": "synth_warponly_000119_v00.jpg",
+      "source_image": "000119.jpg",
+      "neighbour_image": "000128.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.8295943195114465,
+        0.027538001046872203,
+        0.556599232447462,
+        0.03481692076532475
+      ],
+      "tvec": [
+        -1.343281924099791,
+        -0.6850067272222817,
+        4.8598029966470815
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.467 from 000119.jpg toward 000128.jpg",
+      "interp_frac": 0.4666,
+      "hole_fraction": 0.2935,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_warponly_000128_v00.jpg",
+      "source_image": "000128.jpg",
+      "neighbour_image": "000198.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.9101463731665657,
+        0.02369986744966616,
+        0.4121606471598326,
+        0.03457595446842829
+      ],
+      "tvec": [
+        -0.7223165566843345,
+        -0.8417904209793275,
+        4.255962793594105
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.476 from 000128.jpg toward 000198.jpg",
+      "interp_frac": 0.4759,
+      "hole_fraction": 0.0768,
+      "depth_align_r2": 0.9915
+    },
+    {
+      "name": "synth_warponly_000148_v00.jpg",
+      "source_image": "000148.jpg",
+      "neighbour_image": "000228.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.8215948312499879,
+        0.05216464275311861,
+        -0.5520728888791582,
+        -0.1321979904323972
+      ],
+      "tvec": [
+        -0.09739100386913702,
+        -0.5876429564081004,
+        2.245640529319798
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.318 from 000148.jpg toward 000228.jpg",
+      "interp_frac": 0.318,
+      "hole_fraction": 0.6079,
+      "depth_align_r2": 0.9882
+    },
+    {
+      "name": "synth_warponly_000174_v00.jpg",
+      "source_image": "000174.jpg",
+      "neighbour_image": "000080.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.0047631920876933884,
+        -0.03130716714043266,
+        0.9797062159331393,
+        0.19792145853531354
+      ],
+      "tvec": [
+        0.07679196900360433,
+        -1.0288066743967752,
+        4.092288364285696
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.442 from 000174.jpg toward 000080.jpg",
+      "interp_frac": 0.4416,
+      "hole_fraction": 0.4763,
+      "depth_align_r2": 0.9894
+    },
+    {
+      "name": "synth_warponly_000198_v00.jpg",
+      "source_image": "000198.jpg",
+      "neighbour_image": "000128.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.9019885915877918,
+        0.01679932774252408,
+        0.4295600552051816,
+        0.04015622249406078
+      ],
+      "tvec": [
+        -0.31309090279525387,
+        -0.8078967120412732,
+        3.893445628760619
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.306 from 000198.jpg toward 000128.jpg",
+      "interp_frac": 0.3058,
+      "hole_fraction": 0.2933,
+      "depth_align_r2": 0.9947
+    },
+    {
+      "name": "synth_warponly_000228_v00.jpg",
+      "source_image": "000228.jpg",
+      "neighbour_image": "000148.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.805184642417585,
+        0.048816676936320615,
+        -0.5763182700385484,
+        -0.1309651682224529
+      ],
+      "tvec": [
+        0.20000743061416731,
+        -0.825647039422034,
+        2.931064537336888
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.421 from 000228.jpg toward 000148.jpg",
+      "interp_frac": 0.4206,
+      "hole_fraction": 0.1569,
+      "depth_align_r2": 0.992
+    },
+    {
+      "name": "synth_warponly_000044_v01.jpg",
+      "source_image": "000044.jpg",
+      "neighbour_image": "000198.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.9832343597117137,
+        0.038008310089718264,
+        0.1782006514617863,
+        -0.007077433504826873
+      ],
+      "tvec": [
+        -0.4536078509295602,
+        -0.7925426754177123,
+        3.4441813065416444
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.352 from 000044.jpg toward 000198.jpg",
+      "interp_frac": 0.3522,
+      "hole_fraction": 0.1689,
+      "depth_align_r2": 0.9846
+    },
+    {
+      "name": "synth_warponly_000080_v01.jpg",
+      "source_image": "000080.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        -0.06745570723278535,
+        -0.024680808073844224,
+        0.9760802408591822,
+        0.20520221411775152
+      ],
+      "tvec": [
+        0.5942164011511762,
+        -1.213682741536235,
+        4.4846569644262875
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.330 from 000080.jpg toward 000174.jpg",
+      "interp_frac": 0.3303,
+      "hole_fraction": 0.1211,
+      "depth_align_r2": 0.994
+    },
+    {
+      "name": "synth_warponly_000091_v01.jpg",
+      "source_image": "000091.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        -0.16170890891255707,
+        -0.07062739754333779,
+        0.9699188105993014,
+        0.16768870069328562
+      ],
+      "tvec": [
+        -0.26770737683556023,
+        -0.5914314162204658,
+        3.01522820657555
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.391 from 000091.jpg toward 000174.jpg",
+      "interp_frac": 0.3906,
+      "hole_fraction": 0.1774,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_warponly_000108_v01.jpg",
+      "source_image": "000108.jpg",
+      "neighbour_image": "000174.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.20585881329087138,
+        -0.0436049761795537,
+        0.9672293671172444,
+        0.14208485643737637
+      ],
+      "tvec": [
+        0.43551114324832313,
+        -0.5939693150204827,
+        4.08953211339341
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.331 from 000108.jpg toward 000174.jpg",
+      "interp_frac": 0.3313,
+      "hole_fraction": 0.0421,
+      "depth_align_r2": 0.9918
+    },
+    {
+      "name": "synth_warponly_000119_v01.jpg",
+      "source_image": "000119.jpg",
+      "neighbour_image": "000128.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.785957805172493,
+        0.023228057630279776,
+        0.6166156598826441,
+        0.03893473789115627
+      ],
+      "tvec": [
+        -1.2619696648671042,
+        -0.6286738385773112,
+        4.972106992463177
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.276 from 000119.jpg toward 000128.jpg",
+      "interp_frac": 0.2757,
+      "hole_fraction": 0.1628,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_warponly_000128_v01.jpg",
+      "source_image": "000128.jpg",
+      "neighbour_image": "000198.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.9109140067752787,
+        0.024366934163075785,
+        0.4104674497023807,
+        0.03403523931050574
+      ],
+      "tvec": [
+        -0.7634309249880609,
+        -0.8448133511042166,
+        4.289698004850438
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.455 from 000128.jpg toward 000198.jpg",
+      "interp_frac": 0.4548,
+      "hole_fraction": 0.0734,
+      "depth_align_r2": 0.9915
+    },
+    {
+      "name": "synth_warponly_000148_v01.jpg",
+      "source_image": "000148.jpg",
+      "neighbour_image": "000228.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.812937565487045,
+        0.05038590761304398,
+        -0.5650548588948405,
+        -0.13155524076728464
+      ],
+      "tvec": [
+        0.07132214469910436,
+        -0.7156432949210974,
+        2.604867411173443
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.457 from 000148.jpg toward 000228.jpg",
+      "interp_frac": 0.4573,
+      "hole_fraction": 0.6961,
+      "depth_align_r2": 0.9882
+    },
+    {
+      "name": "synth_warponly_000174_v01.jpg",
+      "source_image": "000174.jpg",
+      "neighbour_image": "000080.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        -0.0009543224387433633,
+        -0.03078855758529852,
+        0.9796093374052727,
+        0.1985363947967783
+      ],
+      "tvec": [
+        0.11305365211771738,
+        -1.043297448298281,
+        4.125404684678688
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.460 from 000174.jpg toward 000080.jpg",
+      "interp_frac": 0.4596,
+      "hole_fraction": 0.4884,
+      "depth_align_r2": 0.9894
+    },
+    {
+      "name": "synth_warponly_000198_v01.jpg",
+      "source_image": "000198.jpg",
+      "neighbour_image": "000128.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.9055716570081919,
+        0.01978914085004364,
+        0.42204733199159894,
+        0.03774140281743767
+      ],
+      "tvec": [
+        -0.486765966888998,
+        -0.8231404522229309,
+        4.053504286372441
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.400 from 000198.jpg toward 000128.jpg",
+      "interp_frac": 0.4004,
+      "hole_fraction": 0.3533,
+      "depth_align_r2": 0.9947
+    },
+    {
+      "name": "synth_warponly_000228_v01.jpg",
+      "source_image": "000228.jpg",
+      "neighbour_image": "000148.jpg",
+      "strategy": "warponly",
+      "qvec": [
+        0.8097162609920784,
+        0.04973126414706763,
+        -0.5697750622582097,
+        -0.13131167686080333
+      ],
+      "tvec": [
+        0.12730772860539982,
+        -0.7618749312246119,
+        2.7399435277415454
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.492 from 000228.jpg toward 000148.jpg",
+      "interp_frac": 0.4917,
+      "hole_fraction": 0.261,
+      "depth_align_r2": 0.992
+    }
+  ]
+}

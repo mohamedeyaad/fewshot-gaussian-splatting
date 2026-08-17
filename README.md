@@ -77,6 +77,30 @@ what the data show.
 **The exchange rate:** the best synthetic condition anywhere (+0.285 dB) is
 **6.7× less valuable than simply taking five more photographs** (+1.91 dB).
 
+### The control: is diffusion to blame?
+
+Pose-guided changes two things at once — the camera pose, and the ~10% of pixels
+diffusion invents to fill disocclusions. A control separates them: warp to
+bit-identical poses, then leave the holes **black** and never load Stable
+Diffusion (`src/gen_warponly.py`).
+
+| ratio | pose-guided (warp + SD) | warp-only (holes black) | diffusion's contribution |
+|---|---|---|---|
+| 20 % | −0.451 \* | −1.278 \* | **+0.827** |
+| 50 % | −0.855 \* | −2.191 \* | **+1.336** |
+| 100 % | −1.404 \* | −3.441 \* | **+2.037** |
+| 200 % | −1.451 \* | −3.939 \* | **+2.488** |
+
+**Removing diffusion makes it far worse.** The diffusion step contributes up to
+**+2.49 dB of repair**; SSIM and LPIPS agree at every ratio. So the pose-guided
+damage is *not* caused by hallucinated hole content or warping artifacts — the
+stage responsible for both is the stage holding the result up. What remains is
+**pose novelty itself**.
+
+Caveat: black rectangles are a severe artifact, so part of that +2.49 dB is
+diffusion beating a low bar. The control proves diffusion is net positive —
+enough to rule it out as the cause — not that its output is good.
+
 Full write-up in [`results/report.html`](results/report.html).
 
 ---
@@ -310,16 +334,13 @@ diffusion and 3DGS training never run concurrently.
 
 ## Known limitations
 
-- **The pose-guided artifact is a confound.** Residual speckle survives at depth
-  discontinuities, where the warp produces thin holes that Telea inpainting
-  fills imperfectly. Part of the pose-guided damage may be image degradation
-  rather than pose novelty. The clean control (warp to a new pose, leave holes
-  black, no diffusion at all) is designed but was not run.
-
-  One piece of evidence argues *against* the artifact explanation: sparser
-  subsets need longer interpolation baselines and therefore larger holes, so the
-  artifact account predicts more damage at k=5. Measured damage is smallest at
-  k=5 (−1.013 dB at 200%) and largest at k=20 (−1.884 dB) — the opposite.
+- **The warp-only control uses black holes**, which is a harsh comparison. It
+  shows the diffusion step is net positive and therefore not the cause of the
+  pose-guided damage, but not how good the diffusion output is in absolute
+  terms. A gentler control (classical inpainting instead of diffusion) would
+  separate "diffusion specifically" from "any plausible fill".
+- **The control was run at k=10 only.** Whether diffusion stays net positive at
+  k=5 and k=20 is untested.
 - **The crossover is bracketed, not located.** Outpainting is positive at k=5
   and negative at k=20. The sign change lies somewhere between, but three subset
   sizes do not resolve where.

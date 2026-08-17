@@ -212,6 +212,23 @@ def main():
                                         "realistic, sharp focus, natural lighting")
     ap.add_argument("--negative", default="blurry, distorted, watermark, text, lowres")
     ap.add_argument("--save-debug", action="store_true")
+    # ---- ablation control -------------------------------------------------
+    # Pose-guided synthesis changes two things at once relative to a real view:
+    # the camera pose, and the ~10% of pixels that diffusion invents to fill
+    # disocclusions. Its measured damage cannot be attributed to either on its
+    # own. This flag removes the second: warp to the new pose exactly as
+    # before, but leave the holes as they come out of warp() - black, since
+    # `out` is zero-initialised - and never load Stable Diffusion.
+    #
+    # Comparing the two isolates the diffusion step's contribution. Everything
+    # upstream (depth estimation, COLMAP alignment, pose interpolation, the
+    # z-buffered forward warp, thin-gap interpolation) is bit-identical,
+    # including the RNG stream that picks source views and interpolation
+    # fractions - so the two conditions see exactly the same poses.
+    ap.add_argument("--no-diffusion", action="store_true",
+                    help="warp only; leave disocclusion holes black")
+    ap.add_argument("--label", default="guided",
+                    help="name used in the output directory and filenames")
     args = ap.parse_args()
 
     manifest = json.loads(Path(args.manifest).read_text())
@@ -219,7 +236,7 @@ def main():
     reals = list(manifest["images"])
     seed, k, method = manifest["seed"], manifest["k"], manifest["method"]
 
-    tag = f"{manifest['scene']}_k{k}_seed{seed}_{method}_guided"
+    tag = f"{manifest['scene']}_k{k}_seed{seed}_{method}_{args.label}"
     out_dir = Path(args.out) / tag
     img_dir = out_dir / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
@@ -306,16 +323,20 @@ def main():
     mean_r2 = float(np.mean([align_stats[n]["r2"] for n in usable]))
     print(f"  mean alignment R2 = {mean_r2:.3f} over {len(usable)} views")
 
-    # -------- phase 2: warp + inpaint ------------------------------------
-    print(f"\nphase 2: warping to new poses + filling holes")
-    from diffusers import StableDiffusionInpaintPipeline
-    pipe = StableDiffusionInpaintPipeline.from_pretrained(
-        SD_MODEL, torch_dtype=torch.float16, variant="fp16",
-        use_safetensors=True, safety_checker=None, requires_safety_checker=False)
-    pipe = pipe.to("cuda")
-    pipe.set_progress_bar_config(disable=True)
-    pipe.enable_attention_slicing()
-    pipe.vae.enable_slicing()
+    # -------- phase 2: warp (+ inpaint, unless this is the control) -------
+    pipe = None
+    if args.no_diffusion:
+        print(f"\nphase 2: warping to new poses, holes left BLACK (control)")
+    else:
+        print(f"\nphase 2: warping to new poses + filling holes")
+        from diffusers import StableDiffusionInpaintPipeline
+        pipe = StableDiffusionInpaintPipeline.from_pretrained(
+            SD_MODEL, torch_dtype=torch.float16, variant="fp16",
+            use_safetensors=True, safety_checker=None, requires_safety_checker=False)
+        pipe = pipe.to("cuda")
+        pipe.set_progress_bar_config(disable=True)
+        pipe.enable_attention_slicing()
+        pipe.vae.enable_slicing()
 
     # Keep SD near its 512x512 training resolution. Running at native 976x544
     # was tried and produces incoherent output - SD 1.5 degrades badly at ~2x
@@ -333,7 +354,7 @@ def main():
     for i in range(args.n):
         src_name = usable[i % len(usable)]
         variant = i // len(usable)
-        out_name = f"synth_guided_{Path(src_name).stem}_v{variant:02d}.jpg"
+        out_name = f"synth_{args.label}_{Path(src_name).stem}_v{variant:02d}.jpg"
 
         im = by_name[src_name]
         R1, t1 = qvec2rotmat(im.qvec), np.asarray(im.tvec, dtype=float)
@@ -349,20 +370,27 @@ def main():
         warped, valid = warp(rgb, depths[src_name], K_disk, R1, t1, R2, t_new)
         hole_frac = float(1.0 - valid.mean())
 
-        warped_img = Image.fromarray(warped).resize((sd_w, sd_h), Image.LANCZOS)
-        hole = Image.fromarray(((~valid) * 255).astype(np.uint8)).resize(
-            (sd_w, sd_h), Image.NEAREST)
-
-        gen = torch.Generator("cuda").manual_seed(int(rng.integers(0, 2**31 - 1)))
-        filled = pipe(prompt=args.prompt, negative_prompt=args.negative,
-                      image=warped_img, mask_image=hole,
-                      num_inference_steps=args.steps,
-                      guidance_scale=args.guidance,
-                      height=sd_h, width=sd_w, generator=gen).images[0]
-
-        filled_full = filled.resize((Wd, Hd), Image.LANCZOS)
         keep_mask = Image.fromarray((valid * 255).astype(np.uint8))
-        out_img = Image.composite(Image.fromarray(warped), filled_full, keep_mask)
+        # Draw from the RNG either way, so the pose sequence is identical
+        # between the diffusion and warp-only conditions and the two are
+        # comparable image-for-image.
+        sd_seed = int(rng.integers(0, 2**31 - 1))
+
+        if args.no_diffusion:
+            # Holes stay as warp() left them: black. This is the control.
+            out_img = Image.fromarray(warped)
+        else:
+            warped_img = Image.fromarray(warped).resize((sd_w, sd_h), Image.LANCZOS)
+            hole = Image.fromarray(((~valid) * 255).astype(np.uint8)).resize(
+                (sd_w, sd_h), Image.NEAREST)
+            gen = torch.Generator("cuda").manual_seed(sd_seed)
+            filled = pipe(prompt=args.prompt, negative_prompt=args.negative,
+                          image=warped_img, mask_image=hole,
+                          num_inference_steps=args.steps,
+                          guidance_scale=args.guidance,
+                          height=sd_h, width=sd_w, generator=gen).images[0]
+            filled_full = filled.resize((Wd, Hd), Image.LANCZOS)
+            out_img = Image.composite(Image.fromarray(warped), filled_full, keep_mask)
         out_img.save(img_dir / out_name, quality=95)
 
         if args.save_debug:
@@ -374,7 +402,7 @@ def main():
             "name": out_name,
             "source_image": src_name,
             "neighbour_image": nb,
-            "strategy": "guided",
+            "strategy": args.label,
             "qvec": [float(x) for x in q_new],
             "tvec": [float(x) for x in t_new],
             "camera_id": 1,
@@ -390,7 +418,9 @@ def main():
     peak = torch.cuda.max_memory_allocated() / 1024**3
 
     (out_dir / "poses.json").write_text(json.dumps({
-        "tag": tag, "strategy": "guided", "scene": manifest["scene"],
+        # build_scene.py names scenes from THIS field, not from the directory,
+        # so a hardcoded value here silently mislabels any variant condition.
+        "tag": tag, "strategy": args.label, "scene": manifest["scene"],
         "k": k, "seed": seed, "method": method,
         "source_manifest": str(args.manifest),
         "config": {"sd_model": SD_MODEL, "depth_model": DEPTH_MODEL,

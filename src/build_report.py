@@ -137,6 +137,45 @@ def build_tables(recs):
     return head, rows
 
 
+def build_control(recs):
+    """Warp-only control vs pose-guided, at k=10.
+
+    Both conditions warp to bit-identical poses with bit-identical hole masks;
+    the only difference is whether disoccluded pixels get diffusion content or
+    stay black. The difference between them is the diffusion step's
+    contribution, isolated.
+
+    'warponly' is deliberately absent from STRAT_ORDER, so it never enters the
+    main tables or figures - it is a control, not a fourth strategy.
+    """
+    base, runs = {}, defaultdict(list)
+    for r in recs:
+        p = r["provenance"]
+        if p.get("method") == "full" or p.get("k") != 10:
+            continue
+        s, nf = p.get("seed"), p.get("n_synthetic", 0)
+        if nf == 0:
+            base[s] = r["metrics"]
+        else:
+            runs[(p.get("strategy"), nf)].append((s, r["metrics"]))
+
+    def d(strat, nf):
+        ds = [m["psnr"]["mean"] - base[s]["psnr"]["mean"]
+              for s, m in runs.get((strat, nf), []) if s in base]
+        return agg(ds) if ds else None
+
+    out = []
+    for nf in (2, 5, 10, 20):
+        g, w = d("guided", nf), d("warponly", nf)
+        if not (g and w):
+            continue
+        out.append({"ratio": nf * 10, "n_fake": nf,
+                    "guided": g[0], "guided_sd": g[1],
+                    "warp": w[0], "warp_sd": w[1],
+                    "contribution": g[0] - w[0]})
+    return out
+
+
 def load_noise():
     vals = {"psnr": [], "ssim": [], "lpips": []}
     for p in sorted((ROOT / "runs_noise").glob("repeat*/results.json")):
@@ -199,6 +238,16 @@ def main():
     head, rows = build_tables(recs)
     noise = load_noise()
     gen = load_gen_costs()
+    control = build_control(recs)
+
+    ctrl_rows = "\n".join(
+        f'<tr><td class="ratio">{c["ratio"]}%</td>'
+        + delta_cell(c["guided"], c["guided_sd"], abs(c["guided"]) > c["guided_sd"] > 0)
+        + delta_cell(c["warp"], c["warp_sd"], abs(c["warp"]) > c["warp_sd"] > 0)
+        + f'<td class="num pos">{c["contribution"]:+.3f}</td></tr>'
+        for c in control)
+    ctrl_max = max((c["contribution"] for c in control), default=0.0)
+    ctrl_worst = min((c["warp"] for c in control), default=0.0)
 
     # --- full results table, grouped by strategy then subset size ---
     trs = []
@@ -306,6 +355,9 @@ def main():
         "{{RESULTS_TABLE}}": results_table,
         "{{CROSSOVER_TABLE}}": crossover_table,
         "{{SCALING_TABLE}}": scaling_table,
+        "{{CONTROL_TABLE}}": ctrl_rows,
+        "{{CTRL_MAX}}": f'{ctrl_max:+.2f}',
+        "{{CTRL_WORST}}": f'{ctrl_worst:.2f}',
         "{{FIG_SCALING}}": figure(RES / "scaling.png",
             "Figure 2 — Left: held-out quality against the number of real training views, "
             "with the full-data ceiling marked. Right: the same quantities on one axis. "
@@ -721,6 +773,52 @@ at every subset size tested. Worse, the damage <em>grows</em> with real views: �
 five, −0.45 at ten, −1.02 at twenty for the smallest ratio. The better the reconstruction it
 is inserted into, the more there is to corrupt.</p>
 
+<h3>A control: is the diffusion step responsible?</h3>
+<p>Pose-guided synthesis changes two things at once relative to a real training view — the
+camera pose, and the roughly 10% of pixels diffusion invents to cover disocclusions. Its
+damage could belong to either. A control separates them: warp to exactly the same poses,
+then leave the holes black and never load Stable Diffusion at all.</p>
+
+<p>The poses are bit-identical between the two conditions (maximum quaternion and translation
+difference 0.00e+00, identical hole fractions), because the random stream is advanced
+identically whether or not diffusion runs. The only variable is the hole content.</p>
+
+<div class="tw">
+<table>
+  <caption><b>Table 3.</b> Warp-only control at k = 10, three seeds. The final column is
+  (with diffusion) − (without), which is the diffusion step's isolated contribution.</caption>
+  <thead>
+    <tr><th>Ratio</th><th class="num">Pose-guided<br><span class="sd">warp + SD</span></th>
+        <th class="num">Warp-only<br><span class="sd">holes black</span></th>
+        <th class="num">Diffusion<br><span class="sd">contribution</span></th></tr>
+  </thead>
+  <tbody>
+{{CONTROL_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p>The result reverses the obvious hypothesis. Removing diffusion makes the condition
+<em>dramatically worse</em> — {{CTRL_WORST}} dB at the 200% ratio against −1.45 with it. The
+diffusion step is contributing up to <b>{{CTRL_MAX}} dB</b> of repair, and SSIM and LPIPS
+agree at every ratio.</p>
+
+<p>So the pose-guided damage cannot be attributed to hallucinated hole content or to residual
+warping artifacts: the stage responsible for both is the stage holding the result up. What
+remains is the pose novelty itself — views the optimiser trusts completely that disagree with
+the geometry the real photographs imply.</p>
+
+<div class="note">
+<span class="lbl">Reading this honestly</span>
+<p>Black rectangles are themselves a severe artifact, so part of the {{CTRL_MAX}} dB is simply
+diffusion beating a very low bar. The control does not establish that the diffusion output is
+<em>good</em>. It establishes that the diffusion step is <em>net positive</em>, which is
+sufficient to rule it out as the cause of the degradation — the question that was actually
+open. A second line of evidence agrees: sparser subsets need longer interpolation baselines
+and therefore larger holes, so an artifact explanation predicts more damage at k = 5. The
+measured damage is smallest at k = 5.</p>
+</div>
+
 <h3>Why the sign flips</h3>
 <p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
 diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
@@ -797,7 +895,7 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <h2><span class="n">06</span> Full results</h2>
 <div class="tw">
 <table>
-  <caption><b>Table 3.</b> All 108 augmented conditions. Paired change against the same-seed,
+  <caption><b>Table 4.</b> All 108 augmented conditions. Paired change against the same-seed,
   same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
   <thead>
     <tr>
@@ -816,13 +914,14 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <section>
 <h2><span class="n">07</span> Limitations</h2>
 <ul>
-  <li><b>A warping artifact confounds the pose-guided result.</b> Forward depth-warping
-  leaves residual speckle at depth discontinuities, so some part of the pose-guided damage may
-  be image degradation rather than hallucinated content. The clean control — warp to a new
-  pose, leave holes unfilled, no diffusion — was not run. One piece of evidence argues against
-  the artifact explanation: sparser subsets require longer interpolation baselines and
-  therefore larger holes, so the artifact account predicts <em>more</em> damage at k = 5. The
-  measured damage is smallest at k = 5 and largest at k = 20, which is the opposite.</li>
+  <li><b>The warp-only control uses black holes, which is a harsh comparison.</b> It
+  establishes that the diffusion step is net positive and therefore not the cause of the
+  pose-guided damage, but it does not measure how good the diffusion output is in absolute
+  terms. A gentler control — filling holes by classical inpainting rather than diffusion —
+  would separate "diffusion specifically" from "any plausible fill".</li>
+  <li><b>The control was run at k = 10 only.</b> Whether the diffusion step remains net
+  positive at k = 5 and k = 20 is untested, though the pose-guided damage grows with k while
+  hole sizes shrink, which argues it would.</li>
   <li><b>One scene.</b> All conclusions come from <code>truck</code>. Whether they hold for
   indoor scenes or for objects with different geometry is untested.</li>
   <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
@@ -846,7 +945,7 @@ files by the script that generates it, so the document cannot drift from the exp
 
 <div class="tw">
 <table>
-  <caption><b>Table 3.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
+  <caption><b>Table 5.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
   <thead><tr><th>Strategy</th><th class="num">Seconds / image</th></tr></thead>
   <tbody>{{GEN_ROWS}}</tbody>
 </table>

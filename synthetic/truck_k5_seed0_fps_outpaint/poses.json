@@ -35,8 +35,8 @@
     "negative_prompt": "blurry, distorted, watermark, text, lowres"
   },
   "cost": {
-    "seconds": 88.5,
-    "seconds_per_image": 8.85,
+    "seconds": 328.5,
+    "seconds_per_image": 8.21,
     "peak_vram_gb": 2.65
   },
   "images": [
@@ -213,6 +213,576 @@
     },
     {
       "name": "synth_outpaint_000214_v01.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v02.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v02.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v02.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v02.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v02.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v03.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v03.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v03.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v03.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v03.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v04.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v04.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v04.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v04.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v04.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v05.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v05.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v05.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v05.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v05.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v06.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v06.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v06.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v06.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v06.jpg",
+      "source_image": "000214.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9936579783022931,
+        -0.0009083688324420043,
+        -0.11243970914949636,
+        -0.0005557235290027554
+      ],
+      "tvec": [
+        0.049890153503384736,
+        -0.3533534509804026,
+        2.3159295026128386
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000067_v07.jpg",
+      "source_image": "000067.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.49190061736410207,
+        -0.053630526460520946,
+        0.8513459642768922,
+        0.17426301494531568
+      ],
+      "tvec": [
+        -0.48962073890584124,
+        -1.0026179267942044,
+        4.0746954259377794
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000080_v07.jpg",
+      "source_image": "000080.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.17126018073905805,
+        -0.014865308418325998,
+        0.9616339881685916,
+        0.21379673968005772
+      ],
+      "tvec": [
+        1.5586408381237975,
+        -1.482655827953028,
+        4.912610671861632
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000119_v07.jpg",
+      "source_image": "000119.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.715289472400833,
+        0.016780241379981572,
+        0.6972082792050344,
+        0.044497298566572814
+      ],
+      "tvec": [
+        -1.109363261974941,
+        -0.5642499284274063,
+        5.2821842340280005
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000131_v07.jpg",
+      "source_image": "000131.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9654266308610453,
+        0.022070577993365054,
+        0.2596322044268079,
+        0.00744502758933894
+      ],
+      "tvec": [
+        -1.910759057214891,
+        -0.7547368577149605,
+        4.342963605796958
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_000214_v07.jpg",
       "source_image": "000214.jpg",
       "strategy": "outpaint",
       "qvec": [

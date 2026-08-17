@@ -29,9 +29,22 @@ sys.path.insert(0, str(REPO))
 from scene.colmap_loader import read_extrinsics_binary  # noqa: E402
 
 MODEL = "stable-diffusion-v1-5/stable-diffusion-inpainting"
-# SD1.5 wants multiples of 8 and degrades far from its 512x512 training size.
-# 704x392 keeps the truck aspect ratio (1.7959 vs native 1.7930) almost exactly.
-SD_W, SD_H = 704, 392
+
+
+def sd_size_for(aspect: float, target_w: int = 704):
+    """Nearest multiple-of-8 canvas preserving aspect, near SD's sweet spot.
+
+    SD 1.5 wants multiples of 8 and degrades badly far from its 512x512
+    training size - running at the native 979x546 was tried and produced
+    incoherent output. 704 wide keeps it close enough while preserving detail.
+
+    This was previously the constant 704x392, correct only for truck's 1.7930
+    aspect. A second scene with a different shape (drjohnson is 1.5205) would
+    have been silently stretched, so the height is now derived per scene.
+    """
+    w = int(round(target_w / 8) * 8)
+    h = int(round((w / aspect) / 8) * 8)
+    return w, h
 
 
 def make_mask(w: int, h: int, rng: np.random.Generator,
@@ -91,7 +104,11 @@ def main():
         if r not in by_name:
             raise KeyError(f"{r} not in COLMAP model")
 
+    probe = Image.open(src_root / "images" / reals[0])
+    SD_W, SD_H = sd_size_for(probe.width / probe.height)
     print(f"[{tag}] generating {args.n} inpainted views from {len(reals)} real views")
+    print(f"  source {probe.width}x{probe.height} (aspect {probe.width/probe.height:.4f})"
+          f" -> SD canvas {SD_W}x{SD_H} (aspect {SD_W/SD_H:.4f})")
 
     from diffusers import StableDiffusionInpaintPipeline
     t0 = time.time()

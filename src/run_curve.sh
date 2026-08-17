@@ -25,8 +25,18 @@ SEEDS="${SEEDS:-0 1 2}"
 FAKES="${FAKES:-2 5 10 20}"
 NGEN="${NGEN:-20}"
 ITERS="${ITERS:-7000}"
+# Scene selection. SCENE must match the directory name under data/, because
+# select_subsets.py derives manifest names from it.
+SCENE="${SCENE:-truck}"
+SOURCE="${SOURCE:-data/tandt/truck}"
+# The prompt has to describe the actual scene; the truck default produces
+# nonsense indoors.
+PROMPT="${PROMPT:-}"
 GEN="src/gen_${STRATEGY}.py"
-TAG="truck_k${K}"
+TAG="${SCENE}_k${K}"
+
+PROMPT_ARG=()
+[ -n "$PROMPT" ] && PROMPT_ARG=(--prompt "$PROMPT")
 
 [ -f "$GEN" ] || { echo "no generator $GEN"; exit 1; }
 
@@ -38,7 +48,8 @@ for s in $SEEDS; do
     continue
   fi
   echo "--- seed $s ---"
-  "$VPY" -u "$GEN" --manifest "subsets/${TAG}_seed${s}_fps.json" --n "$NGEN" 2>&1 \
+  "$VPY" -u "$GEN" --manifest "subsets/${TAG}_seed${s}_fps.json" --n "$NGEN" \
+    --source "$SOURCE" "${PROMPT_ARG[@]}" 2>&1 \
     | grep -viE 'warn|deprecat|it/s\]$' | grep -vE '^\s*$'
 done
 
@@ -48,7 +59,7 @@ for s in $SEEDS; do
   "$VPY" src/build_scene.py \
     --manifest "subsets/${TAG}_seed${s}_fps.json" \
     --synthetic "synthetic/${TAG}_seed${s}_fps_${STRATEGY}" \
-    --n-fake $FAKES --force
+    --source "$SOURCE" --n-fake $FAKES --force
 done
 
 echo

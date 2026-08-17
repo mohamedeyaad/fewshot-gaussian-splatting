@@ -1,0 +1,287 @@
+{
+  "tag": "truck_k5_seed1_fps_guided",
+  "strategy": "guided",
+  "scene": "truck",
+  "k": 5,
+  "seed": 1,
+  "method": "fps",
+  "source_manifest": "subsets/truck_k5_seed1_fps.json",
+  "config": {
+    "sd_model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "depth_model": "depth-anything/Depth-Anything-V2-Small-hf",
+    "steps": 25,
+    "guidance": 7.5,
+    "frac_range": [
+      0.25,
+      0.5
+    ],
+    "sd_size": [
+      704,
+      392
+    ],
+    "prompt": "a photo of a truck parked on a street, realistic, sharp focus, natural lighting",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "depth_alignment": {
+    "mean_r2": 0.99,
+    "per_view": {
+      "000044.jpg": {
+        "n": 4256,
+        "r2": 0.9846,
+        "a": 0.065322,
+        "b": 0.023164
+      },
+      "000080.jpg": {
+        "n": 4084,
+        "r2": 0.994,
+        "a": 0.061578,
+        "b": 0.034531
+      },
+      "000108.jpg": {
+        "n": 3512,
+        "r2": 0.9918,
+        "a": 0.075079,
+        "b": 0.012629
+      },
+      "000119.jpg": {
+        "n": 3333,
+        "r2": 0.9876,
+        "a": 0.06538,
+        "b": 0.014805
+      },
+      "000228.jpg": {
+        "n": 3972,
+        "r2": 0.992,
+        "a": 0.086181,
+        "b": 0.035156
+      }
+    }
+  },
+  "cost": {
+    "seconds": 91.7,
+    "seconds_per_image": 9.17,
+    "peak_vram_gb": 2.65
+  },
+  "images": [
+    {
+      "name": "synth_guided_000044_v00.jpg",
+      "source_image": "000044.jpg",
+      "neighbour_image": "000228.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.9487481250856459,
+        0.0517469100308763,
+        -0.2997316043797203,
+        -0.08579171163164155
+      ],
+      "tvec": [
+        -0.07863218949755695,
+        -0.727204627513998,
+        2.497467727721859
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.475 from 000044.jpg toward 000228.jpg",
+      "interp_frac": 0.4754,
+      "hole_fraction": 0.1739,
+      "depth_align_r2": 0.9846
+    },
+    {
+      "name": "synth_guided_000080_v00.jpg",
+      "source_image": "000080.jpg",
+      "neighbour_image": "000108.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.02121580256554178,
+        -0.02900666166547789,
+        0.9839754268758154,
+        0.17464496157943207
+      ],
+      "tvec": [
+        1.029461235797299,
+        -0.9708863513846326,
+        4.5423189838982685
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.471 from 000080.jpg toward 000108.jpg",
+      "interp_frac": 0.471,
+      "hole_fraction": 0.1736,
+      "depth_align_r2": 0.994
+    },
+    {
+      "name": "synth_guided_000108_v00.jpg",
+      "source_image": "000108.jpg",
+      "neighbour_image": "000080.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.09015464791036844,
+        -0.03380904081149387,
+        0.9825867691792635,
+        0.15890981484295127
+      ],
+      "tvec": [
+        0.948188512040682,
+        -0.8185144901487763,
+        4.4976102822409585
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.361 from 000108.jpg toward 000080.jpg",
+      "interp_frac": 0.3608,
+      "hole_fraction": 0.293,
+      "depth_align_r2": 0.9918
+    },
+    {
+      "name": "synth_guided_000119_v00.jpg",
+      "source_image": "000119.jpg",
+      "neighbour_image": "000108.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.5545400286898424,
+        -0.00626690621496614,
+        0.8285726126245484,
+        0.07689933729032797
+      ],
+      "tvec": [
+        -0.1621218627025437,
+        -0.5044011141147912,
+        4.826662124636772
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.375 from 000119.jpg toward 000108.jpg",
+      "interp_frac": 0.3753,
+      "hole_fraction": 0.2694,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_guided_000228_v00.jpg",
+      "source_image": "000228.jpg",
+      "neighbour_image": "000044.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.9355772944370458,
+        0.0511355178120111,
+        -0.3372837011579813,
+        -0.09121397856210456
+      ],
+      "tvec": [
+        0.07419560433421604,
+        -0.7515380215169984,
+        2.5381864675913004
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.467 from 000228.jpg toward 000044.jpg",
+      "interp_frac": 0.4666,
+      "hole_fraction": 0.4936,
+      "depth_align_r2": 0.992
+    },
+    {
+      "name": "synth_guided_000044_v01.jpg",
+      "source_image": "000044.jpg",
+      "neighbour_image": "000228.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.9486374335079399,
+        0.0517418266513291,
+        -0.3000686271996504,
+        -0.0858406785432743
+      ],
+      "tvec": [
+        -0.07724206051169263,
+        -0.7273840665997806,
+        2.4976506486557155
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.476 from 000044.jpg toward 000228.jpg",
+      "interp_frac": 0.4759,
+      "hole_fraction": 0.1735,
+      "depth_align_r2": 0.9846
+    },
+    {
+      "name": "synth_guided_000080_v01.jpg",
+      "source_image": "000080.jpg",
+      "neighbour_image": "000108.jpg",
+      "strategy": "guided",
+      "qvec": [
+        -0.04158656626667746,
+        -0.024511619293950904,
+        0.9809444132695155,
+        0.1881961638850841
+      ],
+      "tvec": [
+        1.1436511426735847,
+        -1.122521735944935,
+        4.630995995062988
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.318 from 000080.jpg toward 000108.jpg",
+      "interp_frac": 0.318,
+      "hole_fraction": 0.1133,
+      "depth_align_r2": 0.994
+    },
+    {
+      "name": "synth_guided_000108_v01.jpg",
+      "source_image": "000108.jpg",
+      "neighbour_image": "000080.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.057094767646576214,
+        -0.031523322790287814,
+        0.9838706509237071,
+        0.1665683339611817
+      ],
+      "tvec": [
+        0.9825226263162181,
+        -0.889925664277855,
+        4.51149283815868
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.442 from 000108.jpg toward 000080.jpg",
+      "interp_frac": 0.4416,
+      "hole_fraction": 0.3475,
+      "depth_align_r2": 0.9918
+    },
+    {
+      "name": "synth_guided_000119_v01.jpg",
+      "source_image": "000119.jpg",
+      "neighbour_image": "000108.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.5863888258289963,
+        -0.00199196016449036,
+        0.806899040142849,
+        0.07112043345019241
+      ],
+      "tvec": [
+        -0.3019275224019517,
+        -0.5135554026032777,
+        4.900719451889272
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.306 from 000119.jpg toward 000108.jpg",
+      "interp_frac": 0.3058,
+      "hole_fraction": 0.2204,
+      "depth_align_r2": 0.9876
+    },
+    {
+      "name": "synth_guided_000228_v01.jpg",
+      "source_image": "000228.jpg",
+      "neighbour_image": "000044.jpg",
+      "strategy": "guided",
+      "qvec": [
+        0.9240849052648107,
+        0.050593227720219326,
+        -0.366614446909993,
+        -0.09540052666235964
+      ],
+      "tvec": [
+        0.1883154346382643,
+        -0.7766339378589444,
+        2.598905791229088
+      ],
+      "camera_id": 1,
+      "pose_source": "slerp/lerp 0.421 from 000228.jpg toward 000044.jpg",
+      "interp_frac": 0.4206,
+      "hole_fraction": 0.4776,
+      "depth_align_r2": 0.992
+    }
+  ]
+}

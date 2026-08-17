@@ -3,10 +3,11 @@
 Does generating synthetic training views with a diffusion model help 3D Gaussian
 Splatting when you only have a handful of real photographs?
 
-**Short answer: barely, and only in a narrow regime.** The best condition
-recovers **2%** of the quality lost by dropping from 219 real views to 10. The
-worst actively destroys the reconstruction. This repository contains the full
-pipeline, all 42 training runs, and the analysis that supports that claim.
+**Short answer: only when you have very few real views, and even then barely.**
+The value of a synthetic image depends on how much real data you already have —
+it crosses from beneficial to harmful somewhere between 5 and 20 real views.
+This repository contains the full pipeline, all 118 training runs, and the
+analysis behind that claim.
 
 University of Genoa (UNIGE) — robotics project.
 
@@ -14,30 +15,69 @@ University of Genoa (UNIGE) — robotics project.
 
 ## Headline result
 
-Scene: Tanks & Temples `truck`, 251 images, 32 held out for evaluation.
+Scene: Tanks & Temples `truck`, 251 images, 32 held out and frozen across every
+run.
 
-| condition | train views | PSNR | SSIM | LPIPS |
-|---|---|---|---|---|
-| Full-data ceiling | 219 real | **25.23** | 0.9070 | 0.1227 |
-| Few-shot floor | 10 real | **17.11 ± 0.39** | 0.6584 | 0.3017 |
+### What real photographs are worth
 
-The **8.12 dB gap** between those two rows is what augmentation has to close.
-Measured against it, across 3 seeds, paired within seed:
+| real views | PSNR | SSIM | LPIPS | Δ | per view |
+|---|---|---|---|---|---|
+| 5 | 15.20 ± 0.33 | 0.5375 | 0.4096 | — | — |
+| 10 | 17.11 ± 0.39 | 0.6584 | 0.3017 | +1.91 | **+0.382** |
+| 20 | 19.74 ± 0.33 | 0.7842 | 0.2027 | +2.63 | **+0.263** |
+| 219 | 25.23 | 0.9070 | 0.1227 | +5.50 | +0.028 |
 
-| synthetic ratio | inpainting | outpainting | pose-guided |
+### What synthetic images are worth
+
+ΔPSNR against the same seed's own baseline at the same subset size. 3 seeds.
+`*` = |mean| exceeds the between-seed standard deviation.
+
+**Outpainting** — crosses from helpful to harmful:
+
+| ratio | k=5 | k=10 | k=20 |
 |---|---|---|---|
-| 20 % (2 imgs) | +0.014 | **+0.172** \* | −0.451 \* |
-| 50 % (5 imgs) | −0.142 \* | +0.013 | −0.855 \* |
-| 100 % (10 imgs) | −0.213 \* | −0.423 \* | −1.404 \* |
-| 200 % (20 imgs) | −0.141 | −0.003 | −1.451 \* |
+| 20–25 % | **+0.140** \* | **+0.172** \* | −0.283 \* |
+| 40–50 % | **+0.140** \* | +0.013 | −0.542 \* |
+| 100 % | **+0.182** \* | −0.423 \* | −0.983 \* |
+| 200 % | **+0.285** \* | −0.003 | −0.618 \* |
 
-ΔPSNR in dB. `*` = |mean| exceeds the between-seed standard deviation.
+**Inpainting** — flat, and the only strategy independent of subset size:
+
+| ratio | k=5 | k=10 | k=20 |
+|---|---|---|---|
+| 100 % | −0.166 \* | −0.213 \* | −0.161 \* |
+| 200 % | +0.029 | −0.141 | −0.102 \* |
+
+**Pose-guided** — harmful everywhere, and worse the more real data it is added to:
+
+| ratio | k=5 | k=10 | k=20 |
+|---|---|---|---|
+| 20–25 % | −0.309 \* | −0.451 \* | −1.017 \* |
+| 200 % | −1.013 \* | −1.451 \* | −1.884 \* |
+
 Measured training noise floor is σ = 0.039 dB (≈ 0.055 dB paired), so these
-effects are real, just small.
+effects are real even where small.
 
-**The ordering is the finding:** the less a strategy pretends to know about 3D
-geometry, the less damage it does. Full write-up in
-[`results/report.html`](results/report.html) — open it in a browser.
+### The finding
+
+**Pose novelty explains all three behaviours.** Order the strategies by how much
+new *camera pose* each invents:
+
+| | new pose | new information | new contradiction | effect |
+|---|---|---|---|---|
+| inpainting | none — pose copied | none | none | ~0, regardless of k |
+| outpainting | same centre, wider frustum | some | some | helps when starved, hurts when not |
+| pose-guided | fully novel viewpoint | most | most | always hurts, worse as baseline improves |
+
+A synthetic view supplies coverage and inconsistency in fixed proportion.
+Coverage loses value as real views accumulate; inconsistency does not. Two
+terms, one decaying and one roughly constant, produce a sign change — which is
+what the data show.
+
+**The exchange rate:** the best synthetic condition anywhere (+0.285 dB) is
+**6.7× less valuable than simply taking five more photographs** (+1.91 dB).
+
+Full write-up in [`results/report.html`](results/report.html).
 
 ---
 
@@ -48,14 +88,14 @@ src/                    all pipeline code (see "Reproducing" below)
 patches/                the two required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
-runs/*/results.json     raw metrics for all 42 runs - the experimental record
+runs/*/results.json     raw metrics for all 118 runs - the experimental record
 results/                figures, summary tables, and the final report
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
 ```
 
 Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded),
-`gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (6.7 GB),
+`gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (~15 GB),
 and `scenes/` (symlink farms with absolute paths — regenerate them).
 
 Every number in the report is read back out of `runs/*/results.json` at build
@@ -113,7 +153,7 @@ Verified against upstream `54c035f` (main repo) and `9c5c202`
 | patch | reason |
 |---|---|
 | `02-rasterizer-cstdint` | GCC 13 stopped including `<cstdint>` transitively. Without it the build dies on `'uintptr_t' is not a member of 'std'`. One line; purely a compiler-compatibility fix. |
-| `01-dataset_readers-explicit-split` | Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across all 42 runs**. The patch makes a `split.json` in the scene root override the rule; with no such file, behaviour is exactly as upstream. |
+| `01-dataset_readers-explicit-split` | Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across all 118 runs**. The patch makes a `split.json` in the scene root override the rule; with no such file, behaviour is exactly as upstream. |
 
 ### 4. Build the CUDA submodules
 
@@ -148,9 +188,11 @@ Expected at `data/tandt/truck/` with `images/` (251 JPEGs, 979×546) and
 
 ## Reproducing the experiments
 
-Total compute ≈ **7 hours** on the 4 GB laptop GPU. Every stage is idempotent —
+Total compute ≈ **15 hours** on the 4 GB laptop GPU. Every stage is idempotent —
 `run_experiment.py` skips any scene that already has a `results.json`, so an
-interrupted batch can simply be re-run.
+interrupted batch can simply be re-run. This matters: the sweep was interrupted
+twice during development (once by a full host disk, once by a CUDA OOM) and both
+times resumed without losing completed work.
 
 ```bash
 VPY=./venv/bin/python
@@ -165,27 +207,46 @@ $VPY src/make_full_manifest.py
 $VPY src/build_scene.py --manifest subsets/truck_k219_seed0_full.json
 $VPY src/run_experiment.py --scene scenes/truck_k219_seed0_full_fake0
 
-# 3. Few-shot floor (10 real views x 3 seeds).
-for s in 0 1 2; do
-  $VPY src/build_scene.py --manifest subsets/truck_k10_seed${s}_fps.json
-  $VPY src/run_experiment.py --scene scenes/truck_k10_seed${s}_fps_fake0
-done
+# 3. Few-shot floors at every subset size (k = 5, 10, 20 x 3 seeds).
+KS="5 10 20" bash src/run_floors.sh
 
-# 4. The three augmentation curves. Each generates 20 synthetic views per seed,
-#    builds the nested 2/5/10/20 scenes, trains and evaluates all of them.
+# 4. The augmentation sweep at k=10 (3 strategies x 4 ratios x 3 seeds).
 STRATEGY=inpaint  bash src/run_curve.sh
 STRATEGY=outpaint bash src/run_curve.sh
 STRATEGY=guided   bash src/run_curve.sh
 
-# 5. Noise floor: same scene, same config, 3 repeats.
+# 5. The same sweep at k=5 and k=20 (72 more runs, ~8 h).
+bash src/run_all_scales.sh
+
+# 6. Noise floor: same scene, same config, 3 repeats.
 bash src/measure_train_noise.sh
 
-# 6. Analysis and deliverables.
+# 7. Analysis and deliverables.
 $VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv
-$VPY src/plot_curves.py       # -> results/curves_{absolute,paired}.png
+$VPY src/crossover_table.py   # -> the headline matrix, to stdout
+$VPY src/plot_curves.py       # -> results/{curves_paired,scaling,curves_absolute}.png
 $VPY src/make_panels.py       # -> results/panel_*.png
 $VPY src/build_report.py      # -> results/report.html (self-contained)
 ```
+
+Synthetic counts differ per subset size because the ratio is relative to `k`:
+
+| k | fakes | realised ratios |
+|---|---|---|
+| 5 | 1 2 5 10 | 20 / 40 / 100 / 200 % |
+| 10 | 2 5 10 20 | 20 / 50 / 100 / 200 % |
+| 20 | 5 10 20 40 | 25 / 50 / 100 / 200 % |
+
+Only k=20 divides cleanly into the spec's 25/50/100/200%; at k=5 and k=10 the
+25% point is fractional (1.25 and 2.5 images) and rounds down.
+
+> **Disk.** The 118 runs produce ~15 GB of Gaussian checkpoints
+> (`runs/*/point_cloud`). Every metric is extracted into `results.json` during
+> the run, so the checkpoints can be deleted afterwards — `rm -rf
+> runs/*/point_cloud runs/*/input.ply` — without losing anything the analysis
+> needs. On WSL, freeing space inside the distro does not return it to Windows;
+> compact the vhdx with `diskpart` (`attach vdisk readonly` / `compact vdisk` /
+> `detach vdisk`) from an Administrator prompt.
 
 Geometry unit tests for the pose-guided warp (CPU only, no GPU needed):
 
@@ -228,7 +289,7 @@ diffusion and 3DGS training never run concurrently.
 ## Experimental design notes
 
 - **Frozen test set.** 32 views chosen by the LLFF `idx % 8` rule and held
-  constant across all 42 runs. No synthetic image is ever derived from a test
+  constant across all 118 runs. No synthetic image is ever derived from a test
   view.
 - **Nested synthetic sets.** The 5-image condition contains the 2-image
   condition's images, and so on, so the ratio sweep is a genuine dose-response
@@ -251,23 +312,34 @@ diffusion and 3DGS training never run concurrently.
 
 - **The pose-guided artifact is a confound.** Residual speckle survives at depth
   discontinuities, where the warp produces thin holes that Telea inpainting
-  fills imperfectly. The −1.45 dB result is therefore partly attributable to
-  image artifacts rather than to pose novelty per se. The clean control (warp to
-  a new pose, leave holes black, no diffusion at all) is designed but was not
-  run; it is the single most valuable follow-up.
+  fills imperfectly. Part of the pose-guided damage may be image degradation
+  rather than pose novelty. The clean control (warp to a new pose, leave holes
+  black, no diffusion at all) is designed but was not run.
+
+  One piece of evidence argues *against* the artifact explanation: sparser
+  subsets need longer interpolation baselines and therefore larger holes, so the
+  artifact account predicts more damage at k=5. Measured damage is smallest at
+  k=5 (−1.013 dB at 200%) and largest at k=20 (−1.884 dB) — the opposite.
+- **The crossover is bracketed, not located.** Outpainting is positive at k=5
+  and negative at k=20. The sign change lies somewhere between, but three subset
+  sizes do not resolve where.
 - **One scene.** All conclusions are from `truck`. A second scene
-  (`drjohnson`, ≈ 5 h) would establish whether the strategy ordering generalises.
+  (`drjohnson`, indoor room-scale, already present in `data/db/`) would test
+  whether this generalises across capture regimes. Note the Stable Diffusion
+  canvas is tuned to truck's 1.7930 aspect ratio; drjohnson is 1.5205 and would
+  need roughly 656×432 rather than 704×392.
 - **One diffusion model.** SD 1.5 inpainting only, chosen for the 4 GB budget.
   SDXL and FLUX do not fit. `src/check_alt_models.sh` enumerates the
   alternatives that were considered, including the multi-view-consistent
   generators (Zero123++, SV3D, ImageDream) that are arguably the actual fix for
   what pose-guided augmentation is trying to do.
-- **7000 iterations**, not the upstream 30000, to keep 42 runs tractable. The
+- **7000 iterations**, not the upstream 30000, to keep 118 runs tractable. The
   full-data run reaches 25.23 dB against ≈ 25.4 dB published at full schedule,
   so the pipeline is validated, but absolute numbers are slightly below
   literature values.
-- Single scale (k = 10) for the augmentation sweep; k = 5 and k = 20 subsets
-  are selected and committed but only the ceiling and floor were trained.
+- **Random-selection subsets were never trained.** `select_subsets.py` writes
+  both `fps` and `random` manifests; only `fps` was swept. Comparing the two
+  would isolate how much view *placement* matters relative to view *count*.
 
 ---
 

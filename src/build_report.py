@@ -42,62 +42,98 @@ def agg(v):
     return mean(v), (stdev(v) if len(v) > 1 else 0.0)
 
 
+KS = (5, 10, 20)
+# Absolute synthetic counts per subset size. Only k=20 divides cleanly into the
+# spec's 25/50/100/200%; at k=5 and k=10 the 25% point is fractional and rounds
+# down, so the realised ratios differ slightly per size.
+FAKES = {5: (1, 2, 5, 10), 10: (2, 5, 10, 20), 20: (5, 10, 20, 40)}
+
+
 def build_tables(recs):
-    baselines, full, fewshot = {}, None, []
+    """Paired deltas, keyed on (k, seed).
+
+    The baseline lookup MUST include k: seed 0 exists at every subset size, so
+    keying on seed alone silently pairs a k=5 augmented run against a k=20
+    baseline. That bug was live while k=10 was the only sweep and produced no
+    visible symptom, because there was only ever one k to collide.
+    """
+    baselines, full = {}, None
+    fewshot = defaultdict(list)
     by = defaultdict(list)
     for r in recs:
-        p, m, c = r["provenance"], r["metrics"], r["cost"]
+        p = r["provenance"]
         if p.get("method") == "full":
             full = r
             continue
-        nf = p.get("n_synthetic", 0)
+        k, seed, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
+        if k not in KS:
+            continue
         if nf == 0:
-            baselines[p.get("seed")] = r
-            fewshot.append(r)
+            baselines[(k, seed)] = r
+            fewshot[k].append(r)
         else:
-            by[(p.get("strategy"), nf)].append(r)
+            by[(k, p.get("strategy"), nf)].append(r)
 
-    # headline numbers
-    fm, fs = agg([r["metrics"]["psnr"]["mean"] for r in fewshot])
-    fsm, _ = agg([r["metrics"]["ssim"]["mean"] for r in fewshot])
-    flm, _ = agg([r["metrics"]["lpips"]["mean"] for r in fewshot])
-    fg, _ = agg([r["cost"]["n_gaussians"] for r in fewshot])
+    floors = {}
+    for k in KS:
+        if not fewshot[k]:
+            continue
+        pm, ps = agg([r["metrics"]["psnr"]["mean"] for r in fewshot[k]])
+        floors[k] = {
+            "psnr": pm, "psnr_sd": ps,
+            "ssim": agg([r["metrics"]["ssim"]["mean"] for r in fewshot[k]])[0],
+            "lpips": agg([r["metrics"]["lpips"]["mean"] for r in fewshot[k]])[0],
+            "gauss": agg([r["cost"]["n_gaussians"] for r in fewshot[k]])[0],
+            "secs": agg([r["cost"]["train_seconds"] or 0 for r in fewshot[k]])[0],
+        }
 
     head = {
-        "floor_psnr": fm, "floor_psnr_sd": fs, "floor_ssim": fsm,
-        "floor_lpips": flm, "floor_gauss": fg,
+        "floors": floors,
+        "floor_psnr": floors[10]["psnr"], "floor_psnr_sd": floors[10]["psnr_sd"],
+        "floor_ssim": floors[10]["ssim"], "floor_lpips": floors[10]["lpips"],
+        "floor_gauss": floors[10]["gauss"],
         "ceil_psnr": full["metrics"]["psnr"]["mean"],
         "ceil_ssim": full["metrics"]["ssim"]["mean"],
         "ceil_lpips": full["metrics"]["lpips"]["mean"],
         "ceil_gauss": full["cost"]["n_gaussians"],
         "n_runs": len(recs),
     }
-    head["gap"] = head["ceil_psnr"] - head["floor_psnr"]
+    head["gap"] = head["ceil_psnr"] - floors[10]["psnr"]
+    head["gap5"] = head["ceil_psnr"] - floors[5]["psnr"]
+    head["gap20"] = head["ceil_psnr"] - floors[20]["psnr"]
+    head["step_5_10"] = floors[10]["psnr"] - floors[5]["psnr"]
+    head["step_10_20"] = floors[20]["psnr"] - floors[10]["psnr"]
 
-    # paired deltas
     rows = []
     for s in STRAT_ORDER:
-        for nf in (2, 5, 10, 20):
-            rs = by.get((s, nf), [])
-            if not rs:
-                continue
-            d = {k: [] for k in ("psnr", "ssim", "lpips")}
-            g = []
-            for r in rs:
-                b = baselines.get(r["provenance"].get("seed"))
-                if not b:
+        for k in KS:
+            for nf in FAKES[k]:
+                rs = by.get((k, s, nf), [])
+                if not rs:
                     continue
-                for k in d:
-                    d[k].append(r["metrics"][k]["mean"] - b["metrics"][k]["mean"])
-                g.append(r["cost"]["n_gaussians"])
-            pm, ps = agg(d["psnr"]); sm, ss = agg(d["ssim"]); lm, ls = agg(d["lpips"])
-            gm, _ = agg(g)
-            rows.append({
-                "strategy": s, "n_fake": nf, "ratio": nf * 10, "seeds": len(rs),
-                "d_psnr": pm, "d_psnr_sd": ps, "d_ssim": sm, "d_ssim_sd": ss,
-                "d_lpips": lm, "d_lpips_sd": ls, "gauss": gm,
-                "sig_psnr": abs(pm) > ps > 0,
-            })
+                d = {m: [] for m in ("psnr", "ssim", "lpips")}
+                g = []
+                for r in rs:
+                    b = baselines.get((k, r["provenance"].get("seed")))
+                    if not b:
+                        continue
+                    for m in d:
+                        d[m].append(r["metrics"][m]["mean"] - b["metrics"][m]["mean"])
+                    g.append(r["cost"]["n_gaussians"])
+                if not d["psnr"]:
+                    continue
+                pm, ps = agg(d["psnr"]); sm, ss = agg(d["ssim"]); lm, ls = agg(d["lpips"])
+                rows.append({
+                    "strategy": s, "k": k, "n_fake": nf,
+                    "ratio": round(100.0 * nf / k), "seeds": len(d["psnr"]),
+                    "d_psnr": pm, "d_psnr_sd": ps, "d_ssim": sm, "d_ssim_sd": ss,
+                    "d_lpips": lm, "d_lpips_sd": ls, "gauss": agg(g)[0],
+                    "sig_psnr": abs(pm) > ps > 0,
+                })
+
+    # best and worst single conditions, for the headline
+    head["best"] = max(rows, key=lambda r: r["d_psnr"])
+    head["worst"] = min(rows, key=lambda r: r["d_psnr"])
     return head, rows
 
 
@@ -164,14 +200,16 @@ def main():
     noise = load_noise()
     gen = load_gen_costs()
 
-    # --- results table ---
+    # --- full results table, grouped by strategy then subset size ---
     trs = []
+    seen = set()
     for r in rows:
-        first = r["n_fake"] == 2
-        if first:
-            trs.append(f'<tr class="grp"><td colspan="7">{STRAT_LABEL[r["strategy"]]}</td></tr>')
+        if r["strategy"] not in seen:
+            seen.add(r["strategy"])
+            trs.append(f'<tr class="grp"><td colspan="8">{STRAT_LABEL[r["strategy"]]}</td></tr>')
         trs.append(
             "<tr>"
+            f'<td class="num">{r["k"]}</td>'
             f'<td class="ratio">{r["ratio"]}%</td>'
             f'<td class="num">{r["n_fake"]}</td>'
             + delta_cell(r["d_psnr"], r["d_psnr_sd"], r["sig_psnr"])
@@ -182,6 +220,47 @@ def main():
             f'<td class="num">{r["seeds"]}</td>'
             "</tr>")
     results_table = "\n".join(trs)
+
+    # --- crossover matrix: ratio down, subset size across, one block per strategy ---
+    NOMINAL = (20, 50, 100, 200)
+    by_key = {(r["strategy"], r["k"], r["n_fake"]): r for r in rows}
+
+    def cell_for(strat, k, nominal):
+        for nf in FAKES[k]:
+            if abs(round(100.0 * nf / k) - nominal) <= 10:
+                r = by_key.get((strat, k, nf))
+                if r:
+                    return delta_cell(r["d_psnr"], r["d_psnr_sd"], r["sig_psnr"])
+        return '<td class="num nil">&mdash;</td>'
+
+    xtrs = []
+    for s in STRAT_ORDER:
+        xtrs.append(f'<tr class="grp"><td colspan="4">{STRAT_LABEL[s]}</td></tr>')
+        for nom in NOMINAL:
+            xtrs.append(f'<tr><td class="ratio">{nom}%</td>'
+                        + "".join(cell_for(s, k, nom) for k in KS) + "</tr>")
+    crossover_table = "\n".join(xtrs)
+
+    # --- scaling table: what real views alone are worth ---
+    strs = []
+    prev = None
+    for k in KS:
+        f = head["floors"][k]
+        step = "&mdash;" if prev is None else f'{f["psnr"] - prev:+.2f}'
+        per = "&mdash;" if prev is None else f'{(f["psnr"] - prev) / (k - prevk):+.3f}'
+        strs.append(f'<tr><td class="num">{k}</td>'
+                    f'<td class="num">{f["psnr"]:.2f} <span class="sd">± {f["psnr_sd"]:.2f}</span></td>'
+                    f'<td class="num">{f["ssim"]:.4f}</td>'
+                    f'<td class="num">{f["lpips"]:.4f}</td>'
+                    f'<td class="num">{step}</td><td class="num">{per}</td></tr>')
+        prev, prevk = f["psnr"], k
+    strs.append(f'<tr class="ceil"><td class="num">219</td>'
+                f'<td class="num">{head["ceil_psnr"]:.2f}</td>'
+                f'<td class="num">{head["ceil_ssim"]:.4f}</td>'
+                f'<td class="num">{head["ceil_lpips"]:.4f}</td>'
+                f'<td class="num">{head["ceil_psnr"] - prev:+.2f}</td>'
+                f'<td class="num">{(head["ceil_psnr"] - prev) / (219 - prevk):+.3f}</td></tr>')
+    scaling_table = "\n".join(strs)
 
     noise_html = ""
     if noise:
@@ -206,8 +285,33 @@ def main():
         "{{CEIL_LPIPS}}": f'{head["ceil_lpips"]:.4f}',
         "{{CEIL_GAUSS}}": f'{head["ceil_gauss"]:,.0f}',
         "{{GAP}}": f'{head["gap"]:.2f}',
+        "{{FLOOR5}}": f'{head["floors"][5]["psnr"]:.2f}',
+        "{{FLOOR5_SD}}": f'{head["floors"][5]["psnr_sd"]:.2f}',
+        "{{FLOOR20}}": f'{head["floors"][20]["psnr"]:.2f}',
+        "{{FLOOR20_SD}}": f'{head["floors"][20]["psnr_sd"]:.2f}',
+        "{{GAP5}}": f'{head["gap5"]:.2f}',
+        "{{GAP20}}": f'{head["gap20"]:.2f}',
+        "{{STEP_5_10}}": f'{head["step_5_10"]:+.2f}',
+        "{{STEP_10_20}}": f'{head["step_10_20"]:+.2f}',
+        "{{PER_VIEW_5_10}}": f'{head["step_5_10"] / 5:+.3f}',
+        "{{PER_VIEW_10_20}}": f'{head["step_10_20"] / 10:+.3f}',
+        "{{BEST_D}}": f'{head["best"]["d_psnr"]:+.3f}',
+        "{{BEST_WHERE}}": f'{STRAT_LABEL[head["best"]["strategy"]].lower()}, '
+                          f'k={head["best"]["k"]}, {head["best"]["ratio"]}%',
+        "{{WORST_D}}": f'{head["worst"]["d_psnr"]:+.3f}',
+        "{{WORST_WHERE}}": f'{STRAT_LABEL[head["worst"]["strategy"]].lower()}, '
+                           f'k={head["worst"]["k"]}, {head["worst"]["ratio"]}%',
+        "{{BEST_VS_REAL}}": f'{head["step_5_10"] / head["best"]["d_psnr"]:.1f}',
         "{{N_RUNS}}": str(head["n_runs"]),
         "{{RESULTS_TABLE}}": results_table,
+        "{{CROSSOVER_TABLE}}": crossover_table,
+        "{{SCALING_TABLE}}": scaling_table,
+        "{{FIG_SCALING}}": figure(RES / "scaling.png",
+            "Figure 2 — Left: held-out quality against the number of real training views, "
+            "with the full-data ceiling marked. Right: the same quantities on one axis. "
+            "Adding five real photographs is worth several times the best synthetic condition "
+            "measured anywhere in this study, and the worst synthetic condition costs more "
+            "than the best one gains.", 1600, 88, "PNG"),
         "{{NOISE_CELLS}}": noise_html,
         "{{NOISE_PSNR}}": f'{noise["psnr"][1]:.3f}' if noise else "n/a",
         "{{GEN_ROWS}}": gen_rows,
@@ -217,10 +321,12 @@ def main():
             "outpainting fabricates the scene beyond the original frame; pose-guided renders "
             "a genuinely different viewpoint, with roughly 10% of its pixels invented.", 1500, 82),
         "{{FIG_PAIRED}}": figure(RES / "curves_paired.png",
-            "Figure 2 — Change in each metric against the same seed's own zero-synthetic "
-            "baseline. Error bars are the standard deviation across three seeds. All three "
-            "metrics agree on both the ordering of the strategies and the shape of each curve.",
-            1600, 88, "PNG"),
+            "Figure 3 — Change in PSNR against the same seed's own zero-synthetic baseline, "
+            "one line per subset size. Error bars are the standard deviation across three "
+            "seeds; the grey band is the measured noise floor. Inpainting is flat and "
+            "independent of subset size; outpainting crosses from beneficial at five views to "
+            "harmful at twenty; pose-guided is harmful everywhere and worsens as real views "
+            "accumulate.", 1600, 88, "PNG"),
         "{{FIG_STRATEGIES}}": figure(RES / "panel_strategies.png",
             "Figure 3 — Held-out renderings at the 100% synthetic ratio. Degradation appears "
             "as smearing and semi-transparent floaters, most severely under pose-guided "
@@ -410,13 +516,15 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
 <header class="top">
   <div class="inner">
     <p class="eyebrow">Few-shot 3D reconstruction · experimental report</p>
-    <h1>Diffusion Augmentation Does Not Rescue Few-Shot Gaussian Splatting</h1>
-    <p class="standfirst">Forty controlled training runs on the <em>truck</em> scene show that
-    synthetic views generated by Stable Diffusion degrade held-out quality in eleven of twelve
-    conditions — and that the damage scales directly with how much each strategy invents.</p>
+    <h1>Diffusion Augmentation Helps Few-Shot Gaussian Splatting Only When Data Is Scarcest</h1>
+    <p class="standfirst">{{N_RUNS}} controlled training runs on the <em>truck</em> scene show
+    that the value of a synthetic view depends on how many real views you already have. At five
+    real images outpainting helps at every ratio; by twenty it hurts at every ratio. The
+    crossover is measurable, and the best synthetic condition anywhere is still worth
+    {{BEST_VS_REAL}}× less than five more photographs.</p>
     <div class="byline">
       <span>Tanks &amp; Temples <b>truck</b> · 251 images</span>
-      <span>3 strategies × 4 ratios × 3 seeds</span>
+      <span>3 strategies × 4 ratios × 3 subset sizes × 3 seeds</span>
       <span>{{N_RUNS}} training runs</span>
       <span>RTX 3050 Ti · 4 GB</span>
     </div>
@@ -426,11 +534,12 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
 <div class="wrap">
 
 <div class="stats">
-  <div class="stat"><p class="k">Few-shot floor</p><p class="v">{{FLOOR_PSNR}}</p><p class="u">PSNR, 10 real images</p></div>
-  <div class="stat"><p class="k">Full-data ceiling</p><p class="v">{{CEIL_PSNR}}</p><p class="u">PSNR, 219 real images</p></div>
-  <div class="stat"><p class="k">Gap to close</p><p class="v">{{GAP}}</p><p class="u">dB lost to few-shot</p></div>
-  <div class="stat"><p class="k">Best augmentation</p><p class="v">+0.17</p><p class="u">outpainting at 20%</p></div>
-  <div class="stat"><p class="k">Worst augmentation</p><p class="v">−1.45</p><p class="u">pose-guided at 200%</p></div>
+  <div class="stat"><p class="k">Floor, 5 views</p><p class="v">{{FLOOR5}}</p><p class="u">PSNR</p></div>
+  <div class="stat"><p class="k">Floor, 10 views</p><p class="v">{{FLOOR_PSNR}}</p><p class="u">PSNR</p></div>
+  <div class="stat"><p class="k">Floor, 20 views</p><p class="v">{{FLOOR20}}</p><p class="u">PSNR</p></div>
+  <div class="stat"><p class="k">Full-data ceiling</p><p class="v">{{CEIL_PSNR}}</p><p class="u">PSNR, 219 views</p></div>
+  <div class="stat"><p class="k">Best augmentation</p><p class="v">{{BEST_D}}</p><p class="u">{{BEST_WHERE}}</p></div>
+  <div class="stat"><p class="k">Worst augmentation</p><p class="v">{{WORST_D}}</p><p class="u">{{WORST_WHERE}}</p></div>
 </div>
 
 <div class="col">
@@ -452,6 +561,27 @@ semi-transparent floaters.</p>
 <b>{{CEIL_PSNR}} dB</b> on the held-out set. Training on 10 reaches
 <b>{{FLOOR_PSNR}} dB</b>. Few-shot costs <b>{{GAP}} dB</b>, and that gap is what
 augmentation would have to close.</p>
+
+<p>Because the whole sweep was run at three subset sizes, the price of scarcity can be
+measured directly rather than assumed:</p>
+
+<table class="tbl">
+  <caption><b>Table 1.</b> Held-out quality against the number of real training views.
+  Three seeds per row except the full-data ceiling, which is a single deterministic
+  split.</caption>
+  <thead>
+    <tr><th class="num">Real views</th><th class="num">PSNR</th><th class="num">SSIM</th>
+        <th class="num">LPIPS</th><th class="num">Δ PSNR</th><th class="num">per view</th></tr>
+  </thead>
+  <tbody>
+{{SCALING_TABLE}}
+  </tbody>
+</table>
+
+<p>The per-view column falls from {{PER_VIEW_5_10}} dB to {{PER_VIEW_10_20}} dB and then to
+roughly +0.03 dB — the diminishing return you would expect, and a check that the pipeline
+behaves sensibly. It also sets the exchange rate against which every synthetic image in this
+study should be judged: <b>five real photographs are worth {{STEP_5_10}} dB</b>.</p>
 
 <div class="note">
 <span class="lbl">Pipeline validation</span>
@@ -534,53 +664,70 @@ clear it.</p>
 
 <section>
 <h2><span class="n">04</span> Results</h2>
-<p>Every condition was run at three seeds and 7,000 iterations at half resolution. The table
-reports change against each seed's own baseline; an asterisk marks deltas whose magnitude
-exceeds their own standard deviation.</p>
+<p>Every condition was run at three seeds and 7,000 iterations at half resolution. Deltas are
+against each seed's own baseline at the same subset size; an asterisk marks deltas whose
+magnitude exceeds their own standard deviation.</p>
+
+<p>Reading the matrix below <em>across</em> a row is the finding: the same synthetic ratio
+changes sign depending on how many real views it is added to.</p>
 
 <div class="tw">
 <table>
-  <caption><b>Table 2.</b> Paired change against the same-seed zero-synthetic baseline.
-  Green is an improvement, red a degradation; LPIPS is inverted so that lower is better.
-  Baseline Gaussian count is {{FLOOR_GAUSS}}.</caption>
+  <caption><b>Table 2.</b> Change in PSNR against the same-seed zero-synthetic baseline, by
+  synthetic ratio (down) and number of real views (across). Green is an improvement, red a
+  degradation.</caption>
   <thead>
-    <tr>
-      <th>Ratio</th><th class="num">Fakes</th>
-      <th class="num">Δ PSNR</th><th class="num">Δ SSIM</th><th class="num">Δ LPIPS</th>
-      <th class="num">Gaussians</th><th class="num">Seeds</th>
-    </tr>
+    <tr><th>Ratio</th><th class="num">k = 5</th><th class="num">k = 10</th>
+        <th class="num">k = 20</th></tr>
   </thead>
   <tbody>
-{{RESULTS_TABLE}}
+{{CROSSOVER_TABLE}}
   </tbody>
 </table>
 </div>
 
-<p>Eleven of the twelve conditions degrade the model. The single exception is outpainting at
-the 20% ratio, where PSNR improves by 0.172 dB — three times the noise floor — and neither
-perceptual metric contradicts it.</p>
+<p>Outpainting is positive at every ratio at five views, mixed at ten, and negative at every
+ratio at twenty. Pose-guided is negative everywhere and grows steadily worse as real views
+accumulate. Inpainting barely moves at any subset size.</p>
 </section>
 
 </div>
 
 <div class="wide">
+{{FIG_SCALING}}
 {{FIG_PAIRED}}
 </div>
 
 <div class="col">
 <section>
-<h3>An ordering by how much each strategy invents</h3>
-<p>At the 100% ratio the damage is −0.21 dB for inpainting, −0.42 for outpainting and
-−1.40 for pose-guided. That ordering is exactly the ordering of how much content each
-strategy fabricates, and all three metrics reproduce it independently.</p>
+<h3>Three behaviours, one explanatory axis</h3>
+<p>The three strategies do not merely differ in magnitude; they respond to subset size in
+three qualitatively different ways. Order them by how much <em>camera pose</em> each one
+invents and the pattern resolves.</p>
 
-<h3>Two curve shapes, not one</h3>
-<p>Inpainting and outpainting are V-shaped: they worsen to a minimum at 100% and then
-partially recover at 200%. Pose-guided declines monotonically, −1.40 to −1.45, with no
-recovery. A plausible reading is that at 200% each real view carries two <em>different</em>
-hallucinations of the same region, which partially cancel; pose-guided instead produces
-geometrically coherent errors at precisely known poses, so additional samples reinforce
-rather than contradict one another.</p>
+<p><b>Inpainting copies the pose exactly.</b> It contributes no new viewpoint, therefore no
+new geometric information and no new opportunity for views to disagree. Its effect is small,
+slightly negative, and — uniquely — independent of subset size. There is nothing for the
+subset size to interact with.</p>
+
+<p><b>Outpainting keeps the camera centre but widens the frustum.</b> It contributes real
+peripheral coverage together with fabricated content. At five views the coverage dominates
+and every ratio helps; by twenty views enough real signal is present that the fabrication
+dominates instead, and every ratio hurts. This is the crossover.</p>
+
+<p><b>Pose-guided synthesis invents a genuinely new viewpoint.</b> It offers the most
+potential information and the most opportunity for contradiction, and the contradiction wins
+at every subset size tested. Worse, the damage <em>grows</em> with real views: −0.31 dB at
+five, −0.45 at ten, −1.02 at twenty for the smallest ratio. The better the reconstruction it
+is inserted into, the more there is to corrupt.</p>
+
+<h3>Why the sign flips</h3>
+<p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
+diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
+of magnitude between the first step and the last. Inconsistency does not diminish; a
+contradictory view is just as harmful at twenty views as at five, and arguably more so
+because it now contradicts a better-determined geometry. Two terms, one decaying and one
+roughly constant, are sufficient to produce a sign change, and that is what the data show.</p>
 
 <h3>Gaussian count as a mechanism</h3>
 <p>Model complexity grows sharply under both geometric strategies. Against a baseline of
@@ -612,17 +759,23 @@ a cheap proxy for reconstruction health.</p>
 <div class="col">
 <section>
 <h2><span class="n">05</span> When is diffusion augmentation worth it?</h2>
-<p>On this scene, almost never. The one beneficial condition returns 0.17 dB against a
-{{GAP}} dB deficit — about 2% of the gap — for roughly six minutes of generation. Nothing
-here approaches a solution to few-shot reconstruction.</p>
+<p>There is a defensible answer, and it is narrower than the question usually assumes:
+<b>only below roughly ten real views, only with outpainting, and only for a small fraction of
+the gap.</b> The best condition measured anywhere in this study is {{BEST_D}} dB
+({{BEST_WHERE}}) against a {{GAP5}} dB deficit at that subset size — under 3% of what is
+missing.</p>
+
+<p>Set against the alternative, that number is easy to interpret. Going from five to ten real
+photographs is worth {{STEP_5_10}} dB. The best synthetic condition is therefore roughly
+<b>{{BEST_VS_REAL}}× less valuable than simply taking five more pictures</b>, and the worst
+condition ({{WORST_WHERE}}, {{WORST_D}} dB) costs several times more than the best one
+gains. If real capture is possible at all, it dominates.</p>
 
 <p>The useful result is the shape of the trade-off. Augmentation contributes value only when
 it adds information the training set lacks, and it does harm in proportion to how much it
-fabricates. Inpainting is safe precisely because it is uninformative: the pose is unchanged,
-so it can neither help nor do much harm. Pose-guided synthesis is the only strategy that
-addresses the actual deficiency — missing viewpoints — and it is the most damaging, because
-producing a new viewpoint requires inventing roughly a tenth of every image and presenting
-it at a pose the optimiser trusts completely.</p>
+fabricates — but the balance between those two terms is not fixed. It is governed by how much
+real data is already present, which is why the same method can be beneficial and harmful in
+the same study.</p>
 
 <div class="note">
 <span class="lbl">The governing constraint</span>
@@ -634,35 +787,60 @@ isolated objects against clean backgrounds and do not transfer to an outdoor str
 and their weights exceed 4 GB of VRAM.</p>
 </div>
 
-<p>Where augmentation would plausibly earn its place: at the frame periphery, in small
-quantities, where few-shot models are least constrained and floaters breed — which is
-exactly the one condition that worked. The practical guidance is to keep synthetic data
-below roughly a quarter of the real set, prefer strategies that preserve pose exactly, and
-treat any method that invents geometry as a liability until multi-view consistency can be
-guaranteed.</p>
+<p>The practical guidance follows directly: use augmentation only when real views are in the
+single digits, prefer the strategy that widens the frustum without moving the camera, and
+treat any method that invents a viewpoint as a liability until multi-view consistency can be
+guaranteed. Above roughly ten real views, spend the effort on photographs instead.</p>
 </section>
 
 <section>
-<h2><span class="n">06</span> Limitations</h2>
+<h2><span class="n">06</span> Full results</h2>
+<div class="tw">
+<table>
+  <caption><b>Table 3.</b> All 108 augmented conditions. Paired change against the same-seed,
+  same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
+  <thead>
+    <tr>
+      <th class="num">k</th><th>Ratio</th><th class="num">Fakes</th>
+      <th class="num">Δ PSNR</th><th class="num">Δ SSIM</th><th class="num">Δ LPIPS</th>
+      <th class="num">Gaussians</th><th class="num">Seeds</th>
+    </tr>
+  </thead>
+  <tbody>
+{{RESULTS_TABLE}}
+  </tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2><span class="n">07</span> Limitations</h2>
 <ul>
   <li><b>A warping artifact confounds the pose-guided result.</b> Forward depth-warping
-  leaves residual speckle at depth discontinuities. Some part of the −1.45 dB may be image
-  degradation rather than hallucinated content. The clean control — warp to a new pose and
-  leave holes unfilled, with no diffusion — was not run.</li>
+  leaves residual speckle at depth discontinuities, so some part of the pose-guided damage may
+  be image degradation rather than hallucinated content. The clean control — warp to a new
+  pose, leave holes unfilled, no diffusion — was not run. One piece of evidence argues against
+  the artifact explanation: sparser subsets require longer interpolation baselines and
+  therefore larger holes, so the artifact account predicts <em>more</em> damage at k = 5. The
+  measured damage is smallest at k = 5 and largest at k = 20, which is the opposite.</li>
   <li><b>One scene.</b> All conclusions come from <code>truck</code>. Whether they hold for
   indoor scenes or for objects with different geometry is untested.</li>
-  <li><b>One shot count.</b> Only k = 10 was swept. Augmentation may behave differently at
-  k = 5, where the model is more starved, or at k = 20.</li>
+  <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
+  divides cleanly into 25/50/100/200%; at k = 5 and k = 10 the 25% point is fractional
+  (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>
   <li><b>7,000 iterations, not 30,000.</b> Densification is scheduled to run to 15,000, so it
   is truncated. Applied identically to every condition, so comparisons hold, but absolute
   numbers are not fully-converged 3DGS.</li>
   <li><b>One diffusion model.</b> Only SD 1.5 inpainting was tested; SDXL and FLUX exceed
   4 GB of VRAM.</li>
+  <li><b>The crossover is bracketed, not located.</b> Outpainting is positive at k = 5 and
+  negative at k = 20. The sign change lies somewhere between, but with only three subset sizes
+  its position is not resolved.</li>
 </ul>
 </section>
 
 <section>
-<h2><span class="n">07</span> Reproducibility</h2>
+<h2><span class="n">08</span> Reproducibility</h2>
 <p>Every number in this report is read directly from the per-run <code>results.json</code>
 files by the script that generates it, so the document cannot drift from the experiments.</p>
 

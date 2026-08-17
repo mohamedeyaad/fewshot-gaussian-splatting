@@ -1,0 +1,787 @@
+{
+  "tag": "truck_k20_seed2_fps_inpaint",
+  "strategy": "inpaint",
+  "scene": "truck",
+  "k": 20,
+  "seed": 2,
+  "method": "fps",
+  "source_manifest": "subsets/truck_k20_seed2_fps.json",
+  "config": {
+    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "steps": 25,
+    "guidance": 7.5,
+    "sd_size": [
+      704,
+      392
+    ],
+    "prompt": "a photo of a truck parked on a street, realistic, sharp focus, natural lighting",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "cost": {
+    "seconds": 366.1,
+    "seconds_per_image": 9.15,
+    "peak_vram_gb": 2.65
+  },
+  "images": [
+    {
+      "name": "synth_inpaint_000044_v00.jpg",
+      "source_image": "000044.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9976730532449403,
+        0.05355525980343674,
+        0.020203504117799365,
+        -0.03704229201422539
+      ],
+      "tvec": [
+        -0.9872401816148866,
+        -0.8549632610254909,
+        3.630433685985324
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1473
+    },
+    {
+      "name": "synth_inpaint_000050_v00.jpg",
+      "source_image": "000050.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9550774228124648,
+        0.04471015393469114,
+        -0.271936954055264,
+        -0.10898812590453126
+      ],
+      "tvec": [
+        -0.5163032783893935,
+        -0.5476043044466135,
+        2.8963153986539707
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1305
+    },
+    {
+      "name": "synth_inpaint_000054_v00.jpg",
+      "source_image": "000054.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9315797039484118,
+        0.04547297876016804,
+        -0.3420821849723517,
+        -0.1143295330114168
+      ],
+      "tvec": [
+        0.6862438333218813,
+        -0.7518857141547285,
+        3.0678978429682826
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0883
+    },
+    {
+      "name": "synth_inpaint_000064_v00.jpg",
+      "source_image": "000064.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.6824552711397773,
+        0.04405003083133495,
+        -0.7112161664553958,
+        -0.1627450836424329
+      ],
+      "tvec": [
+        0.3352788917974534,
+        -0.9128174485708482,
+        3.973893103067886
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1602
+    },
+    {
+      "name": "synth_inpaint_000069_v00.jpg",
+      "source_image": "000069.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.4305655969716632,
+        -0.05367900090048118,
+        0.880794538274297,
+        0.18955952340341445
+      ],
+      "tvec": [
+        -0.2565652680415162,
+        -1.1187212274075575,
+        3.954230568844322
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1371
+    },
+    {
+      "name": "synth_inpaint_000093_v00.jpg",
+      "source_image": "000093.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.26105440923217604,
+        -0.07592244043460984,
+        0.9485616075135507,
+        0.1622259387712138
+      ],
+      "tvec": [
+        -0.24318921403669672,
+        -0.7045847929693921,
+        3.0081083165936597
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1648
+    },
+    {
+      "name": "synth_inpaint_000103_v00.jpg",
+      "source_image": "000103.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.12197037060527086,
+        -0.08144571370610525,
+        0.9805108545357086,
+        0.13072218079182496
+      ],
+      "tvec": [
+        0.255658551584542,
+        -0.37413995699322805,
+        4.544208206896676
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0887
+    },
+    {
+      "name": "synth_inpaint_000107_v00.jpg",
+      "source_image": "000107.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.23409415093328526,
+        -0.0830256174466207,
+        0.9599694981214815,
+        0.12948064729071573
+      ],
+      "tvec": [
+        0.5587170652750317,
+        -0.48246307300101426,
+        4.745161686141701
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.137
+    },
+    {
+      "name": "synth_inpaint_000112_v00.jpg",
+      "source_image": "000112.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.48766783199179786,
+        -0.021926453689247886,
+        0.867725670040939,
+        0.09354933362155145
+      ],
+      "tvec": [
+        -0.5183113771172342,
+        -0.455821228794831,
+        5.067427152271224
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1648
+    },
+    {
+      "name": "synth_inpaint_000116_v00.jpg",
+      "source_image": "000116.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.6699392817814785,
+        0.010968159050333028,
+        0.7398983363061475,
+        0.06009584132498988
+      ],
+      "tvec": [
+        -1.1916327660151258,
+        -0.5937517070510756,
+        5.083281362532627
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1206
+    },
+    {
+      "name": "synth_inpaint_000128_v00.jpg",
+      "source_image": "000128.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9265135115964924,
+        0.038703361226715305,
+        0.3735971237164306,
+        0.022359602181185427
+      ],
+      "tvec": [
+        -1.7106219284211763,
+        -0.8964415560205166,
+        4.95532623929449
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1323
+    },
+    {
+      "name": "synth_inpaint_000147_v00.jpg",
+      "source_image": "000147.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8681077504974073,
+        0.04956360179739724,
+        -0.48119985982671054,
+        -0.11126130417155117
+      ],
+      "tvec": [
+        -0.6106617905291273,
+        -0.23600828277843358,
+        1.4388564215475819
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0913
+    },
+    {
+      "name": "synth_inpaint_000174_v00.jpg",
+      "source_image": "000174.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.14412526913747184,
+        -0.04362791800145708,
+        0.9719098306788508,
+        0.18087507455898097
+      ],
+      "tvec": [
+        -0.555751270221595,
+        -0.6878485950478933,
+        3.225297852367791
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.2074
+    },
+    {
+      "name": "synth_inpaint_000191_v00.jpg",
+      "source_image": "000191.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8549630261316008,
+        0.09237092159664502,
+        0.503379379381775,
+        0.08435067992909881
+      ],
+      "tvec": [
+        -1.599327473042611,
+        -1.286283097152759,
+        3.5942221609889557
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.152
+    },
+    {
+      "name": "synth_inpaint_000195_v00.jpg",
+      "source_image": "000195.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8900743319898053,
+        0.06293009732925357,
+        0.4496873082061981,
+        0.03985989489821101
+      ],
+      "tvec": [
+        -0.8107048978049601,
+        -1.0488085799743958,
+        3.4591710990334064
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1638
+    },
+    {
+      "name": "synth_inpaint_000205_v00.jpg",
+      "source_image": "000205.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9968811468753351,
+        0.030223523576666904,
+        -0.06960580373766145,
+        -0.021669095808581854
+      ],
+      "tvec": [
+        -2.973592515269846,
+        -0.5267138008550533,
+        2.157522824598754
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0733
+    },
+    {
+      "name": "synth_inpaint_000211_v00.jpg",
+      "source_image": "000211.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9998670831348445,
+        -0.0053044682649266124,
+        -0.015389474936067854,
+        -0.0009180092790629254
+      ],
+      "tvec": [
+        -0.404323899122353,
+        -0.40697373286031047,
+        2.5937637383638763
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1899
+    },
+    {
+      "name": "synth_inpaint_000227_v00.jpg",
+      "source_image": "000227.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.7889747047069067,
+        0.04518120033580159,
+        -0.6021179286190923,
+        -0.11371708096992027
+      ],
+      "tvec": [
+        0.22977423235613248,
+        -1.0942977667197444,
+        3.9963778708452495
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1493
+    },
+    {
+      "name": "synth_inpaint_000246_v00.jpg",
+      "source_image": "000246.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.1858737997435689,
+        -0.01002259869087543,
+        0.9622658388027802,
+        0.19848156981833692
+      ],
+      "tvec": [
+        0.04058297306891885,
+        -1.0412875031243876,
+        4.226135950979245
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.133
+    },
+    {
+      "name": "synth_inpaint_000251_v00.jpg",
+      "source_image": "000251.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.015773975933759066,
+        -0.03620967753946154,
+        0.983976537203919,
+        0.17386838461294304
+      ],
+      "tvec": [
+        -0.22582621080685014,
+        -1.0585084489903613,
+        5.256072216094904
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0913
+    },
+    {
+      "name": "synth_inpaint_000044_v01.jpg",
+      "source_image": "000044.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9976730532449403,
+        0.05355525980343674,
+        0.020203504117799365,
+        -0.03704229201422539
+      ],
+      "tvec": [
+        -0.9872401816148866,
+        -0.8549632610254909,
+        3.630433685985324
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1251
+    },
+    {
+      "name": "synth_inpaint_000050_v01.jpg",
+      "source_image": "000050.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9550774228124648,
+        0.04471015393469114,
+        -0.271936954055264,
+        -0.10898812590453126
+      ],
+      "tvec": [
+        -0.5163032783893935,
+        -0.5476043044466135,
+        2.8963153986539707
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1052
+    },
+    {
+      "name": "synth_inpaint_000054_v01.jpg",
+      "source_image": "000054.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9315797039484118,
+        0.04547297876016804,
+        -0.3420821849723517,
+        -0.1143295330114168
+      ],
+      "tvec": [
+        0.6862438333218813,
+        -0.7518857141547285,
+        3.0678978429682826
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1445
+    },
+    {
+      "name": "synth_inpaint_000064_v01.jpg",
+      "source_image": "000064.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.6824552711397773,
+        0.04405003083133495,
+        -0.7112161664553958,
+        -0.1627450836424329
+      ],
+      "tvec": [
+        0.3352788917974534,
+        -0.9128174485708482,
+        3.973893103067886
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1503
+    },
+    {
+      "name": "synth_inpaint_000069_v01.jpg",
+      "source_image": "000069.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.4305655969716632,
+        -0.05367900090048118,
+        0.880794538274297,
+        0.18955952340341445
+      ],
+      "tvec": [
+        -0.2565652680415162,
+        -1.1187212274075575,
+        3.954230568844322
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.12
+    },
+    {
+      "name": "synth_inpaint_000093_v01.jpg",
+      "source_image": "000093.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.26105440923217604,
+        -0.07592244043460984,
+        0.9485616075135507,
+        0.1622259387712138
+      ],
+      "tvec": [
+        -0.24318921403669672,
+        -0.7045847929693921,
+        3.0081083165936597
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0705
+    },
+    {
+      "name": "synth_inpaint_000103_v01.jpg",
+      "source_image": "000103.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.12197037060527086,
+        -0.08144571370610525,
+        0.9805108545357086,
+        0.13072218079182496
+      ],
+      "tvec": [
+        0.255658551584542,
+        -0.37413995699322805,
+        4.544208206896676
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.163
+    },
+    {
+      "name": "synth_inpaint_000107_v01.jpg",
+      "source_image": "000107.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.23409415093328526,
+        -0.0830256174466207,
+        0.9599694981214815,
+        0.12948064729071573
+      ],
+      "tvec": [
+        0.5587170652750317,
+        -0.48246307300101426,
+        4.745161686141701
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.089
+    },
+    {
+      "name": "synth_inpaint_000112_v01.jpg",
+      "source_image": "000112.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.48766783199179786,
+        -0.021926453689247886,
+        0.867725670040939,
+        0.09354933362155145
+      ],
+      "tvec": [
+        -0.5183113771172342,
+        -0.455821228794831,
+        5.067427152271224
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1464
+    },
+    {
+      "name": "synth_inpaint_000116_v01.jpg",
+      "source_image": "000116.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.6699392817814785,
+        0.010968159050333028,
+        0.7398983363061475,
+        0.06009584132498988
+      ],
+      "tvec": [
+        -1.1916327660151258,
+        -0.5937517070510756,
+        5.083281362532627
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1987
+    },
+    {
+      "name": "synth_inpaint_000128_v01.jpg",
+      "source_image": "000128.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9265135115964924,
+        0.038703361226715305,
+        0.3735971237164306,
+        0.022359602181185427
+      ],
+      "tvec": [
+        -1.7106219284211763,
+        -0.8964415560205166,
+        4.95532623929449
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1188
+    },
+    {
+      "name": "synth_inpaint_000147_v01.jpg",
+      "source_image": "000147.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8681077504974073,
+        0.04956360179739724,
+        -0.48119985982671054,
+        -0.11126130417155117
+      ],
+      "tvec": [
+        -0.6106617905291273,
+        -0.23600828277843358,
+        1.4388564215475819
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0988
+    },
+    {
+      "name": "synth_inpaint_000174_v01.jpg",
+      "source_image": "000174.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.14412526913747184,
+        -0.04362791800145708,
+        0.9719098306788508,
+        0.18087507455898097
+      ],
+      "tvec": [
+        -0.555751270221595,
+        -0.6878485950478933,
+        3.225297852367791
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1391
+    },
+    {
+      "name": "synth_inpaint_000191_v01.jpg",
+      "source_image": "000191.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8549630261316008,
+        0.09237092159664502,
+        0.503379379381775,
+        0.08435067992909881
+      ],
+      "tvec": [
+        -1.599327473042611,
+        -1.286283097152759,
+        3.5942221609889557
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.0988
+    },
+    {
+      "name": "synth_inpaint_000195_v01.jpg",
+      "source_image": "000195.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.8900743319898053,
+        0.06293009732925357,
+        0.4496873082061981,
+        0.03985989489821101
+      ],
+      "tvec": [
+        -0.8107048978049601,
+        -1.0488085799743958,
+        3.4591710990334064
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.078
+    },
+    {
+      "name": "synth_inpaint_000205_v01.jpg",
+      "source_image": "000205.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9968811468753351,
+        0.030223523576666904,
+        -0.06960580373766145,
+        -0.021669095808581854
+      ],
+      "tvec": [
+        -2.973592515269846,
+        -0.5267138008550533,
+        2.157522824598754
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.18
+    },
+    {
+      "name": "synth_inpaint_000211_v01.jpg",
+      "source_image": "000211.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.9998670831348445,
+        -0.0053044682649266124,
+        -0.015389474936067854,
+        -0.0009180092790629254
+      ],
+      "tvec": [
+        -0.404323899122353,
+        -0.40697373286031047,
+        2.5937637383638763
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.2057
+    },
+    {
+      "name": "synth_inpaint_000227_v01.jpg",
+      "source_image": "000227.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        0.7889747047069067,
+        0.04518120033580159,
+        -0.6021179286190923,
+        -0.11371708096992027
+      ],
+      "tvec": [
+        0.22977423235613248,
+        -1.0942977667197444,
+        3.9963778708452495
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1601
+    },
+    {
+      "name": "synth_inpaint_000246_v01.jpg",
+      "source_image": "000246.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.1858737997435689,
+        -0.01002259869087543,
+        0.9622658388027802,
+        0.19848156981833692
+      ],
+      "tvec": [
+        0.04058297306891885,
+        -1.0412875031243876,
+        4.226135950979245
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.2213
+    },
+    {
+      "name": "synth_inpaint_000251_v01.jpg",
+      "source_image": "000251.jpg",
+      "strategy": "inpaint",
+      "qvec": [
+        -0.015773975933759066,
+        -0.03620967753946154,
+        0.983976537203919,
+        0.17386838461294304
+      ],
+      "tvec": [
+        -0.22582621080685014,
+        -1.0585084489903613,
+        5.256072216094904
+      ],
+      "camera_id": 1,
+      "pose_source": "copied from source view (exact)",
+      "mask_fraction": 0.1868
+    }
+  ]
+}

@@ -176,6 +176,40 @@ def build_control(recs):
     return out
 
 
+def build_ablation(recs):
+    """Model-robustness ablation: SD 1.5 vs Dreamshaper-8, outpainting at k=5.
+
+    k=5 outpainting is the only condition in the study that improves quality,
+    so the obvious objection is that the effect belongs to one checkpoint
+    rather than to the strategy. Same architecture, same VRAM, better
+    photorealism - which changes image quality while holding structure fixed.
+    """
+    base, runs = {}, defaultdict(list)
+    for r in recs:
+        p = r["provenance"]
+        if p.get("method") == "full" or p.get("k") != 5:
+            continue
+        s, nf = p.get("seed"), p.get("n_synthetic", 0)
+        if nf == 0:
+            base[s] = r["metrics"]
+        else:
+            runs[(p.get("strategy"), nf)].append((s, r["metrics"]))
+
+    def d(strat, nf):
+        ds = [m["psnr"]["mean"] - base[s]["psnr"]["mean"]
+              for s, m in runs.get((strat, nf), []) if s in base]
+        return agg(ds) if ds else None
+
+    out = []
+    for nf in (1, 2, 5, 10):
+        a, b = d("outpaint", nf), d("outpaint_ds8", nf)
+        if not (a and b):
+            continue
+        out.append({"ratio": round(100 * nf / 5), "sd": a[0], "sd_sd": a[1],
+                    "ds": b[0], "ds_sd": b[1], "diff": b[0] - a[0]})
+    return out
+
+
 def load_noise():
     vals = {"psnr": [], "ssim": [], "lpips": []}
     for p in sorted((ROOT / "runs_noise").glob("repeat*/results.json")):
@@ -248,6 +282,15 @@ def main():
         for c in control)
     ctrl_max = max((c["contribution"] for c in control), default=0.0)
     ctrl_worst = min((c["warp"] for c in control), default=0.0)
+
+    ablation = build_ablation(recs)
+    abl_rows = "\n".join(
+        f'<tr><td class="ratio">{a["ratio"]}%</td>'
+        + delta_cell(a["sd"], a["sd_sd"], abs(a["sd"]) > a["sd_sd"] > 0)
+        + delta_cell(a["ds"], a["ds_sd"], abs(a["ds"]) > a["ds_sd"] > 0)
+        + f'<td class="num">{a["diff"]:+.3f}</td></tr>'
+        for a in ablation)
+    abl_all_pos = all(a["ds"] > 0 for a in ablation) if ablation else False
 
     # --- full results table, grouped by strategy then subset size ---
     trs = []
@@ -356,6 +399,9 @@ def main():
         "{{CROSSOVER_TABLE}}": crossover_table,
         "{{SCALING_TABLE}}": scaling_table,
         "{{CONTROL_TABLE}}": ctrl_rows,
+        "{{ABLATION_TABLE}}": abl_rows,
+        "{{ABL_VERDICT}}": ("positive at every ratio" if abl_all_pos
+                            else "not reproduced at every ratio"),
         "{{CTRL_MAX}}": f'{ctrl_max:+.2f}',
         "{{CTRL_WORST}}": f'{ctrl_worst:.2f}',
         "{{FIG_SCALING}}": figure(RES / "scaling.png",
@@ -819,6 +865,40 @@ and therefore larger holes, so an artifact explanation predicts more damage at k
 measured damage is smallest at k = 5.</p>
 </div>
 
+<h3>A second control: is the positive result model-specific?</h3>
+<p>Outpainting at five views is the only condition here that improves quality, which invites
+the objection that the effect belongs to Stable Diffusion 1.5 rather than to the strategy.
+Repeating that sweep with Dreamshaper-8 tests it. Dreamshaper-8 is an SD 1.5 finetune: same
+architecture, same 2.65 GB of VRAM, materially better photorealism — so it varies image
+quality while holding everything structural fixed. A larger model would confound quality with
+capacity, and does not fit in 4 GB regardless.</p>
+
+<div class="tw">
+<table>
+  <caption><b>Table 4.</b> Outpainting at k = 5 under two diffusion checkpoints, three seeds.
+  The real image region is preserved byte-for-byte in both; only the fabricated periphery
+  differs (mean |Δ| of 0.07 inside the frame versus 30.3 outside).</caption>
+  <thead>
+    <tr><th>Ratio</th><th class="num">SD 1.5</th>
+        <th class="num">Dreamshaper-8</th><th class="num">Difference</th></tr>
+  </thead>
+  <tbody>
+{{ABLATION_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p>The effect is {{ABL_VERDICT}} under the second model, and the curve keeps the same rising
+shape. The benefit is a property of the augmentation, not of one checkpoint.</p>
+
+<p>The magnitudes are slightly <em>smaller</em> throughout, which is the more informative
+detail. Dreamshaper-8 produces visibly better images and obtains a marginally worse result. If
+photorealism were the mechanism, the better model should have helped more. It did not — which
+agrees with the warp-only control, where diffusion's contribution was geometric repair rather
+than image quality, and with inpainting, which produces convincing images at a perfect pose
+and is nonetheless useless. Across three independent lines of evidence, what a synthetic view
+contributes is <b>coverage, not photorealism</b>.</p>
+
 <h3>Why the sign flips</h3>
 <p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
 diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
@@ -895,7 +975,7 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <h2><span class="n">06</span> Full results</h2>
 <div class="tw">
 <table>
-  <caption><b>Table 4.</b> All 108 augmented conditions. Paired change against the same-seed,
+  <caption><b>Table 5.</b> All 108 augmented conditions. Paired change against the same-seed,
   same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
   <thead>
     <tr>
@@ -945,7 +1025,7 @@ files by the script that generates it, so the document cannot drift from the exp
 
 <div class="tw">
 <table>
-  <caption><b>Table 5.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
+  <caption><b>Table 6.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
   <thead><tr><th>Strategy</th><th class="num">Seconds / image</th></tr></thead>
   <tbody>{{GEN_ROWS}}</tbody>
 </table>

@@ -64,6 +64,16 @@ def main():
     ap.add_argument("--prompt", default="a photo of a truck parked on a street, "
                                         "wide view, realistic, sharp focus")
     ap.add_argument("--negative", default="blurry, distorted, watermark, text, lowres")
+    # Model-robustness ablation. Is the outpainting result a property of
+    # augmentation, or of Stable Diffusion 1.5 specifically? --model swaps the
+    # checkpoint; --label puts the output in its own directory so both versions
+    # coexist and can be compared directly. NOTE build_scene.py names scenes
+    # from the poses.json "strategy" field rather than the directory it is
+    # given, so --label has to flow into that field too.
+    ap.add_argument("--model", default=MODEL,
+                    help="diffusers inpainting checkpoint")
+    ap.add_argument("--label", default="outpaint",
+                    help="name used in the output directory and filenames")
     args = ap.parse_args()
 
     manifest = json.loads(Path(args.manifest).read_text())
@@ -72,7 +82,7 @@ def main():
     seed, k, method = manifest["seed"], manifest["k"], manifest["method"]
     s = args.expand
 
-    tag = f"{manifest['scene']}_k{k}_seed{seed}_{method}_outpaint"
+    tag = f"{manifest['scene']}_k{k}_seed{seed}_{method}_{args.label}"
     out_dir = Path(args.out) / tag
     img_dir = out_dir / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
@@ -117,8 +127,9 @@ def main():
     print(f"\n[{tag}] generating {args.n} outpainted views")
 
     from diffusers import StableDiffusionInpaintPipeline
+    print(f"  model: {args.model}")
     pipe = StableDiffusionInpaintPipeline.from_pretrained(
-        MODEL, torch_dtype=torch.float16, variant="fp16",
+        args.model, torch_dtype=torch.float16, variant="fp16",
         use_safetensors=True, safety_checker=None, requires_safety_checker=False)
     pipe = pipe.to("cuda")
     pipe.set_progress_bar_config(disable=True)
@@ -133,7 +144,7 @@ def main():
     for i in range(args.n):
         src_name = reals[i % len(reals)]
         variant = i // len(reals)
-        out_name = f"synth_outpaint_{Path(src_name).stem}_v{variant:02d}.jpg"
+        out_name = f"synth_{args.label}_{Path(src_name).stem}_v{variant:02d}.jpg"
 
         real = Image.open(src_root / "images" / src_name).convert("RGB")
 
@@ -168,7 +179,7 @@ def main():
         records.append({
             "name": out_name,
             "source_image": src_name,
-            "strategy": "outpaint",
+            "strategy": args.label,
             "qvec": [float(x) for x in im.qvec],
             "tvec": [float(x) for x in im.tvec],
             "camera_id": 2,                      # the widened camera
@@ -181,7 +192,7 @@ def main():
     peak = torch.cuda.max_memory_allocated() / 1024**3
 
     (out_dir / "poses.json").write_text(json.dumps({
-        "tag": tag, "strategy": "outpaint", "scene": manifest["scene"],
+        "tag": tag, "strategy": args.label, "scene": manifest["scene"],
         "k": k, "seed": seed, "method": method,
         "source_manifest": str(args.manifest),
         "extra_cameras": {

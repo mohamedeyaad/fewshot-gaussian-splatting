@@ -6,7 +6,7 @@ Splatting when you only have a handful of real photographs?
 **Short answer: only when you have very few real views, and even then barely.**
 The value of a synthetic image depends on how much real data you already have —
 it crosses from beneficial to harmful somewhere between 5 and 20 real views.
-This repository contains the full pipeline, all 118 training runs, and the
+This repository contains the full pipeline, all 142 training runs, and the
 analysis behind that claim.
 
 University of Genoa (UNIGE) — robotics project.
@@ -112,7 +112,7 @@ src/                    all pipeline code (see "Reproducing" below)
 patches/                the two required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
-runs/*/results.json     raw metrics for all 118 runs - the experimental record
+runs/*/results.json     raw metrics for all 142 runs - the experimental record
 results/                figures, summary tables, and the final report
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
@@ -177,7 +177,7 @@ Verified against upstream `54c035f` (main repo) and `9c5c202`
 | patch | reason |
 |---|---|
 | `02-rasterizer-cstdint` | GCC 13 stopped including `<cstdint>` transitively. Without it the build dies on `'uintptr_t' is not a member of 'std'`. One line; purely a compiler-compatibility fix. |
-| `01-dataset_readers-explicit-split` | Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across all 118 runs**. The patch makes a `split.json` in the scene root override the rule; with no such file, behaviour is exactly as upstream. |
+| `01-dataset_readers-explicit-split` | Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across all 142 runs**. The patch makes a `split.json` in the scene root override the rule; with no such file, behaviour is exactly as upstream. |
 
 ### 4. Build the CUDA submodules
 
@@ -264,7 +264,7 @@ Synthetic counts differ per subset size because the ratio is relative to `k`:
 Only k=20 divides cleanly into the spec's 25/50/100/200%; at k=5 and k=10 the
 25% point is fractional (1.25 and 2.5 images) and rounds down.
 
-> **Disk.** The 118 runs produce ~15 GB of Gaussian checkpoints
+> **Disk.** The 142 runs produce ~15 GB of Gaussian checkpoints
 > (`runs/*/point_cloud`). Every metric is extracted into `results.json` during
 > the run, so the checkpoints can be deleted afterwards — `rm -rf
 > runs/*/point_cloud runs/*/input.ply` — without losing anything the analysis
@@ -313,7 +313,7 @@ diffusion and 3DGS training never run concurrently.
 ## Experimental design notes
 
 - **Frozen test set.** 32 views chosen by the LLFF `idx % 8` rule and held
-  constant across all 118 runs. No synthetic image is ever derived from a test
+  constant across all 142 runs. No synthetic image is ever derived from a test
   view.
 - **Nested synthetic sets.** The 5-image condition contains the 2-image
   condition's images, and so on, so the ratio sweep is a genuine dose-response
@@ -354,7 +354,7 @@ diffusion and 3DGS training never run concurrently.
   alternatives that were considered, including the multi-view-consistent
   generators (Zero123++, SV3D, ImageDream) that are arguably the actual fix for
   what pose-guided augmentation is trying to do.
-- **7000 iterations**, not the upstream 30000, to keep 118 runs tractable. The
+- **7000 iterations**, not the upstream 30000, to keep 142 runs tractable. The
   full-data run reaches 25.23 dB against ≈ 25.4 dB published at full schedule,
   so the pipeline is validated, but absolute numbers are slightly below
   literature values.

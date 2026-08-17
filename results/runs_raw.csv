@@ -99,6 +99,10 @@ truck_k5_seed0_fps_inpaint_fake1,5,fps,0,1,7000,15.1186,0.5457,0.4030,239.7,1285
 truck_k5_seed0_fps_inpaint_fake10,5,fps,0,10,7000,15.2943,0.5489,0.4025,246.7,1327,415269
 truck_k5_seed0_fps_inpaint_fake2,5,fps,0,2,7000,15.1661,0.5466,0.4017,247.6,1327,421970
 truck_k5_seed0_fps_inpaint_fake5,5,fps,0,5,7000,15.0653,0.5386,0.4115,248.5,1365,425968
+truck_k5_seed0_fps_outpaint_ds8_fake1,5,fps,0,1,7000,15.2869,0.5481,0.3984,269.3,1576,500107
+truck_k5_seed0_fps_outpaint_ds8_fake10,5,fps,0,10,7000,15.5426,0.5384,0.4023,353.6,2152,739566
+truck_k5_seed0_fps_outpaint_ds8_fake2,5,fps,0,2,7000,15.4872,0.5472,0.3945,288.9,1576,528433
+truck_k5_seed0_fps_outpaint_ds8_fake5,5,fps,0,5,7000,15.4680,0.5389,0.4000,330.8,1902,671453
 truck_k5_seed0_fps_outpaint_fake1,5,fps,0,1,7000,15.3248,0.5496,0.3960,283.6,1677,512153
 truck_k5_seed0_fps_outpaint_fake10,5,fps,0,10,7000,15.6350,0.5421,0.3971,365.0,2329,792839
 truck_k5_seed0_fps_outpaint_fake2,5,fps,0,2,7000,15.5025,0.5486,0.3946,295.0,1597,541744
@@ -112,6 +116,10 @@ truck_k5_seed1_fps_inpaint_fake1,5,fps,1,1,7000,14.9064,0.5166,0.4293,234.9,1269
 truck_k5_seed1_fps_inpaint_fake10,5,fps,1,10,7000,14.9500,0.5202,0.4296,249.0,1355,410607
 truck_k5_seed1_fps_inpaint_fake2,5,fps,1,2,7000,14.7152,0.5116,0.4368,234.5,1239,379769
 truck_k5_seed1_fps_inpaint_fake5,5,fps,1,5,7000,14.8194,0.5053,0.4442,247.9,1399,412098
+truck_k5_seed1_fps_outpaint_ds8_fake1,5,fps,1,1,7000,14.9959,0.5161,0.4262,263.6,1449,455719
+truck_k5_seed1_fps_outpaint_ds8_fake10,5,fps,1,10,7000,15.0210,0.5058,0.4378,342.2,1941,683835
+truck_k5_seed1_fps_outpaint_ds8_fake2,5,fps,1,2,7000,14.8955,0.5086,0.4294,276.6,1457,474401
+truck_k5_seed1_fps_outpaint_ds8_fake5,5,fps,1,5,7000,15.0387,0.5080,0.4331,321.0,1853,623850
 truck_k5_seed1_fps_outpaint_fake1,5,fps,1,1,7000,15.0652,0.5159,0.4251,263.4,1527,463342
 truck_k5_seed1_fps_outpaint_fake10,5,fps,1,10,7000,15.0624,0.5081,0.4309,348.7,2017,732685
 truck_k5_seed1_fps_outpaint_fake2,5,fps,1,2,7000,15.0475,0.5074,0.4290,276.2,1505,493694
@@ -125,6 +133,10 @@ truck_k5_seed2_fps_inpaint_fake1,5,fps,2,1,7000,15.4485,0.5464,0.4007,255.0,1469
 truck_k5_seed2_fps_inpaint_fake10,5,fps,2,10,7000,15.4328,0.5531,0.3980,254.8,1473,440666
 truck_k5_seed2_fps_inpaint_fake2,5,fps,2,2,7000,15.2841,0.5412,0.4063,247.5,1381,420122
 truck_k5_seed2_fps_inpaint_fake5,5,fps,2,5,7000,15.2088,0.5362,0.4111,254.9,1539,436504
+truck_k5_seed2_fps_outpaint_ds8_fake1,5,fps,2,1,7000,15.5303,0.5467,0.4006,281.9,1537,511185
+truck_k5_seed2_fps_outpaint_ds8_fake10,5,fps,2,10,7000,15.6067,0.5413,0.4020,362.3,2045,756882
+truck_k5_seed2_fps_outpaint_ds8_fake2,5,fps,2,2,7000,15.4332,0.5442,0.4033,298.5,1549,576004
+truck_k5_seed2_fps_outpaint_ds8_fake5,5,fps,2,5,7000,15.5625,0.5437,0.3994,337.1,1975,693061
 truck_k5_seed2_fps_outpaint_fake1,5,fps,2,1,7000,15.6212,0.5503,0.3985,281.7,1557,521313
 truck_k5_seed2_fps_outpaint_fake10,5,fps,2,10,7000,15.7500,0.5462,0.3961,364.4,2199,800301
 truck_k5_seed2_fps_outpaint_fake2,5,fps,2,2,7000,15.4617,0.5450,0.4008,303.7,1721,601780

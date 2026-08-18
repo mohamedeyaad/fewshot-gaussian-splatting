@@ -120,12 +120,21 @@ def main():
     print(f"test  (held out, every {args.llffhold}th): {len(test_idx)}")
     print(f"train pool                              : {len(train_idx)}")
 
-    # Persist the test split once - it is identical for EVERY condition.
-    (out / "test_split.json").write_text(json.dumps({
+    # Persist the test split once - it is identical for EVERY condition of this
+    # scene. The filename is scene-qualified: an unqualified test_split.json
+    # would be overwritten the moment a second scene is prepared, silently
+    # swapping the frozen held-out views of the first one.
+    split_blob = json.dumps({
         "scene": source.name, "llffhold": args.llffhold,
         "test_images": [names[i] for i in test_idx],
         "train_pool": [names[i] for i in train_idx],
-    }, indent=2))
+    }, indent=2)
+    (out / f"{source.name}_test_split.json").write_text(split_blob)
+    # truck's runs predate the rename and read the unqualified name, so keep it
+    # in step for that scene only.
+    if source.name == "truck":
+        (out / "test_split.json").write_text(split_blob)
+    print(f"test split -> {out / f'{source.name}_test_split.json'}")
 
     pool_centres = centres[train_idx]
     manifests = []
@@ -196,10 +205,14 @@ def make_plots(names, centres, train_idx, test_idx, manifests, out, args):
                 ax.set_aspect("equal", adjustable="datalim")
                 ax.grid(alpha=0.25, linewidth=0.5)
             axes[0][0].legend(fontsize=7, loc="best")
-            fig.suptitle(f"Camera positions - {method.upper()} selection, k={k}",
-                         fontsize=12)
+            scene = recs[0]["scene"]
+            fig.suptitle(f"Camera positions - {scene}, {method.upper()} "
+                         f"selection, k={k}", fontsize=12)
             fig.tight_layout()
-            p = out / f"cameras_k{k}_{method}.png"
+            # Scene-qualified, for the same reason test_split.json is: an
+            # unqualified name silently overwrites the first scene's maps the
+            # moment a second scene is prepared.
+            p = out / f"cameras_{scene}_k{k}_{method}.png"
             fig.savefig(p, dpi=130)
             plt.close(fig)
             print(f"  plot -> {p}")

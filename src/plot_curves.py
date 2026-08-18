@@ -28,6 +28,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from scene_key import scene_of
+
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 OUT = ROOT / "results"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -44,10 +46,14 @@ def agg(v):
     return mean(v), (stdev(v) if len(v) > 1 else 0.0)
 
 
-def load():
+def load(scene="truck"):
+    # One scene only: (k, seed) is unique within a scene but not across them,
+    # so mixing drjohnson in would pair truck runs against drjohnson floors.
     base, runs, full = {}, defaultdict(list), None
     for p in sorted((ROOT / "runs").glob("*/results.json")):
         r = json.loads(p.read_text())
+        if scene_of(r) != scene:
+            continue
         pr = r["provenance"]
         if pr.get("method") == "full":
             full = r["metrics"]

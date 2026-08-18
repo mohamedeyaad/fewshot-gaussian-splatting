@@ -18,6 +18,8 @@ from statistics import mean, stdev
 
 from PIL import Image
 
+from scene_key import scene_of
+
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 RES = ROOT / "results"
 OUT = RES / "report.html"
@@ -28,10 +30,20 @@ STRAT_LABEL = {"inpaint": "Inpainting", "outpaint": "Outpainting",
 
 
 # ---------------------------------------------------------------- data
-def load_runs():
+def load_runs(scene: str = "truck"):
+    """Every run of ONE scene.
+
+    The filter is not cosmetic. Every table below pairs an augmented run
+    against the same (k, seed) baseline, and that key is only unique within a
+    scene - drjohnson k=5 seed0 would overwrite truck k=5 seed0 and silently
+    reassign every truck delta. The report's claims are all about truck, so
+    truck is what it loads.
+    """
     recs = []
     for p in sorted((ROOT / "runs").glob("*/results.json")):
-        recs.append(json.loads(p.read_text()))
+        r = json.loads(p.read_text())
+        if scene_of(r) == scene:
+            recs.append(r)
     return recs
 
 

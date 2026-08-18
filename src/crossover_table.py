@@ -7,6 +7,7 @@ shows how the value of a synthetic image changes as real data accumulates.
 import glob
 import json
 import statistics as st
+import sys
 from collections import defaultdict
 
 RATIO_LABEL = {5: {1: 20, 2: 40, 5: 100, 10: 200},
@@ -14,8 +15,13 @@ RATIO_LABEL = {5: {1: 20, 2: 40, 5: 100, 10: 200},
                20: {5: 25, 10: 50, 20: 100, 40: 200}}
 ORDER = [20, 50, 100, 200]          # nominal ratio buckets
 
+# The glob is scene-prefixed, so the table is always about exactly one scene.
+#   python src/crossover_table.py            # truck
+#   python src/crossover_table.py drjohnson
+SCENE = sys.argv[1] if len(sys.argv) > 1 else "truck"
+
 base, runs = {}, defaultdict(list)
-for f in glob.glob("runs/truck_k*/results.json"):
+for f in glob.glob(f"runs/{SCENE}_k*/results.json"):
     r = json.load(open(f))
     p = r["provenance"]
     if p.get("method") == "full":
@@ -41,7 +47,10 @@ def cell(k, strat, ratio):
     return "      -   "
 
 
+print(f"### scene: {SCENE}")
 for strat in ("outpaint", "inpaint", "guided"):
+    if not any(s == strat for (_, s, _) in runs):
+        continue
     print(f"\n=== {strat} ===")
     print(f"{'ratio':>6s}   {'k=5':>10s} {'k=10':>10s} {'k=20':>10s}")
     for ratio in ORDER:
@@ -50,8 +59,11 @@ for strat in ("outpaint", "inpaint", "guided"):
 print("\n\n=== baselines (real views only) ===")
 for k in (5, 10, 20):
     vs = [v for (kk, s), v in base.items() if kk == k]
+    if not vs:
+        continue
     print(f"  k={k:3d}  {st.mean(vs):6.2f} +- {st.stdev(vs) if len(vs) > 1 else 0:.2f} dB")
-full = [json.load(open(f)) for f in glob.glob("runs/truck_k219*/results.json")]
-if full:
-    print(f"  k=219  {full[0]['metrics']['psnr']['mean']:6.2f} dB  (ceiling)")
+for f in glob.glob(f"runs/{SCENE}_k*_full_fake0/results.json"):
+    r = json.load(open(f))
+    print(f"  k={r['provenance']['k']:3d}  "
+          f"{r['metrics']['psnr']['mean']:6.2f} dB  (ceiling)")
 print("\n* = |mean| exceeds the between-seed standard deviation")

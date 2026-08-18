@@ -15,6 +15,8 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
 
+from scene_key import scene_of
+
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 
 
@@ -30,7 +32,8 @@ def load(runs_dir: Path):
 
 def key_of(r):
     prov = r.get("provenance", {})
-    return (prov.get("k"), prov.get("method"), prov.get("n_synthetic", 0))
+    return (scene_of(r), prov.get("k"), prov.get("method"),
+            prov.get("n_synthetic", 0))
 
 
 def agg(vals):
@@ -63,12 +66,12 @@ def main():
     csv_path = out / "runs_raw.csv"
     with open(csv_path, "w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["tag", "k", "method", "seed", "n_fake", "iterations",
+        w.writerow(["tag", "scene", "k", "method", "seed", "n_fake", "iterations",
                     "psnr", "ssim", "lpips", "train_s", "peak_vram_mib",
                     "n_gaussians"])
         for r in sorted(recs, key=lambda x: x["tag"]):
             p, c, m = r["provenance"], r["config"], r["metrics"]
-            w.writerow([r["tag"], p.get("k"), p.get("method"), p.get("seed"),
+            w.writerow([r["tag"], scene_of(r), p.get("k"), p.get("method"), p.get("seed"),
                         p.get("n_synthetic", 0), c["iterations"],
                         f"{m['psnr']['mean']:.4f}", f"{m['ssim']['mean']:.4f}",
                         f"{m['lpips']['mean']:.4f}",
@@ -78,20 +81,21 @@ def main():
     print(f"wrote {csv_path}")
 
     # ---- grouped markdown table ---------------------------------------
-    lines = ["| k | method | fake | seeds | PSNR | SSIM | LPIPS | Gaussians | train s |",
-             "|---|---|---|---|---|---|---|---|---|"]
-    for k, method, nfake in sorted(groups, key=lambda t: (t[0] or 0, str(t[1]), t[2] or 0)):
-        rs = groups[(k, method, nfake)]
+    lines = ["| scene | k | method | fake | seeds | PSNR | SSIM | LPIPS | Gaussians | train s |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for scene, k, method, nfake in sorted(
+            groups, key=lambda t: (str(t[0]), t[1] or 0, str(t[2]), t[3] or 0)):
+        rs = groups[(scene, k, method, nfake)]
         pm, ps = agg([r["metrics"]["psnr"]["mean"] for r in rs])
         sm, ss = agg([r["metrics"]["ssim"]["mean"] for r in rs])
         lm, ls = agg([r["metrics"]["lpips"]["mean"] for r in rs])
         gm, _ = agg([r["cost"].get("n_gaussians") for r in rs])
         tm, _ = agg([r["cost"].get("train_seconds") for r in rs])
         lines.append(
-            f"| {k} | {method} | {nfake} | {len(rs)} | "
+            f"| {scene} | {k} | {method} | {nfake} | {len(rs)} | "
             f"{pm:.2f} ± {ps:.2f} | {sm:.4f} ± {ss:.4f} | {lm:.4f} ± {ls:.4f} | "
             f"{gm:,.0f} | {tm:.0f} |" if tm is not None else
-            f"| {k} | {method} | {nfake} | {len(rs)} | "
+            f"| {scene} | {k} | {method} | {nfake} | {len(rs)} | "
             f"{pm:.2f} ± {ps:.2f} | {sm:.4f} ± {ss:.4f} | {lm:.4f} ± {ls:.4f} | "
             f"{gm:,.0f} | - |")
 
@@ -101,11 +105,15 @@ def main():
     # The grouped table above can mislead when conditions have different
     # numbers of seeds. Pairing each augmented run against the SAME seed's
     # 0-fake baseline removes seed-to-seed luck entirely.
+    # The baseline key MUST carry the scene as well as (k, seed): drjohnson
+    # k=5 seed0 and truck k=5 seed0 are different runs, and without the scene
+    # one overwrites the other, pairing every augmented run of one scene
+    # against the other scene's floor.
     baselines = {}
     for r in recs:
         p = r["provenance"]
         if p.get("n_synthetic", 0) == 0 and p.get("method") != "full":
-            baselines[(p.get("k"), p.get("seed"))] = r["metrics"]
+            baselines[(scene_of(r), p.get("k"), p.get("seed"))] = r["metrics"]
 
     paired = defaultdict(list)
     for r in recs:
@@ -113,10 +121,10 @@ def main():
         nf = p.get("n_synthetic", 0)
         if nf == 0 or p.get("method") == "full":
             continue
-        base = baselines.get((p.get("k"), p.get("seed")))
+        base = baselines.get((scene_of(r), p.get("k"), p.get("seed")))
         if not base:
             continue
-        paired[(p.get("k"), p.get("strategy"), nf)].append({
+        paired[(scene_of(r), p.get("k"), p.get("strategy"), nf)].append({
             "seed": p.get("seed"),
             "d_psnr": r["metrics"]["psnr"]["mean"] - base["psnr"]["mean"],
             "d_ssim": r["metrics"]["ssim"]["mean"] - base["ssim"]["mean"],
@@ -125,10 +133,11 @@ def main():
 
     plines = ["", "### Paired deltas vs same-seed 0-fake baseline",
               "(positive PSNR/SSIM = better; negative LPIPS = better)", "",
-              "| k | strategy | fake | seeds | dPSNR | dSSIM | dLPIPS |",
-              "|---|---|---|---|---|---|---|"]
-    for k, strat, nf in sorted(paired, key=lambda t: (t[0] or 0, str(t[1]), t[2])):
-        ds = paired[(k, strat, nf)]
+              "| scene | k | strategy | fake | seeds | dPSNR | dSSIM | dLPIPS |",
+              "|---|---|---|---|---|---|---|---|"]
+    for scene, k, strat, nf in sorted(
+            paired, key=lambda t: (str(t[0]), t[1] or 0, str(t[2]), t[3])):
+        ds = paired[(scene, k, strat, nf)]
         pm, ps = agg([d["d_psnr"] for d in ds])
         sm, ss = agg([d["d_ssim"] for d in ds])
         lm, ls = agg([d["d_lpips"] for d in ds])
@@ -136,7 +145,7 @@ def main():
         # agreed on the sign with margin. Not a formal test at n=3, but it
         # separates "consistent" from "noise".
         sig = lambda m, s: "*" if s > 0 and abs(m) > s else " "
-        plines.append(f"| {k} | {strat} | {nf} | {len(ds)} | "
+        plines.append(f"| {scene} | {k} | {strat} | {nf} | {len(ds)} | "
                       f"{pm:+.3f} ± {ps:.3f}{sig(pm,ps)} | "
                       f"{sm:+.4f} ± {ss:.4f}{sig(sm,ss)} | "
                       f"{lm:+.4f} ± {ls:.4f}{sig(lm,ls)} |")

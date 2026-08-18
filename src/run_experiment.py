@@ -115,11 +115,19 @@ def main():
     ap.add_argument("--iterations", type=int, default=7000)
     ap.add_argument("--resolution", type=int, default=2)
     ap.add_argument("--force", action="store_true")
+    # Depth regularisation. Passed straight through to train.py as -d, which
+    # resolves it relative to the scene: <scene>/<depths>. Requires the scene
+    # to have been through src/add_depths.py first.
+    ap.add_argument("--depths", default="", help="depth dir inside the scene")
     args = ap.parse_args()
 
     scene = Path(args.scene).resolve()
-    tag = scene.name
-    model = Path(args.out).resolve() if args.out else (ROOT / "runs" / tag)
+    model = Path(args.out).resolve() if args.out else (ROOT / "runs" / scene.name)
+    # The tag names the RUN, not the scene: one scene can be trained under
+    # several configurations (with and without depth regularisation), and they
+    # must not collide in runs/ or in the aggregated tables. Identical to the
+    # previous behaviour whenever --out is omitted.
+    tag = model.name
     results_path = model / "results.json"
 
     if results_path.exists() and not args.force:
@@ -148,10 +156,12 @@ def main():
     else:
         mon = VramMonitor(); mon.start()
         t0 = time.time()
+        depth_arg = ["-d", args.depths] if args.depths else []
         rc = sh([PY, "train.py", "-s", str(scene), "-m", str(model), "--eval",
                  "-r", str(args.resolution), "--iterations", str(args.iterations),
                  "--test_iterations", str(args.iterations),
                  "--save_iterations", str(args.iterations),
+                 *depth_arg,
                  "--disable_viewer", "--quiet"], log=log)
         train_time = time.time() - t0
         peak = mon.stop()
@@ -171,12 +181,16 @@ def main():
     metrics = evaluate(model, args.iterations)
     ng = gaussian_count(model, args.iterations)
 
+    prov = dict(split.get("provenance", {}))
+    prov["depth_reg"] = bool(args.depths)
+
     rec = {
         "tag": tag,
         "scene": str(scene),
-        "provenance": split.get("provenance", {}),
+        "provenance": prov,
         "config": {"iterations": args.iterations, "resolution": args.resolution,
-                   "n_train": n_train, "n_test": n_test},
+                   "n_train": n_train, "n_test": n_test,
+                   "depths": args.depths or None},
         "cost": {"train_seconds": round(train_time, 1) if train_time else None,
                  "peak_vram_mib": peak, "note": env_note,
                  "reused_checkpoint": train_time is None,

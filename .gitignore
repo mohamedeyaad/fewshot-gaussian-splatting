@@ -39,3 +39,9 @@ scenes/
 # Scratch
 *.log
 .DS_Store
+
+# ---------------------------------------------------------------------------
+# Regenerated .ply point clouds for the SuperSplat viewer (~1.3 GB). Not the
+# experimental record - runs/*/results.json is. Rebuild: src/run_viewer_models.sh
+# ---------------------------------------------------------------------------
+viewer/

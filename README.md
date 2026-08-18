@@ -101,7 +101,55 @@ Caveat: black rectangles are a severe artifact, so part of that +2.49 dB is
 diffusion beating a low bar. The control proves diffusion is net positive —
 enough to rule it out as the cause — not that its output is good.
 
-Full write-up in [`results/report.html`](results/report.html).
+### Does it generalise? A second scene
+
+Everything above is `truck`: one outdoor scene, one object. Deep Blending's
+`drjohnson` (230 views, indoor room) repeats the outpainting sweep at the two
+ends of the crossover — k = 5 and k = 20, 3 seeds, 24 runs.
+
+| ratio | truck k=5 | drjohnson k=5 | truck k=20 | drjohnson k=20 |
+|---|---|---|---|---|
+| 20–25 % | +0.140 \* | +0.239 \* | −0.283 \* | −0.310 \* |
+| 40–50 % | +0.140 \* | +0.134 \* | −0.542 \* | −0.147 \* |
+| 100 % | +0.182 \* | **+0.829** \* | −0.983 \* | −0.242 |
+| 200 % | +0.285 \* | **+0.989** \* | −0.618 \* | +0.195 |
+
+**The sign flip reproduces.** k = 5 is positive at every ratio in both scenes;
+k = 20 is negative at every statistically separated point in both.
+
+The effect is *stronger* indoors, and on better evidence:
+
+- the k = 5 benefit is **3.5× larger** (+0.989 vs +0.285 at 200 %);
+- **all three metrics agree.** On truck, outpainting bought PSNR while SSIM sat
+  flat (−0.001 at 200 %). On drjohnson SSIM improves **+0.049** and LPIPS
+  improves **−0.011** alongside it.
+
+The two non-significant k = 20 cells (100 %, 200 %) are the only places the
+pattern softens — and LPIPS is worse there at *every* ratio, 200 % included, so
+the one positive PSNR cell is not a counterexample so much as a metric
+disagreement.
+
+**Why the paired design earns its keep here.** drjohnson's baselines scatter
+across seeds far more than truck's (± 1.68 dB at k = 5, vs truck's ± 0.33). An
+unpaired comparison at that noise level could not resolve a 0.2 dB effect at
+all. Pairing each augmented run against *its own seed's* baseline holds the
+paired standard deviations to ± 0.10–0.52 and keeps the effects measurable.
+
+Scaling, for reference (not comparable to truck — see below):
+
+| k | 5 | 10 | 20 | 230 (ceiling) |
+|---|---|---|---|---|
+| PSNR | 12.55 | 14.03 | 16.50 | 28.30 |
+
+**Resolution caveat.** drjohnson trains at `--resolution 4`, truck at `2`: a
+230-view drjohnson run at half resolution exceeds the 4 GB card and thrashes
+(5 s/iter against 18 it/s — a 17× slowdown). Absolute PSNR is therefore *not*
+comparable between the two scenes. Every delta in the table above is computed
+within a scene against its own same-seed baseline, which is unaffected by the
+resolution choice. All 34 drjohnson runs use the same resolution, so the
+scene's internal scaling curve is self-consistent.
+
+Full write-up in [`results/report.html`](results/report.html) (truck only).
 
 ---
 
@@ -245,9 +293,22 @@ bash src/run_all_scales.sh
 # 6. Noise floor: same scene, same config, 3 repeats.
 bash src/measure_train_noise.sh
 
-# 7. Analysis and deliverables.
-$VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv
-$VPY src/crossover_table.py   # -> the headline matrix, to stdout
+# 7. Second scene (drjohnson): floors, ceiling and the outpainting sweep at
+#    k=5 and k=20. RES=4 throughout - see the resolution caveat above.
+$VPY src/select_subsets.py --source data/db/drjohnson \
+     --k 5 10 20 --seeds 0 1 2 --methods fps --plot
+$VPY src/make_full_manifest.py --split subsets/drjohnson_test_split.json
+RES=4 SCENE=drjohnson SOURCE=data/db/drjohnson KS="5 10 20" bash src/run_floors.sh
+$VPY src/build_scene.py --manifest subsets/drjohnson_k230_seed0_full.json \
+     --source data/db/drjohnson --force
+$VPY -u src/run_experiment.py --scene scenes/drjohnson_k230_seed0_full_fake0 \
+     --iterations 7000 --resolution 4
+bash src/run_drjohnson_sweep.sh          # 24 runs, ~2.5 h
+
+# 8. Analysis and deliverables.
+$VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv (all scenes)
+$VPY src/crossover_table.py             # truck: the headline matrix, to stdout
+$VPY src/crossover_table.py drjohnson   # the same matrix for the second scene
 $VPY src/plot_curves.py       # -> results/{curves_paired,scaling,curves_absolute}.png
 $VPY src/make_panels.py       # -> results/panel_*.png
 $VPY src/build_report.py      # -> results/report.html (self-contained)
@@ -344,11 +405,13 @@ diffusion and 3DGS training never run concurrently.
 - **The crossover is bracketed, not located.** Outpainting is positive at k=5
   and negative at k=20. The sign change lies somewhere between, but three subset
   sizes do not resolve where.
-- **One scene.** All conclusions are from `truck`. A second scene
-  (`drjohnson`, indoor room-scale, already present in `data/db/`) would test
-  whether this generalises across capture regimes. Note the Stable Diffusion
-  canvas is tuned to truck's 1.7930 aspect ratio; drjohnson is 1.5205 and would
-  need roughly 656×432 rather than 704×392.
+- **Two scenes, one of them partial.** The crossover is confirmed on `truck`
+  (outdoor object) and `drjohnson` (indoor room), but drjohnson was swept for
+  **outpainting only**, at k = 5 and k = 20 — the two ends of the crossover.
+  Inpainting and pose-guided were not repeated there, so "inpainting is flat"
+  and "pose-guided always hurts" remain single-scene claims. drjohnson also
+  runs at a different resolution (`-r 4`), so only within-scene deltas
+  transfer, never absolute PSNR.
 - **One diffusion model.** SD 1.5 inpainting only, chosen for the 4 GB budget.
   SDXL and FLUX do not fit. `src/check_alt_models.sh` enumerates the
   alternatives that were considered, including the multi-view-consistent

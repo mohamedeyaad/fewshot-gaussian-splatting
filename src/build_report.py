@@ -222,6 +222,71 @@ def build_ablation(recs):
     return out
 
 
+def build_generalisation(scene="drjohnson"):
+    """Does the crossover survive a change of scene?
+
+    Loads the SECOND scene independently - deliberately not merged into recs,
+    because (k, seed) is only unique within a scene and the paired baselines
+    would collide. Outpainting only, at k=5 and k=20: those are the two ends
+    of the crossover found on truck, so they are what a generalisation test
+    needs. Repeating all three strategies would be 72 runs to re-confirm two
+    already-known flat/negative results.
+
+    drjohnson trains at --resolution 4 (a 230-view run at -r 2 exceeds the
+    4 GB card), so its ABSOLUTE psnr is not comparable with truck's. Every
+    number returned here is a within-scene paired delta, which is unaffected.
+    """
+    recs = load_runs(scene)
+    if not recs:
+        return None
+
+    base, runs, full = {}, defaultdict(list), None
+    floors = defaultdict(list)
+    for r in recs:
+        p = r["provenance"]
+        if p.get("method") == "full":
+            full = r
+            continue
+        k, s, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
+        if nf == 0:
+            base[(k, s)] = r["metrics"]
+            floors[k].append(r["metrics"]["psnr"]["mean"])
+        else:
+            runs[(k, p.get("strategy"), nf)].append((s, r["metrics"]))
+
+    fakes = {5: (1, 2, 5, 10), 20: (5, 10, 20, 40)}
+
+    def d(k, nf, key="psnr"):
+        ds = [m[key]["mean"] - base[(k, s)][key]["mean"]
+              for s, m in runs.get((k, "outpaint", nf), []) if (k, s) in base]
+        return agg(ds) if ds else None
+
+    rows = []
+    for i in range(4):
+        cell = {"ratio": (20, 50, 100, 200)[i]}
+        ok = False
+        for k in (5, 20):
+            nf = fakes[k][i]
+            v = d(k, nf)
+            if v:
+                ok = True
+                cell[f"k{k}"], cell[f"k{k}_sd"] = v
+                cell[f"k{k}_ssim"] = (d(k, nf, "ssim") or (None, 0))[0]
+                cell[f"k{k}_lpips"] = (d(k, nf, "lpips") or (None, 0))[0]
+        if ok:
+            rows.append(cell)
+
+    return {
+        "scene": scene, "rows": rows, "n_runs": len(recs),
+        "floors": {k: mean(v) for k, v in floors.items()},
+        "ceil": full["metrics"]["psnr"]["mean"] if full else None,
+        "ceil_k": full["provenance"]["k"] if full else None,
+        # the between-seed scatter of the BASELINES - the number that makes
+        # the paired design necessary rather than merely tidy
+        "floor_sd": (stdev(floors[5]) if len(floors[5]) > 1 else 0.0),
+    }
+
+
 def load_noise():
     vals = {"psnr": [], "ssim": [], "lpips": []}
     for p in sorted((ROOT / "runs_noise").glob("repeat*/results.json")):
@@ -303,6 +368,39 @@ def main():
         + f'<td class="num">{a["diff"]:+.3f}</td></tr>'
         for a in ablation)
     abl_all_pos = all(a["ds"] > 0 for a in ablation) if ablation else False
+
+    # --- second scene: does the crossover reproduce? ---
+    second = build_generalisation()
+    gen_rows_html, gen_best, gen_best_ssim, gen_best_lpips = "", 0.0, 0.0, 0.0
+    if second:
+        by_ratio = {r["ratio"]: r for r in rows if r["strategy"] == "outpaint"}
+        cells = []
+        for g in second["rows"]:
+            # truck's k=5 second point is 40%, not 50% - 1.25 images do not
+            # exist - so match the nearest label rather than requiring equality
+            def truck(k, ratio):
+                for rr in rows:
+                    if (rr["strategy"] == "outpaint" and rr["k"] == k
+                            and abs(rr["ratio"] - ratio) <= 10):
+                        return rr
+                return None
+            row = f'<tr><td class="ratio">{g["ratio"]}%</td>'
+            for k in (5, 20):
+                t = truck(k, g["ratio"])
+                row += (delta_cell(t["d_psnr"], t["d_psnr_sd"], t["sig_psnr"])
+                        if t else '<td class="num">&mdash;</td>')
+                if f"k{k}" in g:
+                    sd = g[f"k{k}_sd"]
+                    row += delta_cell(g[f"k{k}"], sd, abs(g[f"k{k}"]) > sd > 0)
+                else:
+                    row += '<td class="num">&mdash;</td>'
+            cells.append(row + "</tr>")
+        # reorder columns to truck-k5 / gen-k5 / truck-k20 / gen-k20
+        gen_rows_html = "\n".join(cells)
+        best = max(second["rows"], key=lambda g: g.get("k5", -99))
+        gen_best = best.get("k5", 0.0)
+        gen_best_ssim = best.get("k5_ssim") or 0.0
+        gen_best_lpips = best.get("k5_lpips") or 0.0
 
     # --- full results table, grouped by strategy then subset size ---
     trs = []
@@ -412,6 +510,14 @@ def main():
         "{{SCALING_TABLE}}": scaling_table,
         "{{CONTROL_TABLE}}": ctrl_rows,
         "{{ABLATION_TABLE}}": abl_rows,
+        "{{GEN_TABLE}}": gen_rows_html,
+        "{{GEN_SCENE}}": second["scene"] if second else "n/a",
+        "{{GEN_N}}": str(second["n_runs"]) if second else "0",
+        "{{GEN_CEIL_K}}": str(second["ceil_k"]) if second and second["ceil_k"] else "n/a",
+        "{{GEN_BEST}}": f"{gen_best:+.3f}",
+        "{{GEN_BEST_SSIM}}": f"{gen_best_ssim:+.4f}",
+        "{{GEN_BEST_LPIPS}}": f"{gen_best_lpips:+.4f}",
+        "{{GEN_FLOOR_SD}}": f'{second["floor_sd"]:.2f}' if second else "n/a",
         "{{ABL_VERDICT}}": ("positive at every ratio" if abl_all_pos
                             else "not reproduced at every ratio"),
         "{{CTRL_MAX}}": f'{ctrl_max:+.2f}',
@@ -630,8 +736,9 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
     <p class="standfirst">{{N_RUNS}} controlled training runs on the <em>truck</em> scene show
     that the value of a synthetic view depends on how many real views you already have. At five
     real images outpainting helps at every ratio; by twenty it hurts at every ratio. The
-    crossover is measurable, and the best synthetic condition anywhere is still worth
-    {{BEST_VS_REAL}}× less than five more photographs.</p>
+    crossover is measurable, it reproduces on a second scene indoors ({{GEN_N}} further runs),
+    and the best synthetic condition anywhere is still worth {{BEST_VS_REAL}}× less than five
+    more photographs.</p>
     <div class="byline">
       <span>Tanks &amp; Temples <b>truck</b> · 251 images</span>
       <span>3 strategies × 4 ratios × 3 subset sizes × 3 seeds</span>
@@ -911,6 +1018,56 @@ than image quality, and with inpainting, which produces convincing images at a p
 and is nonetheless useless. Across three independent lines of evidence, what a synthetic view
 contributes is <b>coverage, not photorealism</b>.</p>
 
+<h3>Does it generalise? A second scene</h3>
+<p>The checkpoint swap rules out one model. It does not rule out one <em>scene</em>. Every
+number above comes from <code>truck</code>: a single object, outdoors, photographed on a loop
+around it. The obvious failure mode for the whole study is that the crossover is a property of
+that capture geometry rather than of few-shot reconstruction.</p>
+
+<p>{{GEN_N}} further runs repeat the outpainting sweep on <code>{{GEN_SCENE}}</code> from the
+Deep Blending dataset — an indoor room, {{GEN_CEIL_K}} views, a fundamentally different capture
+regime — at k = 5 and k = 20, the two ends of the crossover.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 5.</b> Outpainting on both scenes, paired against each scene's own
+  same-seed baseline, three seeds. Absolute PSNR is not comparable across the two
+  (<code>{{GEN_SCENE}}</code> trains at quarter resolution); the deltas are.</caption>
+  <thead>
+    <tr><th>Ratio</th>
+        <th class="num">truck k=5</th><th class="num">{{GEN_SCENE}} k=5</th>
+        <th class="num">truck k=20</th><th class="num">{{GEN_SCENE}} k=20</th></tr>
+  </thead>
+  <tbody>
+{{GEN_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p><b>The sign flip reproduces.</b> At k = 5 every ratio is positive in both scenes; at k = 20
+every statistically separated point is negative in both. An outdoor object and an indoor room
+agree that synthetic views are worth having at five real photographs and worth avoiding at
+twenty.</p>
+
+<p>Indoors the effect is not merely present but <em>stronger</em>, and on better evidence. The
+k = 5 benefit reaches {{GEN_BEST}} dB against truck's {{BEST_D}}, and all three metrics move
+together: where truck bought PSNR while SSIM stayed flat, <code>{{GEN_SCENE}}</code> improves
+SSIM by {{GEN_BEST_SSIM}} and LPIPS by {{GEN_BEST_LPIPS}} at the same point. Agreement across
+three metrics with different failure modes is considerably harder to obtain by chance than
+agreement in one.</p>
+
+<p>One cell dissents: k = 20 at the 200% ratio is positive in PSNR, though not separated from
+zero. LPIPS is worse there — as it is at every k = 20 ratio — so the honest reading is a
+metric disagreement at a point where the effect is small, not a counterexample.</p>
+
+<p>A methodological note falls out of this scene for free. Its baselines scatter
+{{GEN_FLOOR_SD}} dB between seeds against truck's {{FLOOR5_SD}}, because which five views one
+happens to draw matters far more in a room than on a loop around an object. An unpaired
+comparison at that noise level could not resolve a 0.2 dB effect at all. Pairing every
+augmented run against its <em>own seed's</em> baseline holds the paired deviations to
+0.10&ndash;0.52 dB and keeps the effect measurable — the design choice earning its keep on a
+scene it was not designed for.</p>
+
 <h3>Why the sign flips</h3>
 <p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
 diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
@@ -1014,8 +1171,12 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>The control was run at k = 10 only.</b> Whether the diffusion step remains net
   positive at k = 5 and k = 20 is untested, though the pose-guided damage grows with k while
   hole sizes shrink, which argues it would.</li>
-  <li><b>One scene.</b> All conclusions come from <code>truck</code>. Whether they hold for
-  indoor scenes or for objects with different geometry is untested.</li>
+  <li><b>Two scenes, one of them partially swept.</b> The crossover is confirmed on
+  <code>truck</code> (outdoor object) and <code>{{GEN_SCENE}}</code> (indoor room), but the
+  second scene was swept for <b>outpainting only</b>, at the two ends k = 5 and k = 20.
+  Inpainting and pose-guided were not repeated there, so "inpainting is flat" and "pose-guided
+  always hurts" remain single-scene claims. The second scene also trains at a different
+  resolution, so only within-scene deltas transfer between them, never absolute PSNR.</li>
   <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
   divides cleanly into 25/50/100/200%; at k = 5 and k = 10 the 25% point is fractional
   (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>

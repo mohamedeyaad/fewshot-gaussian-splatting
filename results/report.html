@@ -172,8 +172,9 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
     <p class="standfirst">157 controlled training runs on the <em>truck</em> scene show
     that the value of a synthetic view depends on how many real views you already have. At five
     real images outpainting helps at every ratio; by twenty it hurts at every ratio. The
-    crossover is measurable, and the best synthetic condition anywhere is still worth
-    6.7× less than five more photographs.</p>
+    crossover is measurable, it reproduces on a second scene indoors (34 further runs),
+    and the best synthetic condition anywhere is still worth 6.7× less than five
+    more photographs.</p>
     <div class="byline">
       <span>Tanks &amp; Temples <b>truck</b> · 251 images</span>
       <span>3 strategies × 4 ratios × 3 subset sizes × 3 seeds</span>
@@ -485,6 +486,59 @@ than image quality, and with inpainting, which produces convincing images at a p
 and is nonetheless useless. Across three independent lines of evidence, what a synthetic view
 contributes is <b>coverage, not photorealism</b>.</p>
 
+<h3>Does it generalise? A second scene</h3>
+<p>The checkpoint swap rules out one model. It does not rule out one <em>scene</em>. Every
+number above comes from <code>truck</code>: a single object, outdoors, photographed on a loop
+around it. The obvious failure mode for the whole study is that the crossover is a property of
+that capture geometry rather than of few-shot reconstruction.</p>
+
+<p>34 further runs repeat the outpainting sweep on <code>drjohnson</code> from the
+Deep Blending dataset — an indoor room, 230 views, a fundamentally different capture
+regime — at k = 5 and k = 20, the two ends of the crossover.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 5.</b> Outpainting on both scenes, paired against each scene's own
+  same-seed baseline, three seeds. Absolute PSNR is not comparable across the two
+  (<code>drjohnson</code> trains at quarter resolution); the deltas are.</caption>
+  <thead>
+    <tr><th>Ratio</th>
+        <th class="num">truck k=5</th><th class="num">drjohnson k=5</th>
+        <th class="num">truck k=20</th><th class="num">drjohnson k=20</th></tr>
+  </thead>
+  <tbody>
+<tr><td class="ratio">20%</td><td class="num pos">+0.140 <span class="sd">± 0.089</span> *</td><td class="num pos">+0.239 <span class="sd">± 0.157</span> *</td><td class="num neg">-0.283 <span class="sd">± 0.071</span> *</td><td class="num neg">-0.310 <span class="sd">± 0.197</span> *</td></tr>
+<tr><td class="ratio">50%</td><td class="num pos">+0.140 <span class="sd">± 0.135</span> *</td><td class="num pos">+0.134 <span class="sd">± 0.102</span> *</td><td class="num neg">-0.542 <span class="sd">± 0.026</span> *</td><td class="num neg">-0.147 <span class="sd">± 0.123</span> *</td></tr>
+<tr><td class="ratio">100%</td><td class="num pos">+0.182 <span class="sd">± 0.119</span> *</td><td class="num pos">+0.829 <span class="sd">± 0.428</span> *</td><td class="num neg">-0.983 <span class="sd">± 0.228</span> *</td><td class="num nil">-0.242 <span class="sd">± 0.378</span></td></tr>
+<tr><td class="ratio">200%</td><td class="num pos">+0.285 <span class="sd">± 0.069</span> *</td><td class="num pos">+0.989 <span class="sd">± 0.521</span> *</td><td class="num neg">-0.618 <span class="sd">± 0.195</span> *</td><td class="num nil">+0.195 <span class="sd">± 0.410</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>The sign flip reproduces.</b> At k = 5 every ratio is positive in both scenes; at k = 20
+every statistically separated point is negative in both. An outdoor object and an indoor room
+agree that synthetic views are worth having at five real photographs and worth avoiding at
+twenty.</p>
+
+<p>Indoors the effect is not merely present but <em>stronger</em>, and on better evidence. The
+k = 5 benefit reaches +0.989 dB against truck's +0.285, and all three metrics move
+together: where truck bought PSNR while SSIM stayed flat, <code>drjohnson</code> improves
+SSIM by +0.0493 and LPIPS by -0.0106 at the same point. Agreement across
+three metrics with different failure modes is considerably harder to obtain by chance than
+agreement in one.</p>
+
+<p>One cell dissents: k = 20 at the 200% ratio is positive in PSNR, though not separated from
+zero. LPIPS is worse there — as it is at every k = 20 ratio — so the honest reading is a
+metric disagreement at a point where the effect is small, not a counterexample.</p>
+
+<p>A methodological note falls out of this scene for free. Its baselines scatter
+1.68 dB between seeds against truck's 0.33, because which five views one
+happens to draw matters far more in a room than on a loop around an object. An unpaired
+comparison at that noise level could not resolve a 0.2 dB effect at all. Pairing every
+augmented run against its <em>own seed's</em> baseline holds the paired deviations to
+0.10&ndash;0.52 dB and keeps the effect measurable — the design choice earning its keep on a
+scene it was not designed for.</p>
+
 <h3>Why the sign flips</h3>
 <p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
 diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
@@ -632,8 +686,12 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>The control was run at k = 10 only.</b> Whether the diffusion step remains net
   positive at k = 5 and k = 20 is untested, though the pose-guided damage grows with k while
   hole sizes shrink, which argues it would.</li>
-  <li><b>One scene.</b> All conclusions come from <code>truck</code>. Whether they hold for
-  indoor scenes or for objects with different geometry is untested.</li>
+  <li><b>Two scenes, one of them partially swept.</b> The crossover is confirmed on
+  <code>truck</code> (outdoor object) and <code>drjohnson</code> (indoor room), but the
+  second scene was swept for <b>outpainting only</b>, at the two ends k = 5 and k = 20.
+  Inpainting and pose-guided were not repeated there, so "inpainting is flat" and "pose-guided
+  always hurts" remain single-scene claims. The second scene also trains at a different
+  resolution, so only within-scene deltas transfer between them, never absolute PSNR.</li>
   <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
   divides cleanly into 25/50/100/200%; at k = 5 and k = 10 the 25% point is fractional
   (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>

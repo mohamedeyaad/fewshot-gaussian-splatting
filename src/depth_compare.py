@@ -19,7 +19,9 @@ from pathlib import Path
 from statistics import mean, stdev
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
-K, NF, SEEDS = 5, 10, (0, 1, 2)
+K = int(os.environ.get("K", 5))
+NF = int(os.environ.get("NF", 10))
+SEEDS = (0, 1, 2)
 
 
 def psnr(tag):

@@ -23,11 +23,11 @@ VPY="$HOME/fewshot_gs/venv/bin/python"
 
 SCENE=truck
 SOURCE=data/tandt/truck
-K=5
+K="${K:-5}"
 SEEDS="${SEEDS:-0 1 2}"
 ITERS=7000
 RES=2
-NF=10          # 200% ratio at k=5 - the best-performing outpainting condition
+NF="${NF:-10}"   # synthetic count for the 200% ratio at this k
 
 t0=$(date +%s)
 

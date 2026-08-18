@@ -28,6 +28,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
+# the sweep runs one subset size at a time; check that one
+K = int(os.environ.get("K", 5))
 
 
 def main():
@@ -58,7 +60,7 @@ def main():
 
     failed = 0
     for seed in (0, 1, 2):
-        man = ROOT / f"subsets/truck_k5_seed{seed}_fps.json"
+        man = ROOT / f"subsets/truck_k{K}_seed{seed}_fps.json"
         if not man.exists():
             continue
         names = json.loads(man.read_text())["images"]

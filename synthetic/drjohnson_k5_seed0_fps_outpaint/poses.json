@@ -1,0 +1,234 @@
+{
+  "tag": "drjohnson_k5_seed0_fps_outpaint",
+  "strategy": "outpaint",
+  "scene": "drjohnson",
+  "k": 5,
+  "seed": 0,
+  "method": "fps",
+  "source_manifest": "subsets/drjohnson_k5_seed0_fps.json",
+  "extra_cameras": {
+    "2": {
+      "model": "PINHOLE",
+      "width": 1665,
+      "height": 1095,
+      "params": [
+        1035.4965990500061,
+        1034.9718637370904,
+        832.0,
+        547.0
+      ],
+      "derived_from": 1,
+      "expand": 1.25,
+      "note": "focal unchanged; principal point shifted by paste offset"
+    }
+  },
+  "config": {
+    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "steps": 25,
+    "guidance": 7.5,
+    "expand": 1.25,
+    "sd_size": [
+      704,
+      464
+    ],
+    "prompt": "an indoor room interior, furniture and walls, realistic photograph, sharp focus",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "cost": {
+    "seconds": 103.8,
+    "seconds_per_image": 10.38,
+    "peak_vram_gb": 2.76
+  },
+  "images": [
+    {
+      "name": "synth_outpaint_IMG_6330_v00.jpg",
+      "source_image": "IMG_6330.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.2448129216909283,
+        -0.4009566321178992,
+        0.3939603774909463,
+        0.7899972363882131
+      ],
+      "tvec": [
+        -1.008323563991012,
+        -0.6630427338066146,
+        0.7646893181784422
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6357_v00.jpg",
+      "source_image": "IMG_6357.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.604459756276859,
+        -0.6345435612089297,
+        0.34101429293128555,
+        -0.34013544947062646
+      ],
+      "tvec": [
+        -1.957449726180825,
+        0.5095292455080475,
+        1.6659396166110503
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6505_v00.jpg",
+      "source_image": "IMG_6505.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.18230196185976588,
+        0.9274360430662331,
+        -0.04513281126837487,
+        -0.32340595243554493
+      ],
+      "tvec": [
+        -0.598303452850114,
+        -3.1745915391253723,
+        -3.6414048683642233
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6551_v00.jpg",
+      "source_image": "IMG_6551.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.029526600042690244,
+        -0.5418297336679734,
+        0.5592793515273783,
+        0.6267019439560784
+      ],
+      "tvec": [
+        2.4169408369034913,
+        -1.9576614902038452,
+        3.7437626384916536
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6567_v00.jpg",
+      "source_image": "IMG_6567.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6654728709076566,
+        -0.49229074721347227,
+        0.038184409411458196,
+        -0.5597656913136251
+      ],
+      "tvec": [
+        3.201589826568023,
+        1.085211289990694,
+        5.406216360790614
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6330_v01.jpg",
+      "source_image": "IMG_6330.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.2448129216909283,
+        -0.4009566321178992,
+        0.3939603774909463,
+        0.7899972363882131
+      ],
+      "tvec": [
+        -1.008323563991012,
+        -0.6630427338066146,
+        0.7646893181784422
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6357_v01.jpg",
+      "source_image": "IMG_6357.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.604459756276859,
+        -0.6345435612089297,
+        0.34101429293128555,
+        -0.34013544947062646
+      ],
+      "tvec": [
+        -1.957449726180825,
+        0.5095292455080475,
+        1.6659396166110503
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6505_v01.jpg",
+      "source_image": "IMG_6505.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.18230196185976588,
+        0.9274360430662331,
+        -0.04513281126837487,
+        -0.32340595243554493
+      ],
+      "tvec": [
+        -0.598303452850114,
+        -3.1745915391253723,
+        -3.6414048683642233
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6551_v01.jpg",
+      "source_image": "IMG_6551.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.029526600042690244,
+        -0.5418297336679734,
+        0.5592793515273783,
+        0.6267019439560784
+      ],
+      "tvec": [
+        2.4169408369034913,
+        -1.9576614902038452,
+        3.7437626384916536
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6567_v01.jpg",
+      "source_image": "IMG_6567.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6654728709076566,
+        -0.49229074721347227,
+        0.038184409411458196,
+        -0.5597656913136251
+      ],
+      "tvec": [
+        3.201589826568023,
+        1.085211289990694,
+        5.406216360790614
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    }
+  ]
+}

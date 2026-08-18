@@ -79,7 +79,16 @@ def build(manifest_path: Path, source: Path, out_root: Path,
           synthetic_dir: Path | None = None, n_fake: int = 0,
           force: bool = False) -> Path:
     manifest = json.loads(manifest_path.read_text())
-    split_all = json.loads((manifest_path.parent / "test_split.json").read_text())
+    # Prefer the scene-qualified split; fall back to the unqualified name for
+    # the truck manifests, which were written before scenes were separated.
+    split_path = manifest_path.parent / f"{manifest['scene']}_test_split.json"
+    if not split_path.exists():
+        split_path = manifest_path.parent / "test_split.json"
+    split_all = json.loads(split_path.read_text())
+    if split_all["scene"] != manifest["scene"]:
+        raise ValueError(f"{split_path.name} is for scene "
+                         f"'{split_all['scene']}' but the manifest is for "
+                         f"'{manifest['scene']}' - refusing to mix test splits")
 
     test_images = list(split_all["test_images"])
     real_train = list(manifest["images"])

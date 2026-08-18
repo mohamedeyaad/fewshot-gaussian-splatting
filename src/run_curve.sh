@@ -25,6 +25,11 @@ SEEDS="${SEEDS:-0 1 2}"
 FAKES="${FAKES:-2 5 10 20}"
 NGEN="${NGEN:-20}"
 ITERS="${ITERS:-7000}"
+# Resolution divisor passed to run_experiment.py. Must be identical across
+# every condition of a scene: mixing -r 2 and -r 4 within one scene makes the
+# scaling curve meaningless. drjohnson needs -r 4 because at -r 2 a 230-view
+# run exceeds 4 GB and thrashes (5 s/iter instead of 18 it/s).
+RES="${RES:-2}"
 # Scene selection. SCENE must match the directory name under data/, because
 # select_subsets.py derives manifest names from it.
 SCENE="${SCENE:-truck}"
@@ -69,7 +74,7 @@ for s in $SEEDS; do
     SC="scenes/${TAG}_seed${s}_fps_${STRATEGY}_fake${f}"
     [ -d "$SC" ] || { echo "missing $SC"; continue; }
     echo "########## $(basename "$SC") ##########"
-    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" 2>&1 \
+    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" --resolution "$RES" 2>&1 \
       | grep -viE 'warn|deprecat|%\|' | grep -vE '^\s*$'
     echo
   done

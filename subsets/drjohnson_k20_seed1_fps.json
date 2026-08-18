@@ -1,0 +1,34 @@
+{
+  "scene": "drjohnson",
+  "method": "fps",
+  "k": 20,
+  "seed": 1,
+  "llffhold": 8,
+  "images": [
+    "IMG_6304.jpg",
+    "IMG_6324.jpg",
+    "IMG_6373.jpg",
+    "IMG_6381.jpg",
+    "IMG_6393.jpg",
+    "IMG_6406.jpg",
+    "IMG_6438.jpg",
+    "IMG_6486.jpg",
+    "IMG_6495.jpg",
+    "IMG_6505.jpg",
+    "IMG_6512.jpg",
+    "IMG_6533.jpg",
+    "IMG_6547.jpg",
+    "IMG_6550.jpg",
+    "IMG_6575.jpg",
+    "IMG_6577.jpg",
+    "IMG_6580.jpg",
+    "IMG_6586.jpg",
+    "IMG_6590.jpg",
+    "IMG_6596.jpg"
+  ],
+  "coverage": {
+    "mean_nn_dist": 0.7118585400483235,
+    "max_nn_dist": 1.420953772134042,
+    "min_pairwise_dist": 1.4723941271371324
+  }
+}

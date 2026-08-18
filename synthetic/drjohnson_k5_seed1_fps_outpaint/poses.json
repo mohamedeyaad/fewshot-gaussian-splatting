@@ -1,0 +1,234 @@
+{
+  "tag": "drjohnson_k5_seed1_fps_outpaint",
+  "strategy": "outpaint",
+  "scene": "drjohnson",
+  "k": 5,
+  "seed": 1,
+  "method": "fps",
+  "source_manifest": "subsets/drjohnson_k5_seed1_fps.json",
+  "extra_cameras": {
+    "2": {
+      "model": "PINHOLE",
+      "width": 1665,
+      "height": 1095,
+      "params": [
+        1035.4965990500061,
+        1034.9718637370904,
+        832.0,
+        547.0
+      ],
+      "derived_from": 1,
+      "expand": 1.25,
+      "note": "focal unchanged; principal point shifted by paste offset"
+    }
+  },
+  "config": {
+    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "steps": 25,
+    "guidance": 7.5,
+    "expand": 1.25,
+    "sd_size": [
+      704,
+      464
+    ],
+    "prompt": "an indoor room interior, furniture and walls, realistic photograph, sharp focus",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "cost": {
+    "seconds": 108.1,
+    "seconds_per_image": 10.81,
+    "peak_vram_gb": 2.76
+  },
+  "images": [
+    {
+      "name": "synth_outpaint_IMG_6438_v00.jpg",
+      "source_image": "IMG_6438.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3890503496161304,
+        0.7976540215484891,
+        -0.18399716210405814,
+        0.42253157480683295
+      ],
+      "tvec": [
+        -2.9634569389234113,
+        -0.5262427541051279,
+        0.47829535786391403
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6533_v00.jpg",
+      "source_image": "IMG_6533.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9871130128016015,
+        0.08192670081841777,
+        0.13614922925403564,
+        -0.018955290139876645
+      ],
+      "tvec": [
+        -3.344543157177228,
+        2.8060650696375227,
+        -2.7129389178843426
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6575_v00.jpg",
+      "source_image": "IMG_6575.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7120858691812125,
+        0.06763624563060038,
+        0.04210534405519946,
+        -0.6975573045932696
+      ],
+      "tvec": [
+        0.6895280369092028,
+        -3.819611192864864,
+        5.355709561567927
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6577_v00.jpg",
+      "source_image": "IMG_6577.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8119564022650932,
+        -0.3504144744873587,
+        0.44565848233618166,
+        -0.13901443814325745
+      ],
+      "tvec": [
+        4.5550951881992825,
+        -0.250549447132037,
+        1.3213393368879647
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6580_v00.jpg",
+      "source_image": "IMG_6580.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8193061108073924,
+        -0.3428345909854276,
+        0.42018674801549133,
+        -0.18613177270333348
+      ],
+      "tvec": [
+        1.6207918292998946,
+        -0.042518582297749866,
+        1.0299323287204456
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6438_v01.jpg",
+      "source_image": "IMG_6438.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3890503496161304,
+        0.7976540215484891,
+        -0.18399716210405814,
+        0.42253157480683295
+      ],
+      "tvec": [
+        -2.9634569389234113,
+        -0.5262427541051279,
+        0.47829535786391403
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6533_v01.jpg",
+      "source_image": "IMG_6533.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9871130128016015,
+        0.08192670081841777,
+        0.13614922925403564,
+        -0.018955290139876645
+      ],
+      "tvec": [
+        -3.344543157177228,
+        2.8060650696375227,
+        -2.7129389178843426
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6575_v01.jpg",
+      "source_image": "IMG_6575.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7120858691812125,
+        0.06763624563060038,
+        0.04210534405519946,
+        -0.6975573045932696
+      ],
+      "tvec": [
+        0.6895280369092028,
+        -3.819611192864864,
+        5.355709561567927
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6577_v01.jpg",
+      "source_image": "IMG_6577.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8119564022650932,
+        -0.3504144744873587,
+        0.44565848233618166,
+        -0.13901443814325745
+      ],
+      "tvec": [
+        4.5550951881992825,
+        -0.250549447132037,
+        1.3213393368879647
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6580_v01.jpg",
+      "source_image": "IMG_6580.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8193061108073924,
+        -0.3428345909854276,
+        0.42018674801549133,
+        -0.18613177270333348
+      ],
+      "tvec": [
+        1.6207918292998946,
+        -0.042518582297749866,
+        1.0299323287204456
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    }
+  ]
+}

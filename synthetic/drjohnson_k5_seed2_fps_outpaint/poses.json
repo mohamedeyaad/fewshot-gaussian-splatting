@@ -1,0 +1,234 @@
+{
+  "tag": "drjohnson_k5_seed2_fps_outpaint",
+  "strategy": "outpaint",
+  "scene": "drjohnson",
+  "k": 5,
+  "seed": 2,
+  "method": "fps",
+  "source_manifest": "subsets/drjohnson_k5_seed2_fps.json",
+  "extra_cameras": {
+    "2": {
+      "model": "PINHOLE",
+      "width": 1665,
+      "height": 1095,
+      "params": [
+        1035.4965990500061,
+        1034.9718637370904,
+        832.0,
+        547.0
+      ],
+      "derived_from": 1,
+      "expand": 1.25,
+      "note": "focal unchanged; principal point shifted by paste offset"
+    }
+  },
+  "config": {
+    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "steps": 25,
+    "guidance": 7.5,
+    "expand": 1.25,
+    "sd_size": [
+      704,
+      464
+    ],
+    "prompt": "an indoor room interior, furniture and walls, realistic photograph, sharp focus",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "cost": {
+    "seconds": 110.8,
+    "seconds_per_image": 11.08,
+    "peak_vram_gb": 2.76
+  },
+  "images": [
+    {
+      "name": "synth_outpaint_IMG_6381_v00.jpg",
+      "source_image": "IMG_6381.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6941505972845735,
+        -0.19605101171002673,
+        -0.136805724474853,
+        -0.6789721222906397
+      ],
+      "tvec": [
+        -0.9824382899823187,
+        0.002737567379305697,
+        -0.6112360739629664
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6548_v00.jpg",
+      "source_image": "IMG_6548.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6740064918128024,
+        -0.683705622680263,
+        -0.21151088038205298,
+        0.1830983833615184
+      ],
+      "tvec": [
+        0.4562642425769254,
+        -3.1994509839091756,
+        -1.5286402258840412
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6553_v00.jpg",
+      "source_image": "IMG_6553.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6393552037386483,
+        -0.5523143668474848,
+        0.5348217309257237,
+        -0.011810154774019577
+      ],
+      "tvec": [
+        -2.4702948881871443,
+        -1.8848754181974479,
+        4.027717767347525
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6567_v00.jpg",
+      "source_image": "IMG_6567.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6654728709076566,
+        -0.49229074721347227,
+        0.038184409411458196,
+        -0.5597656913136251
+      ],
+      "tvec": [
+        3.201589826568023,
+        1.085211289990694,
+        5.406216360790614
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6598_v00.jpg",
+      "source_image": "IMG_6598.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.19489432865789635,
+        -0.4598493756147927,
+        0.41902616132801634,
+        0.7582689684580138
+      ],
+      "tvec": [
+        -2.147328434063286,
+        0.0018877955159380198,
+        1.0712620255136458
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6381_v01.jpg",
+      "source_image": "IMG_6381.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6941505972845735,
+        -0.19605101171002673,
+        -0.136805724474853,
+        -0.6789721222906397
+      ],
+      "tvec": [
+        -0.9824382899823187,
+        0.002737567379305697,
+        -0.6112360739629664
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6548_v01.jpg",
+      "source_image": "IMG_6548.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6740064918128024,
+        -0.683705622680263,
+        -0.21151088038205298,
+        0.1830983833615184
+      ],
+      "tvec": [
+        0.4562642425769254,
+        -3.1994509839091756,
+        -1.5286402258840412
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6553_v01.jpg",
+      "source_image": "IMG_6553.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6393552037386483,
+        -0.5523143668474848,
+        0.5348217309257237,
+        -0.011810154774019577
+      ],
+      "tvec": [
+        -2.4702948881871443,
+        -1.8848754181974479,
+        4.027717767347525
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6567_v01.jpg",
+      "source_image": "IMG_6567.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6654728709076566,
+        -0.49229074721347227,
+        0.038184409411458196,
+        -0.5597656913136251
+      ],
+      "tvec": [
+        3.201589826568023,
+        1.085211289990694,
+        5.406216360790614
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6598_v01.jpg",
+      "source_image": "IMG_6598.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.19489432865789635,
+        -0.4598493756147927,
+        0.41902616132801634,
+        0.7582689684580138
+      ],
+      "tvec": [
+        -2.147328434063286,
+        0.0018877955159380198,
+        1.0712620255136458
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    }
+  ]
+}

@@ -11,16 +11,23 @@
 set -u
 cd "$HOME/fewshot_gs" || exit 1
 VPY="$HOME/fewshot_gs/venv/bin/python"
+SCENE="${SCENE:-truck}"
+SOURCE="${SOURCE:-data/tandt/truck}"
 KS="${KS:-5 20}"
 SEEDS="${SEEDS:-0 1 2}"
 ITERS="${ITERS:-7000}"
+# Resolution divisor passed to run_experiment.py. Must be identical across
+# every condition of a scene: mixing -r 2 and -r 4 within one scene makes the
+# scaling curve meaningless. drjohnson needs -r 4 because at -r 2 a 230-view
+# run exceeds 4 GB and thrashes (5 s/iter instead of 18 it/s).
+RES="${RES:-2}"
 
 echo "############## BUILD SCENES ##############"
 for k in $KS; do
   for s in $SEEDS; do
-    M="subsets/truck_k${k}_seed${s}_fps.json"
+    M="subsets/${SCENE}_k${k}_seed${s}_fps.json"
     [ -f "$M" ] || { echo "MISSING MANIFEST $M"; exit 1; }
-    "$VPY" src/build_scene.py --manifest "$M" --force
+    "$VPY" src/build_scene.py --manifest "$M" --source "$SOURCE" --force
   done
 done
 
@@ -28,10 +35,10 @@ echo
 echo "############## TRAIN ##############"
 for k in $KS; do
   for s in $SEEDS; do
-    SC="scenes/truck_k${k}_seed${s}_fps_fake0"
+    SC="scenes/${SCENE}_k${k}_seed${s}_fps_fake0"
     [ -d "$SC" ] || { echo "missing $SC"; continue; }
     echo "########## $(basename "$SC") ##########"
-    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" 2>&1 \
+    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" --resolution "$RES" 2>&1 \
       | grep -viE 'warn|deprecat|%\|' | grep -vE '^\s*$'
     echo
   done

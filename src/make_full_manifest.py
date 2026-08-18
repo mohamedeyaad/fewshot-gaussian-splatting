@@ -2,11 +2,20 @@
 
 Same format as the few-shot manifests so build_scene.py handles it unchanged.
 """
-import json, os
+import argparse, json, os
 from pathlib import Path
 
+ap = argparse.ArgumentParser()
+# One test_split.json per scene, so a second scene does not overwrite the
+# first. Defaults to the unsuffixed file for backwards compatibility with the
+# truck runs, which were produced before this was parameterised.
+ap.add_argument("--split", default=None,
+                help="path to test_split.json (default: subsets/test_split.json)")
+args = ap.parse_args()
+
 SUB = Path(os.path.expanduser("~/fewshot_gs/subsets"))
-split = json.loads((SUB / "test_split.json").read_text())
+split = json.loads(Path(args.split).read_text() if args.split
+                   else (SUB / "test_split.json").read_text())
 pool = split["train_pool"]
 
 rec = {

@@ -1,0 +1,19 @@
+{
+  "scene": "drjohnson",
+  "method": "fps",
+  "k": 5,
+  "seed": 2,
+  "llffhold": 8,
+  "images": [
+    "IMG_6381.jpg",
+    "IMG_6548.jpg",
+    "IMG_6553.jpg",
+    "IMG_6567.jpg",
+    "IMG_6598.jpg"
+  ],
+  "coverage": {
+    "mean_nn_dist": 1.6469394319900856,
+    "max_nn_dist": 3.1077918268881923,
+    "min_pairwise_dist": 3.458906179685889
+  }
+}

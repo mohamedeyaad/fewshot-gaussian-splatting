@@ -1,0 +1,804 @@
+{
+  "tag": "drjohnson_k20_seed1_fps_outpaint",
+  "strategy": "outpaint",
+  "scene": "drjohnson",
+  "k": 20,
+  "seed": 1,
+  "method": "fps",
+  "source_manifest": "subsets/drjohnson_k20_seed1_fps.json",
+  "extra_cameras": {
+    "2": {
+      "model": "PINHOLE",
+      "width": 1665,
+      "height": 1095,
+      "params": [
+        1035.4965990500061,
+        1034.9718637370904,
+        832.0,
+        547.0
+      ],
+      "derived_from": 1,
+      "expand": 1.25,
+      "note": "focal unchanged; principal point shifted by paste offset"
+    }
+  },
+  "config": {
+    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "steps": 25,
+    "guidance": 7.5,
+    "expand": 1.25,
+    "sd_size": [
+      704,
+      464
+    ],
+    "prompt": "an indoor room interior, furniture and walls, realistic photograph, sharp focus",
+    "negative_prompt": "blurry, distorted, watermark, text, lowres"
+  },
+  "cost": {
+    "seconds": 443.7,
+    "seconds_per_image": 11.09,
+    "peak_vram_gb": 2.76
+  },
+  "images": [
+    {
+      "name": "synth_outpaint_IMG_6304_v00.jpg",
+      "source_image": "IMG_6304.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7974184199823184,
+        -0.26838287894370016,
+        0.19675992131867373,
+        -0.5033686791264068
+      ],
+      "tvec": [
+        3.3695409505000624,
+        -2.602142559268079,
+        4.622196230556637
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6324_v00.jpg",
+      "source_image": "IMG_6324.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.2049988135484043,
+        -0.4278609789295035,
+        0.38768562771635073,
+        0.7903229233771552
+      ],
+      "tvec": [
+        -3.230867636862376,
+        -1.0121200407548054,
+        0.9400705629924909
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6373_v00.jpg",
+      "source_image": "IMG_6373.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6881449394316009,
+        -0.5356560167784079,
+        0.3800796157571687,
+        -0.3083320607877994
+      ],
+      "tvec": [
+        3.0243444019266845,
+        -0.39043622928329685,
+        0.9817321527089564
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6381_v00.jpg",
+      "source_image": "IMG_6381.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6941505972845735,
+        -0.19605101171002673,
+        -0.136805724474853,
+        -0.6789721222906397
+      ],
+      "tvec": [
+        -0.9824382899823187,
+        0.002737567379305697,
+        -0.6112360739629664
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6393_v00.jpg",
+      "source_image": "IMG_6393.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.41215738126262425,
+        0.7149452405791749,
+        -0.5636653561903159,
+        0.03551003062186753
+      ],
+      "tvec": [
+        2.824042321471155,
+        -0.7790518702857869,
+        -3.5578756757657146
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6406_v00.jpg",
+      "source_image": "IMG_6406.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6861160293769991,
+        -0.21946990645663395,
+        -0.15434185281438056,
+        -0.676207325353461
+      ],
+      "tvec": [
+        -0.02992579921995124,
+        -0.893341616328312,
+        0.3818817856926725
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6438_v00.jpg",
+      "source_image": "IMG_6438.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3890503496161304,
+        0.7976540215484891,
+        -0.18399716210405814,
+        0.42253157480683295
+      ],
+      "tvec": [
+        -2.9634569389234113,
+        -0.5262427541051279,
+        0.47829535786391403
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6486_v00.jpg",
+      "source_image": "IMG_6486.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.05716496890089539,
+        0.8900043016315186,
+        0.01673533391504492,
+        -0.45204473009504775
+      ],
+      "tvec": [
+        1.6288013617152632,
+        2.3518495441044918,
+        3.149928119278719
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6495_v00.jpg",
+      "source_image": "IMG_6495.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6278799294482794,
+        0.7116398058802867,
+        -0.24034683147517322,
+        -0.20388472596674842
+      ],
+      "tvec": [
+        1.129033787359664,
+        5.343032117069142,
+        0.6003135704647985
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6505_v00.jpg",
+      "source_image": "IMG_6505.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.18230196185976588,
+        0.9274360430662331,
+        -0.04513281126837487,
+        -0.32340595243554493
+      ],
+      "tvec": [
+        -0.598303452850114,
+        -3.1745915391253723,
+        -3.6414048683642233
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6512_v00.jpg",
+      "source_image": "IMG_6512.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9772981639829044,
+        0.10954208295253576,
+        -0.17688113189018606,
+        -0.04002369197501128
+      ],
+      "tvec": [
+        0.10599113424390331,
+        0.5544979953158256,
+        1.478747214702087
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6533_v00.jpg",
+      "source_image": "IMG_6533.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9871130128016015,
+        0.08192670081841777,
+        0.13614922925403564,
+        -0.018955290139876645
+      ],
+      "tvec": [
+        -3.344543157177228,
+        2.8060650696375227,
+        -2.7129389178843426
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6547_v00.jpg",
+      "source_image": "IMG_6547.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3052119109550149,
+        0.891716640118969,
+        0.08779188902643346,
+        -0.32245884600565033
+      ],
+      "tvec": [
+        -0.051290791719938326,
+        -1.364207499522532,
+        1.2620089227462543
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6550_v00.jpg",
+      "source_image": "IMG_6550.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.39276308828627277,
+        -0.3334139619260134,
+        0.3466626719254169,
+        0.7838349815912525
+      ],
+      "tvec": [
+        2.7933492705357574,
+        -0.3875962540135803,
+        0.9349353955875818
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6575_v00.jpg",
+      "source_image": "IMG_6575.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7120858691812125,
+        0.06763624563060038,
+        0.04210534405519946,
+        -0.6975573045932696
+      ],
+      "tvec": [
+        0.6895280369092028,
+        -3.819611192864864,
+        5.355709561567927
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6577_v00.jpg",
+      "source_image": "IMG_6577.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8119564022650932,
+        -0.3504144744873587,
+        0.44565848233618166,
+        -0.13901443814325745
+      ],
+      "tvec": [
+        4.5550951881992825,
+        -0.250549447132037,
+        1.3213393368879647
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6580_v00.jpg",
+      "source_image": "IMG_6580.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8193061108073924,
+        -0.3428345909854276,
+        0.42018674801549133,
+        -0.18613177270333348
+      ],
+      "tvec": [
+        1.6207918292998946,
+        -0.042518582297749866,
+        1.0299323287204456
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6586_v00.jpg",
+      "source_image": "IMG_6586.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7279421688684793,
+        -0.013740239807074818,
+        0.00957594882664282,
+        -0.6854339543655305
+      ],
+      "tvec": [
+        -1.8696714179435066,
+        1.4423598360109793,
+        -1.0202270990544704
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6590_v00.jpg",
+      "source_image": "IMG_6590.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.4331265954778401,
+        0.5556185714085677,
+        -0.5396464398318891,
+        -0.46094584863348664
+      ],
+      "tvec": [
+        1.6072198400146376,
+        -3.227148242946767,
+        4.054838375181418
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6596_v00.jpg",
+      "source_image": "IMG_6596.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.18257253597199585,
+        -0.4539223175645792,
+        0.3438874046266186,
+        0.8014756712868607
+      ],
+      "tvec": [
+        0.5187922576732696,
+        -0.274467178739643,
+        1.2397333473774579
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6304_v01.jpg",
+      "source_image": "IMG_6304.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7974184199823184,
+        -0.26838287894370016,
+        0.19675992131867373,
+        -0.5033686791264068
+      ],
+      "tvec": [
+        3.3695409505000624,
+        -2.602142559268079,
+        4.622196230556637
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6324_v01.jpg",
+      "source_image": "IMG_6324.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.2049988135484043,
+        -0.4278609789295035,
+        0.38768562771635073,
+        0.7903229233771552
+      ],
+      "tvec": [
+        -3.230867636862376,
+        -1.0121200407548054,
+        0.9400705629924909
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6373_v01.jpg",
+      "source_image": "IMG_6373.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6881449394316009,
+        -0.5356560167784079,
+        0.3800796157571687,
+        -0.3083320607877994
+      ],
+      "tvec": [
+        3.0243444019266845,
+        -0.39043622928329685,
+        0.9817321527089564
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6381_v01.jpg",
+      "source_image": "IMG_6381.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6941505972845735,
+        -0.19605101171002673,
+        -0.136805724474853,
+        -0.6789721222906397
+      ],
+      "tvec": [
+        -0.9824382899823187,
+        0.002737567379305697,
+        -0.6112360739629664
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6393_v01.jpg",
+      "source_image": "IMG_6393.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.41215738126262425,
+        0.7149452405791749,
+        -0.5636653561903159,
+        0.03551003062186753
+      ],
+      "tvec": [
+        2.824042321471155,
+        -0.7790518702857869,
+        -3.5578756757657146
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6406_v01.jpg",
+      "source_image": "IMG_6406.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6861160293769991,
+        -0.21946990645663395,
+        -0.15434185281438056,
+        -0.676207325353461
+      ],
+      "tvec": [
+        -0.02992579921995124,
+        -0.893341616328312,
+        0.3818817856926725
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6438_v01.jpg",
+      "source_image": "IMG_6438.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3890503496161304,
+        0.7976540215484891,
+        -0.18399716210405814,
+        0.42253157480683295
+      ],
+      "tvec": [
+        -2.9634569389234113,
+        -0.5262427541051279,
+        0.47829535786391403
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6486_v01.jpg",
+      "source_image": "IMG_6486.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.05716496890089539,
+        0.8900043016315186,
+        0.01673533391504492,
+        -0.45204473009504775
+      ],
+      "tvec": [
+        1.6288013617152632,
+        2.3518495441044918,
+        3.149928119278719
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6495_v01.jpg",
+      "source_image": "IMG_6495.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.6278799294482794,
+        0.7116398058802867,
+        -0.24034683147517322,
+        -0.20388472596674842
+      ],
+      "tvec": [
+        1.129033787359664,
+        5.343032117069142,
+        0.6003135704647985
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6505_v01.jpg",
+      "source_image": "IMG_6505.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.18230196185976588,
+        0.9274360430662331,
+        -0.04513281126837487,
+        -0.32340595243554493
+      ],
+      "tvec": [
+        -0.598303452850114,
+        -3.1745915391253723,
+        -3.6414048683642233
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6512_v01.jpg",
+      "source_image": "IMG_6512.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9772981639829044,
+        0.10954208295253576,
+        -0.17688113189018606,
+        -0.04002369197501128
+      ],
+      "tvec": [
+        0.10599113424390331,
+        0.5544979953158256,
+        1.478747214702087
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6533_v01.jpg",
+      "source_image": "IMG_6533.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.9871130128016015,
+        0.08192670081841777,
+        0.13614922925403564,
+        -0.018955290139876645
+      ],
+      "tvec": [
+        -3.344543157177228,
+        2.8060650696375227,
+        -2.7129389178843426
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6547_v01.jpg",
+      "source_image": "IMG_6547.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.3052119109550149,
+        0.891716640118969,
+        0.08779188902643346,
+        -0.32245884600565033
+      ],
+      "tvec": [
+        -0.051290791719938326,
+        -1.364207499522532,
+        1.2620089227462543
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6550_v01.jpg",
+      "source_image": "IMG_6550.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.39276308828627277,
+        -0.3334139619260134,
+        0.3466626719254169,
+        0.7838349815912525
+      ],
+      "tvec": [
+        2.7933492705357574,
+        -0.3875962540135803,
+        0.9349353955875818
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6575_v01.jpg",
+      "source_image": "IMG_6575.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7120858691812125,
+        0.06763624563060038,
+        0.04210534405519946,
+        -0.6975573045932696
+      ],
+      "tvec": [
+        0.6895280369092028,
+        -3.819611192864864,
+        5.355709561567927
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6577_v01.jpg",
+      "source_image": "IMG_6577.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8119564022650932,
+        -0.3504144744873587,
+        0.44565848233618166,
+        -0.13901443814325745
+      ],
+      "tvec": [
+        4.5550951881992825,
+        -0.250549447132037,
+        1.3213393368879647
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6580_v01.jpg",
+      "source_image": "IMG_6580.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.8193061108073924,
+        -0.3428345909854276,
+        0.42018674801549133,
+        -0.18613177270333348
+      ],
+      "tvec": [
+        1.6207918292998946,
+        -0.042518582297749866,
+        1.0299323287204456
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6586_v01.jpg",
+      "source_image": "IMG_6586.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        0.7279421688684793,
+        -0.013740239807074818,
+        0.00957594882664282,
+        -0.6854339543655305
+      ],
+      "tvec": [
+        -1.8696714179435066,
+        1.4423598360109793,
+        -1.0202270990544704
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6590_v01.jpg",
+      "source_image": "IMG_6590.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.4331265954778401,
+        0.5556185714085677,
+        -0.5396464398318891,
+        -0.46094584863348664
+      ],
+      "tvec": [
+        1.6072198400146376,
+        -3.227148242946767,
+        4.054838375181418
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    },
+    {
+      "name": "synth_outpaint_IMG_6596_v01.jpg",
+      "source_image": "IMG_6596.jpg",
+      "strategy": "outpaint",
+      "qvec": [
+        -0.18257253597199585,
+        -0.4539223175645792,
+        0.3438874046266186,
+        0.8014756712868607
+      ],
+      "tvec": [
+        0.5187922576732696,
+        -0.274467178739643,
+        1.2397333473774579
+      ],
+      "camera_id": 2,
+      "pose_source": "copied from source view; intrinsics widened",
+      "expand": 1.25
+    }
+  ]
+}

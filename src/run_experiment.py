@@ -119,6 +119,10 @@ def main():
     # resolves it relative to the scene: <scene>/<depths>. Requires the scene
     # to have been through src/add_depths.py first.
     ap.add_argument("--depths", default="", help="depth dir inside the scene")
+    # NeRF-Synthetic frames are RGBA with a transparent background; the
+    # convention for that dataset is to composite over white. Ignored by the
+    # COLMAP path, whose images are opaque.
+    ap.add_argument("--white-background", action="store_true")
     args = ap.parse_args()
 
     scene = Path(args.scene).resolve()
@@ -149,6 +153,10 @@ def main():
     # ---- train --------------------------------------------------------
     # Reuse an existing checkpoint so a crash in the eval stage doesn't cost
     # another full training run. Timing/VRAM are then unknown, not faked.
+    # Needed by both the train and the render call, and the render call still
+    # happens when an existing checkpoint is reused.
+    wb_arg = ["-w"] if args.white_background else []
+
     ckpt = model / "point_cloud" / f"iteration_{args.iterations}" / "point_cloud.ply"
     if ckpt.exists() and not args.force:
         print(f"  reusing checkpoint at iteration {args.iterations}")
@@ -161,7 +169,7 @@ def main():
                  "-r", str(args.resolution), "--iterations", str(args.iterations),
                  "--test_iterations", str(args.iterations),
                  "--save_iterations", str(args.iterations),
-                 *depth_arg,
+                 *depth_arg, *wb_arg,
                  "--disable_viewer", "--quiet"], log=log)
         train_time = time.time() - t0
         peak = mon.stop()
@@ -171,8 +179,14 @@ def main():
         print(f"  trained in {train_time:.0f}s, peak {peak} MiB")
 
     # ---- render held-out views ----------------------------------------
+    # -w must be repeated here. render.py rebuilds its arguments with
+    # get_combined_args(), which merges the saved cfg_args with the command
+    # line using `if v != None` - and argparse's store_true supplies False, not
+    # None. The command-line default therefore OVERRIDES the trained setting,
+    # so a model trained on white is scored against ground truth composited
+    # over black. That is not a subtle penalty: it drove PSNR to 5.9 dB.
     rc = sh([PY, "render.py", "-m", str(model), "--iteration",
-             str(args.iterations), "--skip_train", "--quiet"], log=log)
+             str(args.iterations), "--skip_train", "--quiet", *wb_arg], log=log)
     if rc != 0:
         print(f"[FAIL] render exited {rc}; see {log}")
         sys.exit(rc)

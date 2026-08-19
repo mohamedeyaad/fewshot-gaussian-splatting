@@ -175,19 +175,40 @@ def panel_control():
 
 
 def panel_scene2():
-    """drjohnson has 33 held-out views, so it needs its own view indices."""
+    """drjohnson at the 100% ratio, not 200%.
+
+    THE 200% RATIO IS THE WRONG CHOICE HERE, and an earlier version of this
+    figure used it. drjohnson k=20 outpainting runs -0.310* / -0.147* / -0.242
+    / +0.195 across the four ratios: it is negative at every ratio EXCEPT 200%,
+    the single cell where it comes out positive. A panel drawn at 200% shows
+    augmentation improving k=20 while its caption claims the reverse - the
+    figure argues against the finding it illustrates.
+
+    100% applies the same treatment at both subset sizes and is negative at
+    k=20, so the columns are comparable and the direction is right. The caption
+    states plainly that the k=20 effect is not statistically separated at this
+    ratio, because it is not.
+
+    drjohnson has 33 held-out views rather than truck's 32.
+    """
     b5 = f"drjohnson_k5_seed{SEED}_fps_fake0"
+    b20 = f"drjohnson_k20_seed{SEED}_fps_fake0"
+    a5 = f"drjohnson_k5_seed{SEED}_fps_outpaint_fake5"     # 100% at k=5
+    a20 = f"drjohnson_k20_seed{SEED}_fps_outpaint_fake20"  # 100% at k=20
     cols = [
         ("ground truth", None),
         ("5 real", b5),
-        ("5 real +200% synth", f"drjohnson_k5_seed{SEED}_fps_outpaint_fake10"),
-        ("20 real", f"drjohnson_k20_seed{SEED}_fps_fake0"),
-        ("20 real +200% synth", f"drjohnson_k20_seed{SEED}_fps_outpaint_fake40"),
+        ("5 real +100% synth", a5),
+        ("20 real", b20),
+        ("20 real +100% synth", a20),
     ]
-    rows, labels = cells(cols, [4, 14, 24], b5)
+    views = representative_views([(a5, b5), (a20, b20)], pool=33)
+    rows, labels = cells(cols, views, b5, deltas_vs={a5: b5, a20: b20})
     grid(rows, [c[0] for c in cols], OUT / "panel_scene2.png",
-         "Second scene (drjohnson, indoor, quarter resolution): the same "
-         "reversal, +0.989 dB at k=5 and negative at k=20", labels)
+         "Second scene (drjohnson, indoor, quarter resolution) at the 100% ratio: "
+         "+0.829 dB at k=5, -0.242 dB at k=20.\nViews closest to the mean effect; "
+         "the k=20 effect is negative but not statistically separated at this ratio "
+         "(it is at 25% and 50%).", labels)
 
 
 if __name__ == "__main__":

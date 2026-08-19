@@ -211,9 +211,34 @@ def panel_scene2():
          "(it is at 25% and 50%).", labels)
 
 
+def panel_lego():
+    """The third capture regime: an isolated object on a clean background.
+
+    Only subset sizes here - no augmentation conditions exist for this scene,
+    because the Blender format stores one global camera_angle_x and cannot
+    express the widened frustum an outpainted view needs.
+
+    lego has 34 held-out views (200 test frames, stride 6), so the view indices
+    differ again from truck's 32 and drjohnson's 33.
+    """
+    b = f"lego_k5_seed{SEED}_fps_fake0"
+    cols = [
+        ("ground truth", None),
+        ("5 real", b),
+        ("10 real", f"lego_k10_seed{SEED}_fps_fake0"),
+        ("20 real", f"lego_k20_seed{SEED}_fps_fake0"),
+        ("100 real (ceiling)", "lego_k100_seed0_full_fake0"),
+    ]
+    rows, labels = cells(cols, [2, 14, 27], b)
+    grid(rows, [c[0] for c in cols], OUT / "panel_lego.png",
+         "Third scene (lego, isolated object on white): what real views buy "
+         "when the background is trivial", labels)
+
+
 if __name__ == "__main__":
     panel_crossover()
     panel_depth()
     panel_scaling()
     panel_control()
     panel_scene2()
+    panel_lego()

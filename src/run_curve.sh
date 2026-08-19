@@ -30,6 +30,11 @@ ITERS="${ITERS:-7000}"
 # scaling curve meaningless. drjohnson needs -r 4 because at -r 2 a 230-view
 # run exceeds 4 GB and thrashes (5 s/iter instead of 18 it/s).
 RES="${RES:-2}"
+# Rasteriser background. legoc has a white background BAKED INTO its images -
+# the COLMAP loader does no compositing - so the rasteriser has to match, or
+# every one of the 70% background pixels is scored against the wrong colour.
+# That mismatch is exactly what cost 27 dB on the Blender path.
+WB="${WB:-0}"
 # Scene selection. SCENE must match the directory name under data/, because
 # select_subsets.py derives manifest names from it.
 SCENE="${SCENE:-truck}"
@@ -42,6 +47,8 @@ TAG="${SCENE}_k${K}"
 
 PROMPT_ARG=()
 [ -n "$PROMPT" ] && PROMPT_ARG=(--prompt "$PROMPT")
+WB_ARG=()
+[ "$WB" = "1" ] && WB_ARG=(--white-background)
 
 [ -f "$GEN" ] || { echo "no generator $GEN"; exit 1; }
 
@@ -74,7 +81,8 @@ for s in $SEEDS; do
     SC="scenes/${TAG}_seed${s}_fps_${STRATEGY}_fake${f}"
     [ -d "$SC" ] || { echo "missing $SC"; continue; }
     echo "########## $(basename "$SC") ##########"
-    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" --resolution "$RES" 2>&1 \
+    "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" \
+        --resolution "$RES" "${WB_ARG[@]}" 2>&1 \
       | grep -viE 'warn|deprecat|%\|' | grep -vE '^\s*$'
     echo
   done

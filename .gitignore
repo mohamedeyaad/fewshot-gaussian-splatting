@@ -45,3 +45,11 @@ scenes/
 # experimental record - runs/*/results.json is. Rebuild: src/run_viewer_models.sh
 # ---------------------------------------------------------------------------
 viewer/
+
+# ---------------------------------------------------------------------------
+# Generated synthetic views (~200 MB). Never tracked, now said so explicitly:
+# an earlier 'git add -A' swept in files nobody meant to commit. Regenerate
+# with src/gen_<strategy>.py - the manifests and seeds are committed, so the
+# selection is reproducible even though diffusion output is not bit-exact.
+# ---------------------------------------------------------------------------
+synthetic/

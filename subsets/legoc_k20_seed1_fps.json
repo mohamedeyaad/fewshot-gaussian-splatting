@@ -1,0 +1,34 @@
+{
+  "scene": "legoc",
+  "method": "fps",
+  "k": 20,
+  "seed": 1,
+  "llffhold": null,
+  "images": [
+    "train_r_10.png",
+    "train_r_13.png",
+    "train_r_17.png",
+    "train_r_22.png",
+    "train_r_26.png",
+    "train_r_28.png",
+    "train_r_31.png",
+    "train_r_37.png",
+    "train_r_4.png",
+    "train_r_43.png",
+    "train_r_48.png",
+    "train_r_51.png",
+    "train_r_61.png",
+    "train_r_66.png",
+    "train_r_71.png",
+    "train_r_8.png",
+    "train_r_84.png",
+    "train_r_87.png",
+    "train_r_89.png",
+    "train_r_9.png"
+  ],
+  "coverage": {
+    "mean_nn_dist": 0.7444603649271134,
+    "max_nn_dist": 1.5774897094338498,
+    "min_pairwise_dist": 1.640169223215275
+  }
+}

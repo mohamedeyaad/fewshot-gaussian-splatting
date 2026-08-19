@@ -235,6 +235,44 @@ def panel_lego():
          "when the background is trivial", labels)
 
 
+def panel_legoc():
+    """Why BOTH strategies collapse on an isolated object.
+
+    This is the figure that explains a result no table makes obvious. On truck
+    the augmented region contains real scene structure that other cameras also
+    observed, so a diffusion model approximating it is roughly right and the
+    errors are tenths of a dB. On an isolated object there IS no structure out
+    there - it is empty white - and a diffusion model cannot generate nothing.
+    It generates plausible photographic content, which is wrong by
+    construction: confetti texture for outpainting, invented objects for
+    pose-guided.
+
+    The damage is not proportional to the baseline either. Both k=5 and k=20
+    land at roughly 12-14 dB whatever they started from, because the fabricated
+    content dominates the optimisation - which is why k=20 shows the LARGER
+    delta (-15.6) despite being the stronger model.
+
+    legoc has 34 held-out views, like the Blender lego it was rebuilt from.
+    """
+    b5 = f"legoc_k5_seed{SEED}_fps_fake0"
+    b20 = f"legoc_k20_seed{SEED}_fps_fake0"
+    cols = [
+        ("ground truth", None),
+        ("5 real", b5),
+        ("5 + outpaint", f"legoc_k5_seed{SEED}_fps_outpaint_fake5"),
+        ("5 + pose-guided", f"legoc_k5_seed{SEED}_fps_guided_fake5"),
+        ("20 real", b20),
+        ("20 + outpaint", f"legoc_k20_seed{SEED}_fps_outpaint_fake20"),
+        ("20 + pose-guided", f"legoc_k20_seed{SEED}_fps_guided_fake20"),
+    ]
+    rows, labels = cells(cols, [2, 14, 27], b5)
+    grid(rows, [c[0] for c in cols], OUT / "panel_legoc.png",
+         "Isolated object (legoc): BOTH strategies collapse, at the 100% ratio. "
+         "Outpainting -9.30 dB at k=5 and -15.57 at k=20; pose-guided -8.39 and -5.26.\n"
+         "Nothing lies outside the object but empty white, and a diffusion model "
+         "cannot generate nothing - so every synthesised pixel is fabrication.", labels)
+
+
 if __name__ == "__main__":
     panel_crossover()
     panel_depth()
@@ -242,3 +280,4 @@ if __name__ == "__main__":
     panel_control()
     panel_scene2()
     panel_lego()
+    panel_legoc()

@@ -1,0 +1,36 @@
+diff --git a/utils/camera_utils.py b/utils/camera_utils.py
+index 590b1e6..4c614be 100644
+--- a/utils/camera_utils.py
++++ b/utils/camera_utils.py
+@@ -20,6 +20,31 @@ WARNED = False
+ def loadCam(args, id, cam_info, resolution_scale, is_nerf_synthetic, is_test_dataset):
+     image = Image.open(cam_info.image_path)
+ 
++    # [few-shot-patch] Composite RGBA over the chosen background.
++    #
++    # readCamerasFromTransforms already builds this composite - and then throws
++    # it away, keeping only image.size to compute the FOV. The pixels are
++    # loaded here instead, straight from the raw RGBA file, so --white_background
++    # never reaches the image data at all. It only recolours the RASTERISER's
++    # background, which is worse than ignoring it: the model then renders onto
++    # white while ground truth stays black.
++    #
++    # The alpha channel compounds it. Without this composite, Camera keeps the
++    # alpha as a mask and train.py multiplies the render by it, so background
++    # pixels contribute nothing to the loss - the model is never penalised for
++    # what it puts there. Evaluation applies no mask, so those unconstrained
++    # floaters are scored across ~70% of every frame. Measured on lego with all
++    # 100 views: 6.1 dB, against ~33 dB published, with the OBJECT itself
++    # reconstructed correctly.
++    #
++    # Compositing here fixes both: the background becomes real image content the
++    # model must learn, and ground truth matches what the renderer produces.
++    if is_nerf_synthetic and image.mode == "RGBA":
++        bg = (255, 255, 255) if args.white_background else (0, 0, 0)
++        canvas = Image.new("RGB", image.size, bg)
++        canvas.paste(image, mask=image.split()[3])
++        image = canvas
++
+     if cam_info.depth_path != "":
+         try:
+             if is_nerf_synthetic:

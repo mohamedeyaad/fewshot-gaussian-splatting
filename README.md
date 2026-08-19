@@ -240,7 +240,7 @@ To produce a PDF: open the brief in a browser → **Ctrl+P** → A4 → margins
 
 ```
 src/                    all pipeline code (see "Reproducing" below)
-patches/                the two required edits to upstream 3DGS
+patches/                the three required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
 runs/*/results.json     raw metrics for all 142 runs - the experimental record
@@ -294,21 +294,23 @@ python3.12 -m venv venv
 ```bash
 git clone https://github.com/graphdeco-inria/gaussian-splatting --recursive --depth 1
 cd gaussian-splatting
-git apply ../patches/01-dataset_readers-explicit-split.patch
+git apply ../patches/01-dataset_readers-split-and-uint8.patch
 git apply --directory=submodules/diff-gaussian-rasterization \
           ../patches/02-rasterizer-cstdint.patch
+git apply ../patches/03-camera_utils-composite-rgba.patch
 cd ..
 ```
 
 Verified against upstream `54c035f` (main repo) and `9c5c202`
 (diff-gaussian-rasterization).
 
-**What the patches do, and why both are mandatory:**
+**What the patches do, and why each is mandatory:**
 
 | patch | reason |
 |---|---|
 | `02-rasterizer-cstdint` | GCC 13 stopped including `<cstdint>` transitively. Without it the build dies on `'uintptr_t' is not a member of 'std'`. One line; purely a compiler-compatibility fix. |
-| `01-dataset_readers-explicit-split` | Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across all 142 runs**. The patch makes a `split.json` in the scene root override the rule; with no such file, behaviour is exactly as upstream. |
+| `01-dataset_readers-split-and-uint8` | **Two fixes in one file.** (a) Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across every run**; the patch lets a `split.json` in the scene root override the rule, and with no such file behaviour is exactly as upstream. (b) The Blender loader builds frames with `dtype=np.byte`, which is *signed* int8 — values above 127 wrap negative and PIL rejects the buffer (`Cannot handle this data type: (1,1,3), \|i1`). Fatal on any recent numpy. |
+| `03-camera_utils-composite-rgba` | The Blender loader composites each RGBA frame over the requested background and then **discards the result**, keeping only `image.size` to compute the FOV; `loadCam` re-opens the raw file. So `--white_background` never reaches the pixels — it only recolours the rasteriser's background, *creating* a mismatch. The retained alpha then becomes a mask that `train.py` multiplies into the loss, so background pixels are never penalised, while evaluation applies no mask and scores the resulting floaters over ~70% of each frame. Measured on `lego` with all 100 views: **2.61 dB** with `-w`, **6.08 dB** without, **33.77 dB** once `loadCam` composites the RGBA itself — against ~33 dB published. Only needed for NeRF-Synthetic scenes; the COLMAP path never enters this code. |
 
 ### 4. Build the CUDA submodules
 

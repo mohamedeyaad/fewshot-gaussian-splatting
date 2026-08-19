@@ -216,7 +216,23 @@ $VPY src/depth_compare.py              # the 2x2, any K via K=10 env var
 > [`src/check_depth_coverage.py`](src/check_depth_coverage.py) gates the sweep so
 > a plumbing fault can never again masquerade as a null result.
 
-Full write-up in [`results/report.html`](results/report.html) (truck only).
+## Reports
+
+Two documents, both generated from `runs/*/results.json` so neither can drift
+from the experiments:
+
+| file | what it is |
+|---|---|
+| [`results/report_brief.html`](results/report_brief.html) | **the ~5-page submission report** — the argument, print-ready |
+| [`results/report.html`](results/report.html) | the full write-up — every table, every control, truck only |
+
+```bash
+$VPY src/build_brief.py     # -> results/report_brief.html
+$VPY src/build_report.py    # -> results/report.html
+```
+
+To produce a PDF: open the brief in a browser → **Ctrl+P** → A4 → margins
+*Default* → **background graphics ON** → Save as PDF.
 
 ---
 

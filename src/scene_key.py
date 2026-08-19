@@ -27,3 +27,25 @@ def scene_of(rec: dict) -> str:
     if man:
         return PurePosixPath(str(man)).stem.split("_k")[0]
     return str(rec.get("tag", "")).split("_k")[0]
+
+
+def is_depth(rec: dict) -> bool:
+    """Was this run trained with depth regularisation?
+
+    Depth runs share a scene with their non-depth twin, so they carry an
+    IDENTICAL provenance: same k, same seed, same strategy, same n_synthetic.
+    That makes them indistinguishable to any table keyed on those fields, and
+    they silently contaminate it in two ways - a `..._fake0_depth` run counts
+    as a baseline and overwrites the real one, and a `..._outpaint_fakeN_depth`
+    run joins the outpainting bucket and doubles its seed count.
+
+    They belong in the depth analysis (src/depth_compare.py), not in the
+    strategy tables, so every general loader filters on this.
+
+    Runs predating depth regularisation have no such key and are never depth.
+    """
+    prov = rec.get("provenance", {}) or {}
+    if prov.get("depth_reg"):
+        return True
+    # Belt and braces: the tag suffix is set by run_experiment.py's --out.
+    return str(rec.get("tag", "")).endswith("_depth")

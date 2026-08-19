@@ -149,6 +149,73 @@ within a scene against its own same-seed baseline, which is unaffected by the
 resolution choice. All 34 drjohnson runs use the same resolution, so the
 scene's internal scaling curve is self-consistent.
 
+### Testing the mechanism: a depth prior
+
+The explanation above predicts something that could fail. If the harm comes from
+**inconsistency** rather than from augmentation as such, then an intervention
+supplying geometric constraint *without inventing a viewpoint* should never
+cross over — it has no contradictory geometry to accumulate.
+
+Monocular depth regularisation is that intervention: a depth network predicts an
+inverse-depth map per real training photo, anchored to scene scale against the
+sparse COLMAP points that view observes (median R² 0.964). No camera is
+invented, no pixel fabricated. Synthetic views get **no** depth supervision —
+estimating depth from a fabricated image to constrain geometry would be
+circular.
+
+A 3×2×2 factorial (subset size × outpainting × depth prior), 3 seeds, paired:
+
+| | k=5 | k=10 | k=20 |
+|---|---|---|---|
+| **+ depth prior** | +0.259 \* | +0.163 \* | **+0.155** \* |
+| **+ outpainting (200%)** | +0.285 \* | −0.003 | **−0.618** \* |
+| **+ both** | **+0.714** \* | +0.294 \* | −0.355 \* |
+| *interaction* | +0.169 \* | +0.134 | +0.108 \* |
+
+**The prediction holds. Coverage crosses over; constraint does not.** The depth
+prior is positive and statistically separated at *every* subset size, including
+k=20 where outpainting costs 0.618 dB. The two interventions differ in exactly
+one respect — whether a camera that never existed is invented — and only the one
+that invents a camera reverses sign.
+
+The shape agrees too: the prior's benefit *decays* (+0.259 → +0.163 → +0.155),
+exactly as diminishing returns on constraint predict. It simply never turns
+negative, because there is no contradiction term to overtake it.
+
+They also **compound**. At k=5 the combination reaches **+0.714 dB — the largest
+improvement anywhere in this study** — with a positive interaction at all three
+subset sizes. They repair different deficiencies: outpainting supplies
+peripheral *content* no real view recorded; the prior supplies *constraint* on
+geometry already observed.
+
+**What to actually do**, now evidenced rather than argued:
+
+| you have | do this | gain |
+|---|---|---|
+| 5 real views | both | **+0.714** |
+| 10 real views | both | **+0.294** (outpainting alone is inert) |
+| 20 real views | **depth only** | +0.155 (adding synthetic costs ~0.5 dB) |
+
+Depth is also the cheaper and cleaner intervention: it improves all three
+metrics where outpainting buys PSNR while degrading SSIM, and costs **+6.6%
+Gaussians** against outpainting's **+103%**.
+
+```bash
+bash src/run_depth_reg.sh              # k=5
+bash src/run_depth_k10_k20.sh          # k=10 and k=20
+$VPY src/depth_compare.py              # the 2x2, any K via K=10 env var
+```
+
+> **Note on the upstream depth utility.** `gaussian-splatting/utils/make_depth_scale.py`
+> is broken on the OpenCV version this project pins: it slices its `cv2.remap`
+> output as `[..., 0]`, which takes the first *column* of a `(1, N)` result rather
+> than a channel, collapsing every image to one sample and emitting `scale=inf`.
+> That poisons the median in `dataset_readers.py` and fails every image at the
+> reliability gate in `cameras.py`, silently disabling depth supervision
+> entirely. [`src/make_depth_params.py`](src/make_depth_params.py) replaces it;
+> [`src/check_depth_coverage.py`](src/check_depth_coverage.py) gates the sweep so
+> a plumbing fault can never again masquerade as a null result.
+
 Full write-up in [`results/report.html`](results/report.html) (truck only).
 
 ---

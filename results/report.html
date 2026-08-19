@@ -547,6 +547,66 @@ contradictory view is just as harmful at twenty views as at five, and arguably m
 because it now contradicts a better-determined geometry. Two terms, one decaying and one
 roughly constant, are sufficient to produce a sign change, and that is what the data show.</p>
 
+<h3>Testing the mechanism: constraint without a viewpoint</h3>
+<p>The account above is an explanation, and explanations are cheap. What makes it worth more is
+that it predicts something which could fail: if the harm comes from <em>inconsistency</em>
+rather than from augmentation as such, an intervention supplying geometric constraint
+<em>without inventing a viewpoint</em> should never cross over, because it has no contradictory
+geometry to accumulate.</p>
+
+<p>Monocular depth regularisation is that intervention. A depth network predicts an
+inverse-depth map for each real training photograph; each map is anchored to true scene scale
+by a least-squares fit against the sparse COLMAP points that view observes (median R&sup2;
+0.964), and training then minimises image error and depth disagreement together. No camera is
+invented and no pixel is fabricated. Synthetic views receive no depth supervision at all —
+estimating depth from a fabricated image and then using it to constrain geometry would be
+circular — so the prior acts on real photographs only.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 6.</b> Depth regularisation crossed with outpainting at every subset size —
+  a 3&times;2&times;2 factorial, three seeds, every cell paired against the same seed's own
+  unaugmented baseline. The final row is the interaction: how far <em>+ both</em> exceeds the
+  sum of the two interventions applied separately.</caption>
+  <thead>
+    <tr><th></th><th class="num">k = 5</th><th class="num">k = 10</th>
+        <th class="num">k = 20</th></tr>
+  </thead>
+  <tbody>
+<tr><td>+ depth prior</td><td class="num pos">+0.259 <span class="sd">± 0.111</span> *</td><td class="num pos">+0.163 <span class="sd">± 0.073</span> *</td><td class="num pos">+0.155 <span class="sd">± 0.039</span> *</td></tr>
+<tr><td>+ outpainting (200%)</td><td class="num pos">+0.285 <span class="sd">± 0.069</span> *</td><td class="num nil">-0.003 <span class="sd">± 0.064</span></td><td class="num neg">-0.618 <span class="sd">± 0.195</span> *</td></tr>
+<tr><td>+ both</td><td class="num pos">+0.714 <span class="sd">± 0.202</span> *</td><td class="num pos">+0.294 <span class="sd">± 0.045</span> *</td><td class="num neg">-0.355 <span class="sd">± 0.198</span> *</td></tr>
+<tr class="grp"><td>interaction</td><td class="num pos">+0.169 <span class="sd">± 0.094</span> *</td><td class="num nil">+0.134 <span class="sd">± 0.136</span></td><td class="num pos">+0.108 <span class="sd">± 0.031</span> *</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>The prediction holds.</b> The depth prior is positive and separated from zero at every
+subset size, including k = 20, where outpainting costs -0.618 dB. Coverage crosses over;
+constraint does not. The two interventions differ in exactly one respect — whether a camera
+that never existed is invented — and only the one that invents a camera reverses sign.</p>
+
+<p>The <em>shape</em> agrees too. The prior's benefit decays with subset size (+0.259 at
+k = 5 down to +0.155 at k = 20), which is what diminishing returns on constraint
+predict: the more real views pin the geometry, the less an approximate prior can add. It simply
+never turns negative, because there is no contradiction term to overtake it. That is the
+two-term account of the previous section reduced to its first term and observed in
+isolation.</p>
+
+<p>The two also <b>compound</b> rather than overlap. At k = 5 the combination reaches
++0.714 dB — the largest improvement anywhere in this study — with a positive
+interaction at all three subset sizes. They repair different deficiencies: outpainting supplies
+peripheral <em>content</em> that no real view recorded, the prior supplies <em>constraint</em>
+on geometry already observed, and neither substitutes for the other. This agrees with the
+duplication control, which found 80&ndash;85% of outpainting's benefit comes from the
+fabricated borders rather than from repeated views.</p>
+
+<p>The practical consequence is a recommendation the earlier sections could not support: at
+five or ten real views use both; at twenty use the prior alone, since adding synthetic views
+costs roughly half a decibel. At k = 10 outpainting by itself is inert, yet combined with the
+prior it beats the prior alone — a depth constraint makes otherwise worthless synthetic views
+worth having.</p>
+
 <h3>Gaussian count as a mechanism</h3>
 <p>Model complexity grows sharply under both geometric strategies. Against a baseline of
 493,990 Gaussians, inpainting barely moves the count — +3&ndash;5%, since it adds no
@@ -686,6 +746,16 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>The control was run at k = 10 only.</b> Whether the diffusion step remains net
   positive at k = 5 and k = 20 is untested, though the pose-guided damage grows with k while
   hole sizes shrink, which argues it would.</li>
+  <li><b>The depth loss weight was never tuned.</b> Upstream's schedule (1.0 decaying to 0.01)
+  was chosen for scenes with hundreds of views, where photographs are highly informative and the
+  prior is a mild correction. At five views the balance plausibly favours trusting the prior
+  longer, so +0.259 dB is more likely a floor than a ceiling. Tuning it honestly would
+  need a validation split carved out of the training pool — selecting the weight on test PSNR
+  would be fitting to the held-out set.</li>
+  <li><b>Depth regularisation was tested on one scene, at one ratio.</b> Only <code>truck</code>,
+  and the outpainting arm only at the 200% ratio — not at 100%, where outpainting does its worst
+  damage, nor at the 800% ratio that produced the best augmentation-only result. Whether the
+  prior's immunity to the crossover survives indoors is untested.</li>
   <li><b>Two scenes, one of them partially swept.</b> The crossover is confirmed on
   <code>truck</code> (outdoor object) and <code>drjohnson</code> (indoor room), but the
   second scene was swept for <b>outpainting only</b>, at the two ends k = 5 and k = 20.

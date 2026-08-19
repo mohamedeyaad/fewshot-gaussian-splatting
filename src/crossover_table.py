@@ -26,6 +26,11 @@ for f in glob.glob(f"runs/{SCENE}_k*/results.json"):
     p = r["provenance"]
     if p.get("method") == "full":
         continue
+    # Depth-regularised runs carry an identical provenance to their non-depth
+    # twin, so they would both overwrite the baselines and double the seed
+    # count of every strategy cell. They belong in src/depth_compare.py.
+    if p.get("depth_reg") or r.get("tag", "").endswith("_depth"):
+        continue
     k, s, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
     if nf == 0:
         base[(k, s)] = r["metrics"]["psnr"]["mean"]

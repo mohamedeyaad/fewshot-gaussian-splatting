@@ -15,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
 
-from scene_key import scene_of
+from scene_key import is_depth, scene_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 
@@ -32,8 +32,10 @@ def load(runs_dir: Path):
 
 def key_of(r):
     prov = r.get("provenance", {})
-    return (scene_of(r), prov.get("k"), prov.get("method"),
-            prov.get("n_synthetic", 0))
+    # Depth runs share a scene - and therefore a provenance - with their
+    # non-depth twin, so they must be labelled apart or they merge into it.
+    method = (prov.get("method") or "") + ("+depth" if is_depth(r) else "")
+    return (scene_of(r), prov.get("k"), method, prov.get("n_synthetic", 0))
 
 
 def agg(vals):
@@ -109,22 +111,32 @@ def main():
     # k=5 seed0 and truck k=5 seed0 are different runs, and without the scene
     # one overwrites the other, pairing every augmented run of one scene
     # against the other scene's floor.
+    # A depth-regularised 0-fake run is NOT a baseline: it is a treatment that
+    # happens to add no synthetic views. Letting it in here overwrites the real
+    # baseline and shifts every delta in the table.
     baselines = {}
     for r in recs:
         p = r["provenance"]
-        if p.get("n_synthetic", 0) == 0 and p.get("method") != "full":
+        if (p.get("n_synthetic", 0) == 0 and p.get("method") != "full"
+                and not is_depth(r)):
             baselines[(scene_of(r), p.get("k"), p.get("seed"))] = r["metrics"]
 
     paired = defaultdict(list)
     for r in recs:
         p = r["provenance"]
         nf = p.get("n_synthetic", 0)
-        if nf == 0 or p.get("method") == "full":
+        if p.get("method") == "full":
             continue
+        dep = is_depth(r)
+        if nf == 0 and not dep:
+            continue                      # a plain baseline is the reference
         base = baselines.get((scene_of(r), p.get("k"), p.get("seed")))
         if not base:
             continue
-        paired[(scene_of(r), p.get("k"), p.get("strategy"), nf)].append({
+        strat = p.get("strategy") or "none"
+        if dep:
+            strat = "depth" if nf == 0 else f"{strat}+depth"
+        paired[(scene_of(r), p.get("k"), strat, nf)].append({
             "seed": p.get("seed"),
             "d_psnr": r["metrics"]["psnr"]["mean"] - base["psnr"]["mean"],
             "d_ssim": r["metrics"]["ssim"]["mean"] - base["ssim"]["mean"],

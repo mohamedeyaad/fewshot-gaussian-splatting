@@ -18,7 +18,7 @@ from statistics import mean, stdev
 
 from PIL import Image
 
-from scene_key import scene_of
+from scene_key import is_depth, scene_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 RES = ROOT / "results"
@@ -38,11 +38,16 @@ def load_runs(scene: str = "truck"):
     scene - drjohnson k=5 seed0 would overwrite truck k=5 seed0 and silently
     reassign every truck delta. The report's claims are all about truck, so
     truck is what it loads.
+
+    Depth-regularised runs are excluded for the same reason: they share a
+    provenance with their non-depth twin, so a `..._fake0_depth` run counts as
+    a baseline and overwrites the real one. They are loaded separately by
+    build_depth().
     """
     recs = []
     for p in sorted((ROOT / "runs").glob("*/results.json")):
         r = json.loads(p.read_text())
-        if scene_of(r) == scene:
+        if scene_of(r) == scene and not is_depth(r):
             recs.append(r)
     return recs
 
@@ -287,6 +292,54 @@ def build_generalisation(scene="drjohnson"):
     }
 
 
+def build_depth(scene="truck"):
+    """The 3x2x2: subset size x outpainting x depth prior, paired within seed.
+
+    A depth prior is the clean test of the mechanism the report proposes. If a
+    synthetic view really delivers coverage and inconsistency together, and
+    only the inconsistency fails to lose value as real data accumulates, then
+    an intervention supplying CONSTRAINT with no extra view should never cross
+    over - it has no contradictory geometry to accumulate.
+
+    Depth runs share a provenance with their non-depth twin, so they are found
+    here by tag rather than by the usual (k, seed, n_synthetic) keys.
+    """
+    def m(tag):
+        p = ROOT / "runs" / tag / "results.json"
+        if not p.exists():
+            return None
+        return json.loads(p.read_text())["metrics"]["psnr"]["mean"]
+
+    NF = {5: 10, 10: 20, 20: 40}          # the 200% ratio at each subset size
+    out = {"ks": [], "rows": {}, "inter": {}}
+    for k in (5, 10, 20):
+        pats = {
+            "depth": f"{scene}_k{k}_seed{{s}}_fps_fake0_depth",
+            "outpaint": f"{scene}_k{k}_seed{{s}}_fps_outpaint_fake{NF[k]}",
+            "both": f"{scene}_k{k}_seed{{s}}_fps_outpaint_fake{NF[k]}_depth",
+        }
+        per = {}
+        for label, pat in pats.items():
+            ds = []
+            for sd in (0, 1, 2):
+                b = m(f"{scene}_k{k}_seed{sd}_fps_fake0")
+                v = m(pat.format(s=sd))
+                if b is not None and v is not None:
+                    ds.append(v - b)
+            per[label] = ds
+        if not all(per.values()):
+            continue
+        out["ks"].append(k)
+        out["rows"][k] = {lab: agg(v) for lab, v in per.items()}
+        n = min(len(v) for v in per.values())
+        # Interaction computed PER SEED, so the baseline cancels inside each
+        # pair instead of adding its own scatter to the error bar.
+        ints = [per["both"][i] - (per["depth"][i] + per["outpaint"][i])
+                for i in range(n)]
+        out["inter"][k] = agg(ints)
+    return out if out["ks"] else None
+
+
 def load_noise():
     vals = {"psnr": [], "ssim": [], "lpips": []}
     for p in sorted((ROOT / "runs_noise").glob("repeat*/results.json")):
@@ -368,6 +421,27 @@ def main():
         + f'<td class="num">{a["diff"]:+.3f}</td></tr>'
         for a in ablation)
     abl_all_pos = all(a["ds"] > 0 for a in ablation) if ablation else False
+
+    # --- depth regularisation: the 3x2x2 factorial ---
+    depth = build_depth()
+    depth_rows = ""
+    if depth:
+        def drow(label, key):
+            cells = "".join(
+                delta_cell(*depth["rows"][k][key],
+                           abs(depth["rows"][k][key][0]) > depth["rows"][k][key][1] > 0)
+                for k in depth["ks"])
+            return f"<tr><td>{label}</td>{cells}</tr>"
+        inter_cells = "".join(
+            delta_cell(*depth["inter"][k],
+                       abs(depth["inter"][k][0]) > depth["inter"][k][1] > 0)
+            for k in depth["ks"])
+        depth_rows = "\n".join([
+            drow("+ depth prior", "depth"),
+            drow("+ outpainting (200%)", "outpaint"),
+            drow("+ both", "both"),
+            f'<tr class="grp"><td>interaction</td>{inter_cells}</tr>',
+        ])
 
     # --- second scene: does the crossover reproduce? ---
     second = build_generalisation()
@@ -510,6 +584,11 @@ def main():
         "{{SCALING_TABLE}}": scaling_table,
         "{{CONTROL_TABLE}}": ctrl_rows,
         "{{ABLATION_TABLE}}": abl_rows,
+        "{{DEPTH_TABLE}}": depth_rows,
+        "{{DEPTH_K5}}": f'{depth["rows"][5]["depth"][0]:+.3f}' if depth else "n/a",
+        "{{DEPTH_K20}}": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
+        "{{DEPTH_BOTH_K5}}": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
+        "{{OUT_K20}}": f'{depth["rows"][20]["outpaint"][0]:.3f}' if depth else "n/a",
         "{{GEN_TABLE}}": gen_rows_html,
         "{{GEN_SCENE}}": second["scene"] if second else "n/a",
         "{{GEN_N}}": str(second["n_runs"]) if second else "0",
@@ -1076,6 +1155,63 @@ contradictory view is just as harmful at twenty views as at five, and arguably m
 because it now contradicts a better-determined geometry. Two terms, one decaying and one
 roughly constant, are sufficient to produce a sign change, and that is what the data show.</p>
 
+<h3>Testing the mechanism: constraint without a viewpoint</h3>
+<p>The account above is an explanation, and explanations are cheap. What makes it worth more is
+that it predicts something which could fail: if the harm comes from <em>inconsistency</em>
+rather than from augmentation as such, an intervention supplying geometric constraint
+<em>without inventing a viewpoint</em> should never cross over, because it has no contradictory
+geometry to accumulate.</p>
+
+<p>Monocular depth regularisation is that intervention. A depth network predicts an
+inverse-depth map for each real training photograph; each map is anchored to true scene scale
+by a least-squares fit against the sparse COLMAP points that view observes (median R&sup2;
+0.964), and training then minimises image error and depth disagreement together. No camera is
+invented and no pixel is fabricated. Synthetic views receive no depth supervision at all —
+estimating depth from a fabricated image and then using it to constrain geometry would be
+circular — so the prior acts on real photographs only.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 6.</b> Depth regularisation crossed with outpainting at every subset size —
+  a 3&times;2&times;2 factorial, three seeds, every cell paired against the same seed's own
+  unaugmented baseline. The final row is the interaction: how far <em>+ both</em> exceeds the
+  sum of the two interventions applied separately.</caption>
+  <thead>
+    <tr><th></th><th class="num">k = 5</th><th class="num">k = 10</th>
+        <th class="num">k = 20</th></tr>
+  </thead>
+  <tbody>
+{{DEPTH_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p><b>The prediction holds.</b> The depth prior is positive and separated from zero at every
+subset size, including k = 20, where outpainting costs {{OUT_K20}} dB. Coverage crosses over;
+constraint does not. The two interventions differ in exactly one respect — whether a camera
+that never existed is invented — and only the one that invents a camera reverses sign.</p>
+
+<p>The <em>shape</em> agrees too. The prior's benefit decays with subset size ({{DEPTH_K5}} at
+k = 5 down to {{DEPTH_K20}} at k = 20), which is what diminishing returns on constraint
+predict: the more real views pin the geometry, the less an approximate prior can add. It simply
+never turns negative, because there is no contradiction term to overtake it. That is the
+two-term account of the previous section reduced to its first term and observed in
+isolation.</p>
+
+<p>The two also <b>compound</b> rather than overlap. At k = 5 the combination reaches
+{{DEPTH_BOTH_K5}} dB — the largest improvement anywhere in this study — with a positive
+interaction at all three subset sizes. They repair different deficiencies: outpainting supplies
+peripheral <em>content</em> that no real view recorded, the prior supplies <em>constraint</em>
+on geometry already observed, and neither substitutes for the other. This agrees with the
+duplication control, which found 80&ndash;85% of outpainting's benefit comes from the
+fabricated borders rather than from repeated views.</p>
+
+<p>The practical consequence is a recommendation the earlier sections could not support: at
+five or ten real views use both; at twenty use the prior alone, since adding synthetic views
+costs roughly half a decibel. At k = 10 outpainting by itself is inert, yet combined with the
+prior it beats the prior alone — a depth constraint makes otherwise worthless synthetic views
+worth having.</p>
+
 <h3>Gaussian count as a mechanism</h3>
 <p>Model complexity grows sharply under both geometric strategies. Against a baseline of
 {{FLOOR_GAUSS}} Gaussians, inpainting barely moves the count — +3&ndash;5%, since it adds no
@@ -1171,6 +1307,16 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>The control was run at k = 10 only.</b> Whether the diffusion step remains net
   positive at k = 5 and k = 20 is untested, though the pose-guided damage grows with k while
   hole sizes shrink, which argues it would.</li>
+  <li><b>The depth loss weight was never tuned.</b> Upstream's schedule (1.0 decaying to 0.01)
+  was chosen for scenes with hundreds of views, where photographs are highly informative and the
+  prior is a mild correction. At five views the balance plausibly favours trusting the prior
+  longer, so {{DEPTH_K5}} dB is more likely a floor than a ceiling. Tuning it honestly would
+  need a validation split carved out of the training pool — selecting the weight on test PSNR
+  would be fitting to the held-out set.</li>
+  <li><b>Depth regularisation was tested on one scene, at one ratio.</b> Only <code>truck</code>,
+  and the outpainting arm only at the 200% ratio — not at 100%, where outpainting does its worst
+  damage, nor at the 800% ratio that produced the best augmentation-only result. Whether the
+  prior's immunity to the crossover survives indoors is untested.</li>
   <li><b>Two scenes, one of them partially swept.</b> The crossover is confirmed on
   <code>truck</code> (outdoor object) and <code>{{GEN_SCENE}}</code> (indoor room), but the
   second scene was swept for <b>outpainting only</b>, at the two ends k = 5 and k = 20.

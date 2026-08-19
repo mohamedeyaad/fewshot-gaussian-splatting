@@ -28,7 +28,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from scene_key import scene_of
+from scene_key import is_depth, scene_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 OUT = ROOT / "results"
@@ -52,7 +52,7 @@ def load(scene="truck"):
     base, runs, full = {}, defaultdict(list), None
     for p in sorted((ROOT / "runs").glob("*/results.json")):
         r = json.loads(p.read_text())
-        if scene_of(r) != scene:
+        if scene_of(r) != scene or is_depth(r):
             continue
         pr = r["provenance"]
         if pr.get("method") == "full":

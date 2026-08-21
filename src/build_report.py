@@ -292,6 +292,102 @@ def build_generalisation(scene="drjohnson"):
     }
 
 
+def build_isolated():
+    """The third capture regime, and the boundary of the method.
+
+    Two scenes are involved and they are not interchangeable:
+
+      lego  - NeRF-Synthetic in its native Blender format. Baselines only. Its
+              full-data ceiling reproduces the ~33 dB published for lego, which
+              is the ONLY number in this study anchored outside it.
+      legoc - the same 134 frames reconstructed with COLMAP, which is what the
+              augmentation conditions need: the Blender format stores one
+              global camera_angle_x and cannot express an outpainted view's
+              widened frustum, and gen_guided.py anchors depth to sparse points
+              the Blender path does not have.
+
+    Their absolute numbers differ for reasons worth stating rather than hiding.
+    legoc's ceiling is 1.6 dB lower (COLMAP poses carry 0.55 px reprojection
+    error where Blender's were exact) while its k=5 baseline is 1.8 dB HIGHER
+    (20,944 real SfM points beat a random cube at five views). So the scaling
+    curve is quoted from lego, where it is externally anchored, and every
+    augmentation delta from legoc, where it is a within-scene paired
+    comparison. Neither is quoted from the other.
+    """
+    out = {}
+
+    scal = []
+    for k in (5, 10, 20):
+        vals = [r["metrics"] for r in load_runs("lego")
+                if r["provenance"].get("k") == k]
+        if vals:
+            scal.append({
+                "k": k,
+                "psnr": mean(m["psnr"]["mean"] for m in vals),
+                "sd": stdev([m["psnr"]["mean"] for m in vals]) if len(vals) > 1 else 0.0,
+                "ssim": mean(m["ssim"]["mean"] for m in vals),
+                "lpips": mean(m["lpips"]["mean"] for m in vals),
+            })
+    ceil = [r for r in load_runs("lego") if r["provenance"].get("method") == "full"]
+    out["scaling"] = scal
+    out["ceil"] = ceil[0]["metrics"]["psnr"]["mean"] if ceil else None
+
+    recs = load_runs("legoc")
+    if not recs:
+        return out if scal else None
+
+    base, runs, full = {}, defaultdict(list), None
+    floors = defaultdict(list)
+    for r in recs:
+        p = r["provenance"]
+        if p.get("method") == "full":
+            full = r
+            continue
+        k, s, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
+        if nf == 0:
+            base[(k, s)] = r["metrics"]
+            floors[k].append(r["metrics"]["psnr"]["mean"])
+        else:
+            runs[(k, p.get("strategy"), nf)].append((s, r["metrics"]))
+
+    def d(k, strat, nf, key="psnr"):
+        ds = [m[key]["mean"] - base[(k, s)][key]["mean"]
+              for s, m in runs.get((k, strat, nf), []) if (k, s) in base]
+        return agg(ds) if ds else None
+
+    rows = []
+    for strat in ("outpaint", "guided", "outwhite"):
+        for ratio, mult in (("100%", 1), ("200%", 2)):
+            cell = {"strategy": strat, "ratio": ratio}
+            ok = False
+            for k in (5, 20):
+                v = d(k, strat, k * mult)
+                if v:
+                    ok = True
+                    cell[f"k{k}"], cell[f"k{k}_sd"] = v
+            if ok:
+                rows.append(cell)
+
+    # Gaussian counts corroborate the collapse independently of PSNR: an
+    # optimiser fed views it cannot reconcile answers by spawning primitives.
+    gb = [r["cost"]["n_gaussians"] for r in recs
+          if r["provenance"].get("n_synthetic", 0) == 0
+          and r["provenance"].get("k") == 5
+          and r["provenance"].get("method") != "full"]
+    ga = [r["cost"]["n_gaussians"] for r in recs
+          if r["provenance"].get("k") == 5
+          and r["provenance"].get("strategy") == "outpaint"]
+
+    out.update({
+        "rows": rows, "n_runs": len(recs),
+        "floors": {k: mean(v) for k, v in floors.items()},
+        "legoc_ceil": full["metrics"]["psnr"]["mean"] if full else None,
+        "gauss_base": mean(gb) if gb else None,
+        "gauss_aug": mean(ga) if ga else None,
+    })
+    return out
+
+
 def build_depth(scene="truck"):
     """The 3x2x2: subset size x outpainting x depth prior, paired within seed.
 
@@ -443,6 +539,27 @@ def main():
             f'<tr class="grp"><td>interaction</td>{inter_cells}</tr>',
         ])
 
+    # --- third scene: does the mechanism hold where there is nothing to
+    # recover? Two lego scenes, deliberately not merged - see build_isolated.
+    iso = build_isolated()
+    iso_rows, iso_v = "", {}
+    if iso and iso.get("rows"):
+        ISO_LABEL = {"outpaint": "Outpainting", "guided": "Pose-guided",
+                     "outwhite": "Control: white border, no diffusion"}
+        for r in iso["rows"]:
+            iso_v[(r["strategy"], r["ratio"])] = r
+            iso_rows += (
+                f'    <tr><td>{ISO_LABEL[r["strategy"]]}, {r["ratio"]}</td>'
+                + "".join(
+                    delta_cell(r.get(f"k{k}"), r.get(f"k{k}_sd"),
+                               abs(r.get(f"k{k}") or 0) > (r.get(f"k{k}_sd") or 0))
+                    for k in (5, 20))
+                + "</tr>\n")
+
+    def iso_d(strat, k, ratio="100%"):
+        r = iso_v.get((strat, ratio))
+        return f'{r[f"k{k}"]:+.2f}' if r and r.get(f"k{k}") is not None else "n/a"
+
     # --- second scene: does the crossover reproduce? ---
     second = build_generalisation()
     gen_rows_html, gen_best, gen_best_ssim, gen_best_lpips = "", 0.0, 0.0, 0.0
@@ -589,6 +706,30 @@ def main():
         "{{DEPTH_K20}}": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "{{DEPTH_BOTH_K5}}": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
         "{{OUT_K20}}": f'{depth["rows"][20]["outpaint"][0]:.3f}' if depth else "n/a",
+        # --- third scene (isolated object) ---
+        "{{ISO_BG_PCT}}": "70.4",
+        "{{ISO_TABLE}}": iso_rows,
+        "{{ISO_N}}": str(iso["n_runs"]) if iso else "0",
+        "{{ISO_CEIL}}": f'{iso["ceil"]:.2f}' if iso and iso.get("ceil") else "n/a",
+        "{{ISO_FLOOR5}}": f'{iso["floors"][5]:.2f}' if iso and iso.get("floors") else "n/a",
+        "{{ISO_FLOOR20}}": f'{iso["floors"][20]:.2f}' if iso and iso.get("floors") else "n/a",
+        **{f"{{{{ISO_PCT{k}}}}}":
+           (f'{100 * next(r["psnr"] for r in iso["scaling"] if r["k"] == k) / iso["ceil"]:.0f}'
+            if iso and iso.get("ceil") else "n/a")
+           for k in (5, 10, 20)},
+        "{{ISO_OUT5}}": iso_d("outpaint", 5),
+        "{{ISO_OUT20}}": iso_d("outpaint", 20),
+        "{{ISO_GUI5}}": iso_d("guided", 5),
+        "{{ISO_GUI20}}": iso_d("guided", 20),
+        "{{ISO_WHITE5}}": iso_d("outwhite", 5),
+        "{{ISO_WHITE20}}": iso_d("outwhite", 20),
+        "{{ISO_CEIL_GAP}}": (f'{iso["ceil"] - iso["legoc_ceil"]:.1f}'
+                             if iso and iso.get("legoc_ceil") else "n/a"),
+        "{{ISO_FLOOR_GAP}}": (
+            f'{iso["floors"][5] - next(r["psnr"] for r in iso["scaling"] if r["k"] == 5):.1f}'
+            if iso and iso.get("floors") else "n/a"),
+        "{{ISO_GAUSS_BASE}}": f'{iso["gauss_base"]:,.0f}' if iso and iso.get("gauss_base") else "n/a",
+        "{{ISO_GAUSS_AUG}}": f'{iso["gauss_aug"]:,.0f}' if iso and iso.get("gauss_aug") else "n/a",
         "{{GEN_TABLE}}": gen_rows_html,
         "{{GEN_SCENE}}": second["scene"] if second else "n/a",
         "{{GEN_N}}": str(second["n_runs"]) if second else "0",
@@ -622,6 +763,12 @@ def main():
             "independent of subset size; outpainting crosses from beneficial at five views to "
             "harmful at twenty; pose-guided is harmful everywhere and worsens as real views "
             "accumulate.", 1600, 88, "PNG"),
+        "{{FIG_LEGOC}}": figure(
+            RES / "panel_legoc.png",
+            "<b>Figure.</b> Isolated object. Both strategies collapse at the 100% ratio, and "
+            "the renders show why: the augmented reconstructions are not merely blurrier, they "
+            "are polluted by content the diffusion model invented where the truth is empty "
+            "white. The control in Table 7 confirms the widened frustum itself is harmless."),
         "{{FIG_STRATEGIES}}": figure(RES / "panel_strategies.png",
             "Figure 3 — Held-out renderings at the 100% synthetic ratio. Degradation appears "
             "as smearing and semi-transparent floaters, most severely under pose-guided "
@@ -1231,10 +1378,72 @@ separately — which is precisely what a floater is.</p>
 real geometry or contradictory geometry. Densification statistics on their own cannot
 distinguish the two cases, which is worth knowing for anyone hoping to use Gaussian count as
 a cheap proxy for reconstruction health.</p>
+
+<h3>Testing the mechanism, part 2: an object with nothing around it</h3>
+<p>Depth regularisation tested one half of the account — that constraint supplied without an
+invented viewpoint never crosses over. An isolated object tests the other half. If augmentation
+pays off in proportion to the <em>real scene content</em> the synthesised region recovers, then
+a scene whose synthesised region contains <em>nothing</em> should show no benefit at any subset
+size.</p>
+
+<p><code>lego</code> from NeRF-Synthetic is that scene: one object on a clean white background,
+{{ISO_BG_PCT}}% of every frame trivially predictable. Its scaling curve is steeper than truck's —
+{{ISO_PCT5}}%, {{ISO_PCT10}}% and {{ISO_PCT20}}% of the full-data ceiling at k = 5, 10 and 20
+against truck's 60%, 68% and 78% — because the deficit here is angular rather than occlusive,
+and each added view buys a great deal. Its ceiling of {{ISO_CEIL}} dB reproduces the
+&asymp;33 dB published for this scene, the only number in this study anchored outside it.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 7.</b> Isolated object, {{ISO_N}} runs. Every cell is a within-scene paired
+  delta against the same seed's own unaugmented baseline
+  ({{ISO_FLOOR5}} dB at k = 5, {{ISO_FLOOR20}} dB at k = 20). The final row is the control:
+  the identical widened camera with a plain white border instead of diffusion output.</caption>
+  <thead>
+    <tr><th>condition</th><th class="num">k = 5</th><th class="num">k = 20</th></tr>
+  </thead>
+  <tbody>
+{{ISO_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p><b>The prediction failed, and failed informatively.</b> Outpainting was expected to be worth
+approximately nothing here. It is worth {{ISO_OUT5}} dB at k = 5 and {{ISO_OUT20}} dB at
+k = 20. Pose-guided synthesis, expected to <em>help</em> because it supplies precisely the
+angular coverage the scene lacks, is worth {{ISO_GUI5}} dB and {{ISO_GUI20}} dB.</p>
+
+<p>The renders explain what the table cannot. A diffusion model cannot generate nothing. Asked
+to extend the border of an isolated object — with a prompt that explicitly requests
+<em>"a plain white background"</em> — Stable Diffusion paints dense confetti texture, because
+empty white is not what its training distribution says the periphery of a photograph looks
+like. Pose-guided fails twice over: depth is anchored to sparse points that exist only
+<em>on</em> the object, so most of each frame has no depth and warps to speckle, and the
+resulting holes are then filled with invented objects. Every synthesised pixel is fabrication,
+and the optimiser cannot reconcile fabrication across views — gaussian counts rise from
+{{ISO_GAUSS_BASE}} at baseline to {{ISO_GAUSS_AUG}}.</p>
+
+<p>A control settles which half of that is responsible. Outpainting changes two things at once:
+it widens the frustum, and it fills the new border with invented content. Regenerating the same
+views with a <em>plain white</em> border — identical canvas, identical focal length, identical
+widened camera, identical poses, verified equal in the stored metadata — leaves the frustum
+change intact and removes only the fabrication. The result is {{ISO_WHITE5}} dB at k = 5 and
+{{ISO_WHITE20}} dB at k = 20: indistinguishable from doing nothing. The widened frustum is
+harmless, and essentially all of the damage is the invented content.</p>
+
+<p>The damage also does not scale with the baseline. Both subset sizes land near 12&ndash;14 dB
+whatever they started from, which is why k = 20 shows the <em>larger</em> delta despite being
+the stronger model — the reverse of truck, where added real views diluted the synthetic
+contribution.</p>
+
+<p>This is a boundary condition on the central claim rather than a contradiction of it. Restated
+to survive it: <b>augmentation pays off in proportion to the real scene content the synthesised
+region can recover, and an isolated object has none to recover.</b></p>
 </section>
 </div>
 
 <div class="wide">
+{{FIG_LEGOC}}
 {{FIG_STRATEGIES}}
 {{FIG_RATIO}}
 </div>
@@ -1317,6 +1526,18 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   and the outpainting arm only at the 200% ratio — not at 100%, where outpainting does its worst
   damage, nor at the 800% ratio that produced the best augmentation-only result. Whether the
   prior's immunity to the crossover survives indoors is untested.</li>
+  <li><b>The isolated-object collapse is specific to this pose-guided implementation.</b>
+  Warping only the object's pixels and leaving the background white was not attempted, and
+  would very likely behave differently: the failure there is partly that depth is anchored to
+  sparse points existing only on the object, leaving most of the frame unconstrained. The
+  outpainting arm carries no such caveat — its control isolates the cause cleanly.</li>
+  <li><b>Two <code>lego</code> scenes are used and are not interchangeable.</b> The scaling
+  curve is quoted from the Blender-format scene, whose ceiling reproduces the published
+  &asymp;33 dB; every augmentation delta is quoted from the COLMAP-format rebuild, which is the
+  only one able to express a widened frustum or supply sparse points for depth anchoring. The
+  rebuild's ceiling is {{ISO_CEIL_GAP}} dB lower (0.55 px pose error against exact poses) while
+  its k = 5 baseline is {{ISO_FLOOR_GAP}} dB <em>higher</em> (20,944 real SfM points beat a
+  random cube at five views). No number is quoted across the two.</li>
   <li><b>Two scenes, one of them partially swept.</b> The crossover is confirmed on
   <code>truck</code> (outdoor object) and <code>{{GEN_SCENE}}</code> (indoor room), but the
   second scene was swept for <b>outpainting only</b>, at the two ends k = 5 and k = 20.

@@ -171,6 +171,27 @@ def main():
                       for k in depth["ks"])
         d_rows += f'<tr class="grp"><td>interaction</td>{tds}</tr>\n'
 
+    # ---- isolated object: the boundary of the method ---------------------
+    iso = R.build_isolated()
+    iso_rows, iso_v = "", {}
+    if iso and iso.get("rows"):
+        LBL = {"outpaint": "Outpainting", "guided": "Pose-guided",
+               "outwhite": "Control: white border, no diffusion"}
+        for r in iso["rows"]:
+            iso_v[(r["strategy"], r["ratio"])] = r
+            if r["ratio"] != "100%":          # the brief shows one ratio only
+                continue
+            tds = "".join(
+                cell(r.get(f"k{k}"), r.get(f"k{k}_sd"),
+                     sig=abs(r.get(f"k{k}") or 0) > (r.get(f"k{k}_sd") or 0) > 0)
+                for k in (5, 20))
+            cls = ' class="grp"' if r["strategy"] == "outwhite" else ""
+            iso_rows += f'<tr{cls}><td>{LBL[r["strategy"]]}</td>{tds}</tr>\n'
+
+    def iso_d(strat, k, ratio="100%"):
+        r = iso_v.get((strat, ratio))
+        return f'{r[f"k{k}"]:+.2f}' if r and r.get(f"k{k}") is not None else "n/a"
+
     fl, ce = head["floors"], head["ceil_psnr"]
     n_total = len(list((ROOT / "runs").glob("*/results.json")))
 
@@ -371,6 +392,36 @@ observed alone. The two also <b>compound</b>: at k = 5 the combination reaches
 interaction at all three sizes. They repair different deficiencies — outpainting supplies
 peripheral <em>content</em>, the prior supplies <em>constraint</em> — which agrees with the
 duplication control.</p>
+
+<h3>Where the method stops working</h3>
+<p>A second, harsher test: if augmentation pays off in proportion to the <em>real scene content</em>
+the synthesised region recovers, a scene whose synthesised region contains <em>nothing</em>
+should show no benefit anywhere. <code>lego</code> (NeRF-Synthetic, one object on white,
+{iso['n_runs']} runs) is that scene; its Blender-format ceiling of {iso['ceil']:.2f}&nbsp;dB
+reproduces the &asymp;33&nbsp;dB published, the only externally anchored number here.</p>
+
+<table>
+<caption><b>Table 6.</b> Isolated object, 100% ratio, paired against each seed's own baseline
+({iso['floors'][5]:.2f}&nbsp;dB at k = 5, {iso['floors'][20]:.2f} at k = 20).</caption>
+<thead><tr><th>Condition</th><th class="num">k = 5</th><th class="num">k = 20</th></tr></thead>
+<tbody>{iso_rows}</tbody></table>
+
+<div class="key">
+<b>The prediction failed, and the failure is the finding.</b> Both strategies do not merely stop
+helping — they collapse by 5&ndash;16&nbsp;dB. A diffusion model cannot generate nothing: asked to
+extend an isolated object's border, with a prompt explicitly requesting <em>"a plain white
+background"</em>, it paints dense texture instead. The control settles the cause — the identical
+widened camera with a <b>plain white</b> border scores {iso_d('outwhite', 5)}&nbsp;dB and
+{iso_d('outwhite', 20)}&nbsp;dB, i.e. nothing. The frustum change is harmless; the invented
+content is the entire effect.
+</div>
+
+<p>The damage does not scale with the baseline — both subset sizes land near 12&ndash;14&nbsp;dB
+whatever they started from, so k = 20 shows the <em>larger</em> delta despite being the stronger
+model, reversing truck's pattern. Gaussian counts corroborate: {iso['gauss_base']:,.0f} at
+baseline against {iso['gauss_aug']:,.0f} when fed views the optimiser cannot reconcile. This
+bounds the claim rather than contradicting it: <b>augmentation pays in proportion to the real
+scene content the synthesised region can recover, and an isolated object has none.</b></p>
 
 <h2><span class="n">7</span>Conclusions</h2>
 <ul>

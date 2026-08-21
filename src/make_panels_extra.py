@@ -261,16 +261,18 @@ def panel_legoc():
         ("5 real", b5),
         ("5 + outpaint", f"legoc_k5_seed{SEED}_fps_outpaint_fake5"),
         ("5 + pose-guided", f"legoc_k5_seed{SEED}_fps_guided_fake5"),
+        ("5 + WHITE border\n(control)", f"legoc_k5_seed{SEED}_fps_outwhite_fake5"),
         ("20 real", b20),
         ("20 + outpaint", f"legoc_k20_seed{SEED}_fps_outpaint_fake20"),
-        ("20 + pose-guided", f"legoc_k20_seed{SEED}_fps_guided_fake20"),
+        ("20 + WHITE border\n(control)", f"legoc_k20_seed{SEED}_fps_outwhite_fake20"),
     ]
     rows, labels = cells(cols, [2, 14, 27], b5)
     grid(rows, [c[0] for c in cols], OUT / "panel_legoc.png",
-         "Isolated object (legoc): BOTH strategies collapse, at the 100% ratio. "
-         "Outpainting -9.30 dB at k=5 and -15.57 at k=20; pose-guided -8.39 and -5.26.\n"
-         "Nothing lies outside the object but empty white, and a diffusion model "
-         "cannot generate nothing - so every synthesised pixel is fabrication.", labels)
+         "Isolated object (legoc) at the 100% ratio: outpainting -9.30 dB at k=5 and "
+         "-15.57 at k=20; pose-guided -8.39 and -5.26.\nThe CONTROL columns use the identical "
+         "widened camera with a plain white border instead of diffusion output: +0.22 and "
+         "-0.27 dB, i.e. nothing.\nSo the widened frustum is harmless - the damage is entirely "
+         "the content the model invented where the truth is empty white.", labels)
 
 
 if __name__ == "__main__":

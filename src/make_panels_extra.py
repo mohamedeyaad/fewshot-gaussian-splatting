@@ -211,9 +211,54 @@ def panel_scene2():
          "(it is at 25% and 50%).", labels)
 
 
+def panel_selection():
+    """Does the crossover depend on having chosen the five views well?
+
+    Every other result uses farthest-point sampling, which spreads the K views
+    over the trajectory. Random draws cover the scene worse (k=5 max_nn_dist
+    5.15 against fps's 3.54), so the coverage account predicted augmentation
+    would help MORE there, and cross over later.
+
+    It does not. Random is slightly less positive at k=5 (+0.261 vs +0.285,
+    and not separated from zero) and clearly MORE negative at k=20 (-0.929 vs
+    -0.618). The columns are ordered fps-then-random at each subset size so
+    the two baselines can be compared before the two treatments are.
+    """
+    b5f = f"truck_k5_seed{SEED}_fps_fake0"
+    b5r = f"truck_k5_seed{SEED}_random_fake0"
+    b20f = f"truck_k20_seed{SEED}_fps_fake0"
+    b20r = f"truck_k20_seed{SEED}_random_fake0"
+    cols = [
+        ("ground truth", None),
+        ("5 real, spread", b5f),
+        ("5 real, spread\n+200%", f"truck_k5_seed{SEED}_fps_outpaint_fake10"),
+        ("5 real, random", b5r),
+        ("5 real, random\n+200%", f"truck_k5_seed{SEED}_random_outpaint_fake10"),
+        ("20 real, spread\n+200%", f"truck_k20_seed{SEED}_fps_outpaint_fake40"),
+        ("20 real, random\n+200%", f"truck_k20_seed{SEED}_random_outpaint_fake40"),
+    ]
+    a5f = f"truck_k5_seed{SEED}_fps_outpaint_fake10"
+    a5r = f"truck_k5_seed{SEED}_random_outpaint_fake10"
+    a20f = f"truck_k20_seed{SEED}_fps_outpaint_fake40"
+    a20r = f"truck_k20_seed{SEED}_random_outpaint_fake40"
+    # Not VIEWS. Arbitrary cameras scatter several dB either side of the mean:
+    # view 12 shows +2.02 for the k=20 fps condition whose mean is -0.618, so a
+    # panel drawn there argues against its own caption.
+    views = representative_views([(a5f, b5f), (a5r, b5r), (a20f, b20f), (a20r, b20r)])
+    rows, labels = cells(cols, views, b5f,
+                         deltas_vs={a5f: b5f, a5r: b5r, a20f: b20f, a20r: b20r})
+    grid(rows, [c[0] for c in cols], OUT / "panel_selection.png",
+         "Badly-chosen views are NOT rescued by augmentation. Random draws cover the "
+         "scene worse, so the coverage account predicted a bigger gain;\ninstead random "
+         "is +0.261 at k=5 (not separated from zero, against fps's +0.285*) and -0.929* "
+         "at k=20 against fps's -0.618*.\nOutpainting widens each existing frustum - it "
+         "cannot reach scene a badly-spread set never came near.", labels)
+
+
 if __name__ == "__main__":
     panel_crossover()
     panel_depth()
     panel_scaling()
     panel_control()
     panel_scene2()
+    panel_selection()

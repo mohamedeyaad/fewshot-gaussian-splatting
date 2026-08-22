@@ -21,11 +21,17 @@ ITERS="${ITERS:-7000}"
 # scaling curve meaningless. drjohnson needs -r 4 because at -r 2 a 230-view
 # run exceeds 4 GB and thrashes (5 s/iter instead of 18 it/s).
 RES="${RES:-2}"
+# Subset selection method. `fps` spreads the K views over the camera
+# trajectory; `random` draws them uniformly, which covers the scene noticeably
+# worse (truck k=5: max_nn_dist 5.15 against fps's 3.54) and is the more
+# realistic "someone took five casual photos" case. Manifests for both are
+# written by select_subsets.py --methods.
+METHOD="${METHOD:-fps}"
 
 echo "############## BUILD SCENES ##############"
 for k in $KS; do
   for s in $SEEDS; do
-    M="subsets/${SCENE}_k${k}_seed${s}_fps.json"
+    M="subsets/${SCENE}_k${k}_seed${s}_${METHOD}.json"
     [ -f "$M" ] || { echo "MISSING MANIFEST $M"; exit 1; }
     "$VPY" src/build_scene.py --manifest "$M" --source "$SOURCE" --force
   done
@@ -35,7 +41,7 @@ echo
 echo "############## TRAIN ##############"
 for k in $KS; do
   for s in $SEEDS; do
-    SC="scenes/${SCENE}_k${k}_seed${s}_fps_fake0"
+    SC="scenes/${SCENE}_k${k}_seed${s}_${METHOD}_fake0"
     [ -d "$SC" ] || { echo "missing $SC"; continue; }
     echo "########## $(basename "$SC") ##########"
     "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" --resolution "$RES" 2>&1 \

@@ -35,6 +35,10 @@ RES="${RES:-2}"
 # every one of the 70% background pixels is scored against the wrong colour.
 # That mismatch is exactly what cost 27 dB on the Blender path.
 WB="${WB:-0}"
+# Subset selection method, matching run_floors.sh. Must agree with the floors
+# the curve is paired against: a `random` augmented run compared to an `fps`
+# baseline would attribute the whole coverage difference to augmentation.
+METHOD="${METHOD:-fps}"
 # Scene selection. SCENE must match the directory name under data/, because
 # select_subsets.py derives manifest names from it.
 SCENE="${SCENE:-truck}"
@@ -54,13 +58,13 @@ WB_ARG=()
 
 echo "############## GENERATE ($STRATEGY, k=$K) ##############"
 for s in $SEEDS; do
-  D="synthetic/${TAG}_seed${s}_fps_${STRATEGY}"
+  D="synthetic/${TAG}_seed${s}_${METHOD}_${STRATEGY}"
   if [ -f "$D/poses.json" ] && [ "$(ls "$D/images" 2>/dev/null | wc -l)" -ge "$NGEN" ]; then
     echo "--- seed $s: already have >= $NGEN images, skipping ---"
     continue
   fi
   echo "--- seed $s ---"
-  "$VPY" -u "$GEN" --manifest "subsets/${TAG}_seed${s}_fps.json" --n "$NGEN" \
+  "$VPY" -u "$GEN" --manifest "subsets/${TAG}_seed${s}_${METHOD}.json" --n "$NGEN" \
     --source "$SOURCE" "${PROMPT_ARG[@]}" 2>&1 \
     | grep -viE 'warn|deprecat|it/s\]$' | grep -vE '^\s*$'
 done
@@ -69,8 +73,8 @@ echo
 echo "############## BUILD SCENES ##############"
 for s in $SEEDS; do
   "$VPY" src/build_scene.py \
-    --manifest "subsets/${TAG}_seed${s}_fps.json" \
-    --synthetic "synthetic/${TAG}_seed${s}_fps_${STRATEGY}" \
+    --manifest "subsets/${TAG}_seed${s}_${METHOD}.json" \
+    --synthetic "synthetic/${TAG}_seed${s}_${METHOD}_${STRATEGY}" \
     --source "$SOURCE" --n-fake $FAKES --force
 done
 
@@ -78,7 +82,7 @@ echo
 echo "############## TRAIN ##############"
 for s in $SEEDS; do
   for f in $FAKES; do
-    SC="scenes/${TAG}_seed${s}_fps_${STRATEGY}_fake${f}"
+    SC="scenes/${TAG}_seed${s}_${METHOD}_${STRATEGY}_fake${f}"
     [ -d "$SC" ] || { echo "missing $SC"; continue; }
     echo "########## $(basename "$SC") ##########"
     "$VPY" -u src/run_experiment.py --scene "$SC" --iterations "$ITERS" \

@@ -105,12 +105,6 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--methods", nargs="+", default=["fps", "random"])
     ap.add_argument("--llffhold", type=int, default=8)
-    # Scenes whose held-out set is not "every nth image". legoc is rebuilt from
-    # NeRF-Synthetic, where train and test frames are two separate orbits: the
-    # llffhold rule would interleave them and destroy the only external anchor
-    # the scene has (its ceiling reproducing 33.77 dB on those exact frames).
-    ap.add_argument("--split", default=None,
-                    help="explicit <scene>_test_split.json; bypasses --llffhold")
     ap.add_argument("--plot", action="store_true", help="render camera maps")
     args = ap.parse_args()
 
@@ -119,27 +113,11 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     names, centres = camera_centres(source / "sparse" / "0")
-    if args.split:
-        blob = json.loads(Path(args.split).read_text())
-        if blob["scene"] != source.name:
-            raise ValueError(f"{args.split} is for scene '{blob['scene']}' but "
-                             f"--source points at '{source.name}'")
-        pos = {n: i for i, n in enumerate(names)}
-        missing = [n for n in blob["test_images"] + blob["train_pool"] if n not in pos]
-        if missing:
-            raise ValueError(f"{len(missing)} split images are not in the "
-                             f"reconstruction, e.g. {missing[:3]}")
-        test_idx = sorted(pos[n] for n in blob["test_images"])
-        train_idx = sorted(pos[n] for n in blob["train_pool"])
-        hold = blob.get("llffhold")
-    else:
-        train_idx, test_idx = split_train_test(names, args.llffhold)
-        hold = args.llffhold
+    train_idx, test_idx = split_train_test(names, args.llffhold)
 
     print(f"scene      : {source.name}")
     print(f"images     : {len(names)}")
-    print(f"test  (held out, {'explicit split' if args.split else f'every {hold}th'})"
-          f": {len(test_idx)}")
+    print(f"test  (held out, every {args.llffhold}th): {len(test_idx)}")
     print(f"train pool                              : {len(train_idx)}")
 
     # Persist the test split once - it is identical for EVERY condition of this
@@ -147,14 +125,11 @@ def main():
     # would be overwritten the moment a second scene is prepared, silently
     # swapping the frozen held-out views of the first one.
     split_blob = json.dumps({
-        "scene": source.name, "llffhold": hold,
+        "scene": source.name, "llffhold": args.llffhold,
         "test_images": [names[i] for i in test_idx],
         "train_pool": [names[i] for i in train_idx],
     }, indent=2)
-    # With --split the file already exists and IS the authority; rewriting it
-    # would only risk reordering the frozen held-out set.
-    if not args.split:
-        (out / f"{source.name}_test_split.json").write_text(split_blob)
+    (out / f"{source.name}_test_split.json").write_text(split_blob)
     # truck's runs predate the rename and read the unqualified name, so keep it
     # in step for that scene only.
     if source.name == "truck":
@@ -177,7 +152,7 @@ def main():
 
                 rec = {
                     "scene": source.name, "method": method, "k": k, "seed": seed,
-                    "llffhold": hold,
+                    "llffhold": args.llffhold,
                     "images": sorted(sel),
                     "coverage": stats,
                 }

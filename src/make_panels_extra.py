@@ -211,75 +211,9 @@ def panel_scene2():
          "(it is at 25% and 50%).", labels)
 
 
-def panel_lego():
-    """The third capture regime: an isolated object on a clean background.
-
-    Only subset sizes here - no augmentation conditions exist for this scene,
-    because the Blender format stores one global camera_angle_x and cannot
-    express the widened frustum an outpainted view needs.
-
-    lego has 34 held-out views (200 test frames, stride 6), so the view indices
-    differ again from truck's 32 and drjohnson's 33.
-    """
-    b = f"lego_k5_seed{SEED}_fps_fake0"
-    cols = [
-        ("ground truth", None),
-        ("5 real", b),
-        ("10 real", f"lego_k10_seed{SEED}_fps_fake0"),
-        ("20 real", f"lego_k20_seed{SEED}_fps_fake0"),
-        ("100 real (ceiling)", "lego_k100_seed0_full_fake0"),
-    ]
-    rows, labels = cells(cols, [2, 14, 27], b)
-    grid(rows, [c[0] for c in cols], OUT / "panel_lego.png",
-         "Third scene (lego, isolated object on white): what real views buy "
-         "when the background is trivial", labels)
-
-
-def panel_legoc():
-    """Why BOTH strategies collapse on an isolated object.
-
-    This is the figure that explains a result no table makes obvious. On truck
-    the augmented region contains real scene structure that other cameras also
-    observed, so a diffusion model approximating it is roughly right and the
-    errors are tenths of a dB. On an isolated object there IS no structure out
-    there - it is empty white - and a diffusion model cannot generate nothing.
-    It generates plausible photographic content, which is wrong by
-    construction: confetti texture for outpainting, invented objects for
-    pose-guided.
-
-    The damage is not proportional to the baseline either. Both k=5 and k=20
-    land at roughly 12-14 dB whatever they started from, because the fabricated
-    content dominates the optimisation - which is why k=20 shows the LARGER
-    delta (-15.6) despite being the stronger model.
-
-    legoc has 34 held-out views, like the Blender lego it was rebuilt from.
-    """
-    b5 = f"legoc_k5_seed{SEED}_fps_fake0"
-    b20 = f"legoc_k20_seed{SEED}_fps_fake0"
-    cols = [
-        ("ground truth", None),
-        ("5 real", b5),
-        ("5 + outpaint", f"legoc_k5_seed{SEED}_fps_outpaint_fake5"),
-        ("5 + pose-guided", f"legoc_k5_seed{SEED}_fps_guided_fake5"),
-        ("5 + WHITE border\n(control)", f"legoc_k5_seed{SEED}_fps_outwhite_fake5"),
-        ("20 real", b20),
-        ("20 + outpaint", f"legoc_k20_seed{SEED}_fps_outpaint_fake20"),
-        ("20 + WHITE border\n(control)", f"legoc_k20_seed{SEED}_fps_outwhite_fake20"),
-    ]
-    rows, labels = cells(cols, [2, 14, 27], b5)
-    grid(rows, [c[0] for c in cols], OUT / "panel_legoc.png",
-         "Isolated object (legoc) at the 100% ratio: outpainting -9.30 dB at k=5 and "
-         "-15.57 at k=20; pose-guided -8.39 and -5.26.\nThe CONTROL columns use the identical "
-         "widened camera with a plain white border instead of diffusion output: +0.22 and "
-         "-0.27 dB, i.e. nothing.\nSo the widened frustum is harmless - the damage is entirely "
-         "the content the model invented where the truth is empty white.", labels)
-
-
 if __name__ == "__main__":
     panel_crossover()
     panel_depth()
     panel_scaling()
     panel_control()
     panel_scene2()
-    panel_lego()
-    panel_legoc()

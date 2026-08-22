@@ -68,7 +68,6 @@ def main():
     head, rows = R.build_tables(recs)
     gen = R.build_generalisation()
     depth = R.build_depth()
-    iso = R.build_isolated()
 
     def out(k, ratio):
         for r in rows:
@@ -80,16 +79,6 @@ def main():
     cross = [(k, out(k, 200)) for k in (5, 10, 20)]
     cross_bars = "".join(bar(r["d_psnr"], 0.8, f"k = {k}") for k, r in cross if r)
 
-    iso_v = {(r["strategy"], r["ratio"]): r for r in (iso.get("rows") or [])}
-    iso_bars = "".join(
-        bar(iso_v[(s, "100%")][f"k{k}"], 17.0, lab)
-        for s, k, lab in (("outpaint", 5, "outpainting, k = 5"),
-                          ("outpaint", 20, "outpainting, k = 20"),
-                          ("guided", 5, "pose-guided, k = 5"),
-                          ("guided", 20, "pose-guided, k = 20"),
-                          ("outwhite", 5, "control: white, k = 5"),
-                          ("outwhite", 20, "control: white, k = 20"))
-        if (s, "100%") in iso_v and iso_v[(s, "100%")].get(f"k{k}") is not None)
 
     fl = head["floors"]
     v = {
@@ -98,7 +87,7 @@ def main():
         "GAP5": f'{head["gap5"]:.2f}', "NRUNS": str(len(list((ROOT / "runs").glob("*/results.json")))),
         "BEST": f'{head["best"]["d_psnr"]:+.3f}',
         "STEP510": f'{head["step_5_10"]:+.2f}',
-        "CROSS_BARS": cross_bars, "ISO_BARS": iso_bars,
+        "CROSS_BARS": cross_bars,
         "GEN5": f'{gen["rows"][-1]["k5"]:+.3f}' if gen else "n/a",
         "GEN20": f'{gen["rows"][2]["k20"]:+.3f}' if gen else "n/a",
         "GENFLOORSD": f'{gen["floor_sd"]:.2f}' if gen else "n/a",
@@ -106,17 +95,7 @@ def main():
         "D10": f'{depth["rows"][10]["depth"][0]:+.3f}' if depth else "n/a",
         "D20": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "DBOTH": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
-        "ISOCEIL": f'{iso["ceil"]:.2f}', "ISOF5": f'{iso["floors"][5]:.2f}',
-        "ISOF20": f'{iso["floors"][20]:.2f}',
-        "ISOW5": f'{iso_v[("outwhite","100%")]["k5"]:+.2f}',
-        "ISOW20": f'{iso_v[("outwhite","100%")]["k20"]:+.2f}',
-        "ISOO5": f'{iso_v[("outpaint","100%")]["k5"]:.2f}',
-        "ISOO20": f'{iso_v[("outpaint","100%")]["k20"]:.2f}',
-        "ISOG5": f'{iso_v[("guided","100%")]["k5"]:.2f}',
-        "ISOG20": f'{iso_v[("guided","100%")]["k20"]:.2f}',
-        "GB": f'{iso["gauss_base"]:,.0f}', "GA": f'{iso["gauss_aug"]:,.0f}',
         "IMG_CROSS": data_uri("panel_crossover.png"),
-        "IMG_LEGOC": data_uri("panel_legoc.png", width=1900),
         "IMG_SCALE": data_uri("panel_scaling.png"),
     }
 
@@ -264,12 +243,12 @@ a{color:var(--accent)}
     <div class="cols">
       <div class="card"><div class="k num">{{NRUNS}}</div>
         <div class="cap">training runs</div></div>
-      <div class="card"><div class="k num">4</div>
-        <div class="cap">scenes: outdoor object, indoor room, isolated object &times;2 formats</div></div>
+      <div class="card"><div class="k num">2</div>
+        <div class="cap">scenes: an outdoor object and an indoor room</div></div>
       <div class="card"><div class="k num">3</div>
         <div class="cap">augmentation strategies, 4 ratios, 3 seeds</div></div>
-      <div class="card"><div class="k num">5</div>
-        <div class="cap">controls, one of which reverses the headline reading</div></div>
+      <div class="card"><div class="k num">4</div>
+        <div class="cap">controls, plus a depth prior that tests the mechanism</div></div>
     </div>
     <p class="muted" style="font-size:.9em">Mohamed Eyad</p>
   </div>
@@ -454,101 +433,24 @@ a{color:var(--accent)}
   </div>
 </section>
 
-<section class="slide">
-  <div class="inner">
-    <div class="eyebrow">Prediction 2 &middot; failed</div>
-    <h2>An object with nothing around it</h2>
-    <p class="lead">If augmentation pays in proportion to the <em>real scene content</em>
-    the synthesised region recovers, then a scene whose synthesised region contains
-    <strong>nothing</strong> should show no benefit at any subset size.</p>
-    <p><span class="tag">lego</span> is that scene — one object on clean white, 70.4% of
-    every frame trivially predictable. Its full-data ceiling of
-    <span class="num">{{ISOCEIL}}</span> dB reproduces the ≈33 dB published for it: the
-    only number in this study anchored outside it.</p>
-    <hr class="rule">
-    <p><strong>What I predicted:</strong> outpainting worth approximately nothing —
-    there is no content outside the frame to recover. Pose-guided <em>helping</em>,
-    because an isolated object's deficit is angular and that is exactly what a new
-    viewpoint supplies.</p>
-    <p class="muted">Both halves were wrong.</p>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="inner">
-    <div class="eyebrow">Prediction 2 &middot; what happened</div>
-    <h2>Both strategies collapse</h2>
-    <div style="display:flex;flex-direction:column;gap:clamp(6px,1.1vh,12px)">
-      {{ISO_BARS}}
-    </div>
-    <p><strong>A diffusion model cannot generate nothing.</strong> Asked to extend an
-    isolated object's border — with a prompt that explicitly requests <em>"a plain white
-    background"</em> — Stable Diffusion paints dense confetti texture, because empty
-    white is not what its training distribution says the periphery of a photograph looks
-    like. Pose-guided fails twice over: depth anchors to points existing only <em>on</em>
-    the object, so most of the frame warps to speckle, and the holes fill with invented
-    objects.</p>
-    <p class="muted">Gaussian counts corroborate: <span class="num">{{GB}}</span> at
-    baseline against <span class="num">{{GA}}</span> when fed views the optimiser cannot
-    reconcile. Note the last two rows — that is the control.</p>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="inner wide">
-    <div class="eyebrow">The control</div>
-    <figure>
-      <img src="{{IMG_LEGOC}}" alt="Isolated object renders: baseline, outpainting, pose-guided, and the white-border control at 5 and 20 real views.">
-      <figcaption>Outpainting changes two things at once: it widens the frustum, and it
-      fills the new border with invented content. Regenerating the same views with a
-      <strong>plain white</strong> border — identical canvas, focal length, widened
-      camera and poses, verified equal in the stored metadata — leaves the frustum change
-      intact and removes only the fabrication.</figcaption>
-    </figure>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="inner">
-    <div class="eyebrow">The control &middot; verdict</div>
-    <h2>The frustum is harmless. The fabrication is the whole effect.</h2>
-    <div class="tw"><table>
-      <thead><tr><th>Condition at the 100% ratio</th><th class="n">k = 5</th><th class="n">k = 20</th></tr></thead>
-      <tbody>
-        <tr><td>Outpainting — diffusion border</td>
-            <td class="n neg">{{ISOO5}}</td><td class="n neg">{{ISOO20}}</td></tr>
-        <tr><td>Pose-guided</td>
-            <td class="n neg">{{ISOG5}}</td><td class="n neg">{{ISOG20}}</td></tr>
-        <tr><td><strong>Control — identical camera, white border</strong></td>
-            <td class="n">{{ISOW5}}</td><td class="n">{{ISOW20}}</td></tr>
-      </tbody>
-      <caption>Paired against each seed's own baseline
-      (<span class="num">{{ISOF5}}</span> dB at k = 5,
-      <span class="num">{{ISOF20}}</span> dB at k = 20).</caption>
-    </table></div>
-    <p>At k = 20 the widened frustum accounts for <span class="num">0.27</span> dB of a
-    <span class="num">15.57</span> dB collapse. <strong>Roughly 98% of the damage is the
-    content the model invented</strong> where the truth was empty white.</p>
-  </div>
-</section>
 
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">Conclusion</div>
-    <h2>What the four scenes say together</h2>
+    <h2>What both scenes say together</h2>
     <ul>
       <li><strong>Diffusion augmentation is not free coverage.</strong> It helps only
       while real views are in the single digits, and the crossover reproduces outdoors
       and indoors.</li>
-      <li><strong>The mechanism is pose novelty.</strong> Five controls exclude image
-      quality, hole content, warping artifacts, mere view repetition — and now the
-      frustum change itself.</li>
+      <li><strong>The mechanism is pose novelty.</strong> Four controls exclude image
+      quality, hallucinated hole content, warping artifacts, and mere view
+      repetition.</li>
       <li><strong>Constraint beats invention.</strong> A depth prior is positive at every
       subset size and compounds with augmentation; anything that invents a camera
       eventually reverses sign.</li>
-      <li><strong>The boundary:</strong> augmentation pays in proportion to the real
-      scene content the synthesised region can recover — and an isolated object has
-      none to recover.</li>
+      <li><strong>The two effects are separable.</strong> Outpainting supplies peripheral
+      content, the depth prior supplies constraint — and combining them exceeds the sum
+      of the parts at every subset size.</li>
     </ul>
     <hr class="rule">
     <p class="lead">Practical guidance: use augmentation below about ten real views,
@@ -571,12 +473,11 @@ a{color:var(--accent)}
       and was out of reach.</li>
       <li><strong>Three seeds.</strong> A consistency check, not statistical
       significance.</li>
-      <li><strong>The pose-guided collapse is implementation-specific.</strong> Warping
-      only the object's pixels and leaving the background white was not attempted. The
-      outpainting arm carries no such caveat — its control isolates the cause cleanly.</li>
-      <li><strong>A failed prediction is reported as one.</strong> Pose-guided was
-      expected to help on an isolated object. It did not, and the corrected account is
-      the more general one.</li>
+      <li><strong>Two scenes, one partially swept.</strong> The second scene was swept
+      for outpainting only, at k = 5 and k = 20. "Inpainting is flat" and "pose-guided
+      always hurts" remain single-scene claims.</li>
+      <li><strong>The depth prior was tested on one scene, at one ratio.</strong> Whether
+      its immunity to the crossover survives indoors is untested.</li>
     </ul>
   </div>
 </section>
@@ -586,12 +487,11 @@ a{color:var(--accent)}
     <div class="eyebrow">In one sentence</div>
     <h1 style="max-width:20ch">Augmentation buys coverage, and pays for it in
     consistency.</h1>
-    <p class="lead">Whether that trade is worth taking depends on one thing: how much
-    real scene the synthesised region can recover. At five outdoor views, a lot. At
-    twenty, not enough. Around an isolated object, none — and the model fabricates
-    instead.</p>
+    <p class="lead">Whether that trade is worth taking depends on how scarce the real
+    photographs are. At five views the coverage is worth the inconsistency. By twenty it
+    is not — and the same treatment that helped now harms.</p>
     <hr class="rule">
-    <p class="muted">{{NRUNS}} runs · 4 scenes · every held-out set hash-verified
+    <p class="muted">{{NRUNS}} runs · 2 scenes · every held-out set hash-verified
     identical within its scene · code and full report in the repository.</p>
   </div>
 </section>

@@ -149,70 +149,6 @@ within a scene against its own same-seed baseline, which is unaffected by the
 resolution choice. All 34 drjohnson runs use the same resolution, so the
 scene's internal scaling curve is self-consistent.
 
-### Third scene: where the method stops working
-
-`lego` (NeRF-Synthetic, one object on a clean white background) tests the
-coverage account at its breaking point. If augmentation pays off in proportion
-to the **real scene content** the synthesised region recovers, a scene whose
-synthesised region contains *nothing* should show no benefit at any subset size.
-
-Two `lego` scenes exist here and they are **not interchangeable**:
-
-| scene | format | used for | ceiling |
-| --- | --- | --- | --- |
-| `lego` | Blender / NeRF-Synthetic | the scaling curve only | 33.77 dB — reproduces the ≈33 dB published |
-| `legoc` | the same 134 frames, COLMAP-reconstructed | every augmentation delta | 32.17 dB |
-
-The rebuild is necessary because the Blender format stores one global
-`camera_angle_x` (so an outpainted view's widened frustum has nowhere to live)
-and carries no sparse points (so `gen_guided.py` cannot anchor depth). COLMAP
-registered 134/134 images into one model at 0.546 px mean reprojection error.
-
-The rebuild's ceiling is 1.6 dB *lower* (0.55 px pose error against Blender's
-exact poses) while its k=5 baseline is 1.8 dB **higher** (20,944 real SfM points
-beat a random cube at five views). No number is quoted across the two scenes.
-
-**Scaling curve** (`lego`): 18.95 → 25.76 → 30.49 → 33.77 dB at k = 5, 10, 20,
-100 — that is 56 %, 76 % and 90 % of the ceiling, against truck's 60/68/78 %.
-An isolated object recovers faster per added view, because its deficit is
-angular rather than occlusive.
-
-**The augmentation result** (`legoc`, 100 % ratio, paired within seed):
-
-| condition | k=5 | k=20 |
-| --- | ---: | ---: |
-| outpainting | **−9.295*** | **−15.571*** |
-| pose-guided | **−8.392*** | **−5.258*** |
-| control: white border, no diffusion | +0.215* | −0.265* |
-
-Both strategies do not merely stop helping — they collapse. **A diffusion model
-cannot generate nothing.** Asked to extend an isolated object's border, with a
-prompt that explicitly requests *"a plain white background"*, SD 1.5 paints
-dense confetti texture, because empty white is not what its training
-distribution says the periphery of a photograph looks like. Pose-guided fails
-twice over: depth anchors to sparse points existing only *on* the object, so
-most of the frame warps to speckle, and the holes are filled with invented
-objects.
-
-The **control** isolates the cause. Regenerating the same views with a plain
-white border — identical canvas, focal length, widened camera and poses,
-verified equal in `poses.json` — costs nothing. So the widened frustum is
-harmless and essentially all of the damage is the fabricated content.
-
-The damage does not scale with the baseline either: both subset sizes land near
-12–14 dB whatever they started from, which is why k=20 shows the *larger* delta
-despite being the stronger model — the reverse of truck. Gaussian counts
-corroborate: 130k at baseline against 573k when fed views the optimiser cannot
-reconcile.
-
-This bounds the central claim rather than contradicting it: **augmentation pays
-in proportion to the real scene content the synthesised region can recover, and
-an isolated object has none.**
-
-*Caveat:* the pose-guided collapse is specific to this implementation. Warping
-only object pixels and leaving the background white was not attempted. The
-outpainting arm carries no such caveat — its control isolates the cause cleanly.
-
 ### Testing the mechanism: a depth prior
 
 The explanation above predicts something that could fail. If the harm comes from
@@ -453,20 +389,6 @@ $VPY src/build_scene.py --manifest subsets/drjohnson_k230_seed0_full.json \
 $VPY -u src/run_experiment.py --scene scenes/drjohnson_k230_seed0_full_fake0 \
      --iterations 7000 --resolution 4
 bash src/run_drjohnson_sweep.sh          # 24 runs, ~2.5 h
-
-# 7b. Third scene (lego): the scaling curve in the native Blender format, then
-#     the same frames rebuilt with COLMAP so they can host the augmentation
-#     conditions. -r 1 and --white-background throughout, matching the ceiling.
-bash src/get_blender_scene.sh lego
-$VPY src/build_blender_scene.py --scene lego --k 5 10 20 --seeds 0 1 2
-bash src/run_lego_floors.sh              # 9 runs, ~45 min
-
-$VPY src/build_colmap_lego.py            # export + SfM, ~10 min (CPU)
-$VPY src/build_legoc_split.py            # freezes the 34-frame held-out set
-$VPY src/build_scene.py --manifest subsets/legoc_k100_seed0_full.json \
-     --source data/legoc
-bash src/run_legoc_sweep.sh              # gate + 31 runs, ~5.5 h
-bash src/run_legoc_control.sh            # white-border control, 6 runs, ~35 min
 
 # 8. Analysis and deliverables.
 $VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv (all scenes)

@@ -53,3 +53,10 @@ viewer/
 # selection is reproducible even though diffusion output is not bit-exact.
 # ---------------------------------------------------------------------------
 synthetic/
+
+# ---------------------------------------------------------------------------
+# Isolated-object experiment (lego / legoc), set aside. Moved here rather than
+# deleted: it is ~6h20m of compute, and the results.json files remain in git
+# history at commit aa17381 if it is ever wanted back.
+# ---------------------------------------------------------------------------
+archive_isolated/

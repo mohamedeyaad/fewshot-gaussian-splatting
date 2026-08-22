@@ -51,27 +51,6 @@ def fov_deg(size_px: float, focal_px: float) -> float:
     return math.degrees(2.0 * math.atan(size_px / (2.0 * focal_px)))
 
 
-def record_for(src_name, out_name, by_name, expand, label):
-    """One entry in poses.json.
-
-    The synthetic view reuses its source view's pose EXACTLY - the camera did
-    not move, the lens got wider - and points at camera id 2. Shared by both
-    fill modes so the diffusion arm and the white control differ in their
-    pixels and in nothing else.
-    """
-    im = by_name[src_name]
-    return {
-        "name": out_name,
-        "source_image": src_name,
-        "strategy": label,
-        "qvec": [float(x) for x in im.qvec],
-        "tvec": [float(x) for x in im.tvec],
-        "camera_id": 2,                      # the widened camera
-        "pose_source": "copied from source view; intrinsics widened",
-        "expand": expand,
-    }
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest", required=True)
@@ -85,15 +64,6 @@ def main():
     ap.add_argument("--prompt", default="a photo of a truck parked on a street, "
                                         "wide view, realistic, sharp focus")
     ap.add_argument("--negative", default="blurry, distorted, watermark, text, lowres")
-    # THE CONTROL for the isolated-object result. Outpainting cost legoc 9-16
-    # dB, and two explanations survive that number: the invented content is
-    # destructive, or the widened frustum alone is. --fill white separates
-    # them - same canvas, same focal, same widened camera id 2, same paste
-    # offset, but the new border is plain white instead of diffusion output.
-    # On an isolated object plain white is the TRUE content out there, so if
-    # this control returns to baseline the damage is provably the fabrication.
-    ap.add_argument("--fill", choices=["diffusion", "white"], default="diffusion",
-                    help="what to put in the new border (default: diffusion)")
     # Model-robustness ablation. Is the outpainting result a property of
     # augmentation, or of Stable Diffusion 1.5 specifically? --model swaps the
     # checkpoint; --label puts the output in its own directory so both versions
@@ -156,19 +126,15 @@ def main():
 
     print(f"\n[{tag}] generating {args.n} outpainted views")
 
-    pipe = None
-    if args.fill == "diffusion":
-        from diffusers import StableDiffusionInpaintPipeline
-        print(f"  model: {args.model}")
-        pipe = StableDiffusionInpaintPipeline.from_pretrained(
-            args.model, torch_dtype=torch.float16, variant="fp16",
-            use_safetensors=True, safety_checker=None, requires_safety_checker=False)
-        pipe = pipe.to("cuda")
-        pipe.set_progress_bar_config(disable=True)
-        pipe.enable_attention_slicing()
-        pipe.vae.enable_slicing()
-    else:
-        print("  fill: PLAIN WHITE (control - no diffusion model loaded)")
+    from diffusers import StableDiffusionInpaintPipeline
+    print(f"  model: {args.model}")
+    pipe = StableDiffusionInpaintPipeline.from_pretrained(
+        args.model, torch_dtype=torch.float16, variant="fp16",
+        use_safetensors=True, safety_checker=None, requires_safety_checker=False)
+    pipe = pipe.to("cuda")
+    pipe.set_progress_bar_config(disable=True)
+    pipe.enable_attention_slicing()
+    pipe.vae.enable_slicing()
 
     rng = np.random.default_rng(seed * 1000 + 23)
     torch.cuda.reset_peak_memory_stats()
@@ -182,24 +148,12 @@ def main():
 
         real = Image.open(src_root / "images" / src_name).convert("RGB")
 
-        # Canvas at full disk resolution with the real frame centred. The base
-        # colour is irrelevant under diffusion (every pixel of it is repainted)
-        # but IS the output under --fill white.
-        canvas = Image.new("RGB", (Wd2, Hd2),
-                           (255, 255, 255) if args.fill == "white" else (0, 0, 0))
+        # Canvas at full disk resolution with the real frame centred.
+        canvas = Image.new("RGB", (Wd2, Hd2), (0, 0, 0))
         canvas.paste(real, (ox_d, oy_d))
         keep = Image.new("L", (Wd2, Hd2), 0)
         ImageDraw.Draw(keep).rectangle(
             [ox_d, oy_d, ox_d + real.width - 1, oy_d + real.height - 1], fill=255)
-
-        if args.fill == "white":
-            # Nothing to synthesise: the real frame is already composited onto
-            # a white border, which for an isolated object is the truth.
-            out_img = canvas
-            out_img.save(img_dir / out_name, quality=95)
-            records.append(record_for(src_name, out_name, by_name, s, args.label))
-            print(f"  [{i+1}/{args.n}] {out_name}  from {src_name}  (white fill)")
-            continue
 
         # SD works on the downscaled canvas. Feather the mask a few px INTO
         # the real region so the model has context to blend against.
@@ -221,7 +175,17 @@ def main():
         out_img = Image.composite(canvas, painted_full, keep)
         out_img.save(img_dir / out_name, quality=95)
 
-        records.append(record_for(src_name, out_name, by_name, s, args.label))
+        im = by_name[src_name]
+        records.append({
+            "name": out_name,
+            "source_image": src_name,
+            "strategy": args.label,
+            "qvec": [float(x) for x in im.qvec],
+            "tvec": [float(x) for x in im.tvec],
+            "camera_id": 2,                      # the widened camera
+            "pose_source": "copied from source view; intrinsics widened",
+            "expand": s,
+        })
         print(f"  [{i+1}/{args.n}] {out_name}  from {src_name}")
 
     elapsed = time.time() - t0
@@ -237,8 +201,7 @@ def main():
                   "derived_from": 1, "expand": s,
                   "note": "focal unchanged; principal point shifted by paste offset"}
         },
-        "config": {"fill": args.fill,
-                   "model": MODEL, "steps": args.steps, "guidance": args.guidance,
+        "config": {"model": MODEL, "steps": args.steps, "guidance": args.guidance,
                    "expand": s, "sd_size": [sd_w, sd_h],
                    "prompt": args.prompt, "negative_prompt": args.negative},
         "cost": {"seconds": round(elapsed, 1),

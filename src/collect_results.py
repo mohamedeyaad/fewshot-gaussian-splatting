@@ -15,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
 
-from scene_key import is_depth, scene_of
+from scene_key import is_depth, scene_of, select_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 
@@ -31,11 +31,35 @@ def load(runs_dir: Path):
 
 
 def key_of(r):
+    """Group key for the summary table.
+
+    It has to separate on every axis that distinguishes a CONDITION, or two
+    unrelated conditions merge into one row carrying double the seed count and
+    a standard deviation that describes the gap between them rather than any
+    real variation:
+
+      scene           drjohnson k=5 seed0 vs truck k=5 seed0
+      k, n_synthetic
+      strategy        outpaint vs duplicate at the same n_fake - this one
+                      merged silently from the day the duplicate control was
+                      run, because the key carried the SELECTION method
+                      ('fps') in the column labelled 'method' and never the
+                      strategy at all
+      selection       fps vs random
+      depth           depth runs share a provenance with their twin
+
+    The label mirrors the paired table below: a baseline is named by how its
+    views were chosen, an augmented run by what was done to it.
+    """
     prov = r.get("provenance", {})
-    # Depth runs share a scene - and therefore a provenance - with their
-    # non-depth twin, so they must be labelled apart or they merge into it.
-    method = (prov.get("method") or "") + ("+depth" if is_depth(r) else "")
-    return (scene_of(r), prov.get("k"), method, prov.get("n_synthetic", 0))
+    sel = select_of(r)
+    strat = prov.get("strategy") or "none"
+    label = sel if strat == "none" else strat
+    if strat != "none" and sel != "fps":
+        label = f"{label}+{sel}"
+    if is_depth(r):
+        label += "+depth"
+    return (scene_of(r), prov.get("k"), label, prov.get("n_synthetic", 0))
 
 
 def agg(vals):
@@ -114,12 +138,16 @@ def main():
     # A depth-regularised 0-fake run is NOT a baseline: it is a treatment that
     # happens to add no synthetic views. Letting it in here overwrites the real
     # baseline and shifts every delta in the table.
+    # ...and it must carry the SELECTION METHOD too. truck_k20_seed0_fps_fake0
+    # and truck_k20_seed0_random_fake0 agree on (scene, k, seed); without the
+    # third axis one overwrites the other and every fps delta is measured
+    # against a random baseline ~0.7 dB lower. See select_of().
     baselines = {}
     for r in recs:
         p = r["provenance"]
         if (p.get("n_synthetic", 0) == 0 and p.get("method") != "full"
                 and not is_depth(r)):
-            baselines[(scene_of(r), p.get("k"), p.get("seed"))] = r["metrics"]
+            baselines[(scene_of(r), select_of(r), p.get("k"), p.get("seed"))] = r["metrics"]
 
     paired = defaultdict(list)
     for r in recs:
@@ -130,12 +158,18 @@ def main():
         dep = is_depth(r)
         if nf == 0 and not dep:
             continue                      # a plain baseline is the reference
-        base = baselines.get((scene_of(r), p.get("k"), p.get("seed")))
+        sel = select_of(r)
+        base = baselines.get((scene_of(r), sel, p.get("k"), p.get("seed")))
         if not base:
             continue
         strat = p.get("strategy") or "none"
         if dep:
             strat = "depth" if nf == 0 else f"{strat}+depth"
+        # Same suffix idiom as +depth: keeps the table shape while making the
+        # key unique, so an fps row and a random row cannot merge into one
+        # six-seed row with a standard deviation twice the effect.
+        if sel != "fps":
+            strat = f"{strat}+{sel}"
         paired[(scene_of(r), p.get("k"), strat, nf)].append({
             "seed": p.get("seed"),
             "d_psnr": r["metrics"]["psnr"]["mean"] - base["psnr"]["mean"],

@@ -28,7 +28,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from scene_key import is_depth, scene_of
+from scene_key import is_depth, scene_of, select_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 OUT = ROOT / "results"
@@ -46,13 +46,19 @@ def agg(v):
     return mean(v), (stdev(v) if len(v) > 1 else 0.0)
 
 
-def load(scene="truck"):
+def load(scene="truck", select="fps"):
     # One scene only: (k, seed) is unique within a scene but not across them,
     # so mixing drjohnson in would pair truck runs against drjohnson floors.
+    # And one SELECTION method only, for exactly the same reason one axis over:
+    # truck_k20_seed0_fps_fake0 and truck_k20_seed0_random_fake0 agree on
+    # (k, seed), so the random baseline would overwrite the fps one and every
+    # curve here would be drawn against a floor ~0.7 dB too low.
     base, runs, full = {}, defaultdict(list), None
     for p in sorted((ROOT / "runs").glob("*/results.json")):
         r = json.loads(p.read_text())
         if scene_of(r) != scene or is_depth(r):
+            continue
+        if select_of(r) not in (select, "full"):
             continue
         pr = r["provenance"]
         if pr.get("method") == "full":

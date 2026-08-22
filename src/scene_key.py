@@ -29,6 +29,32 @@ def scene_of(rec: dict) -> str:
     return str(rec.get("tag", "")).split("_k")[0]
 
 
+def select_of(rec: dict) -> str:
+    """How the K real views were CHOSEN: 'fps', 'random', or 'full'.
+
+    The third collision axis, and the one that stayed hidden longest. Every
+    result in the study used farthest-point sampling, so (scene, k, seed) was
+    unique - until the `random` manifests, written by select_subsets.py at the
+    very start, were finally trained on. Then truck_k20_seed0_fps_fake0 and
+    truck_k20_seed0_random_fake0 shared a baseline key, one silently
+    overwrote the other, and EVERY fps delta in the study was recomputed
+    against a random baseline that is ~0.7 dB lower. Inpainting at k=20 moved
+    from -0.161 to +0.515 - a sign flip, from a run that had nothing to do
+    with inpainting.
+
+    This is the same failure as scene_of() one axis over: a key that was
+    unique only because an experiment had not been run yet.
+    """
+    prov = rec.get("provenance", {}) or {}
+    m = prov.get("method")
+    if m:
+        return str(m)
+    man = prov.get("manifest")
+    if man:                       # subsets/truck_k20_seed0_random.json
+        return PurePosixPath(str(man)).stem.rsplit("_", 1)[-1]
+    return "fps"                  # pre-dates the random sweep
+
+
 def is_depth(rec: dict) -> bool:
     """Was this run trained with depth regularisation?
 

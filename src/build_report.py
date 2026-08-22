@@ -18,7 +18,7 @@ from statistics import mean, stdev
 
 from PIL import Image
 
-from scene_key import is_depth, scene_of
+from scene_key import is_depth, scene_of, select_of
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 RES = ROOT / "results"
@@ -30,7 +30,7 @@ STRAT_LABEL = {"inpaint": "Inpainting", "outpaint": "Outpainting",
 
 
 # ---------------------------------------------------------------- data
-def load_runs(scene: str = "truck"):
+def load_runs(scene: str = "truck", select: str = "fps"):
     """Every run of ONE scene.
 
     The filter is not cosmetic. Every table below pairs an augmented run
@@ -43,11 +43,22 @@ def load_runs(scene: str = "truck"):
     provenance with their non-depth twin, so a `..._fake0_depth` run counts as
     a baseline and overwrites the real one. They are loaded separately by
     build_depth().
+
+    Runs whose K views were drawn at RANDOM rather than by farthest-point
+    sampling are excluded for the same reason again, one axis over. They are
+    the same scene, the same k and the same seeds, so truck_k20_seed0_fps_fake0
+    and truck_k20_seed0_random_fake0 collide in `baselines[(k, seed)]` below -
+    and they also land in the same `fewshot[k]` bucket, which is where the
+    15.20 / 17.11 / 19.74 dB floors quoted throughout this report come from.
+    Left in, they would move every floor and every delta at once.
+
+    Pass select="random" to load them deliberately.
     """
     recs = []
     for p in sorted((ROOT / "runs").glob("*/results.json")):
         r = json.loads(p.read_text())
-        if scene_of(r) == scene and not is_depth(r):
+        if (scene_of(r) == scene and not is_depth(r)
+                and (select_of(r) in (select, "full"))):
             recs.append(r)
     return recs
 

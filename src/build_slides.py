@@ -68,6 +68,7 @@ def main():
     head, rows = R.build_tables(recs)
     gen = R.build_generalisation()
     depth = R.build_depth()
+    mcx = {r["k"]: r for r in R.build_model_crossover(recs)}
 
     def out(k, ratio):
         for r in rows:
@@ -95,6 +96,10 @@ def main():
         "D10": f'{depth["rows"][10]["depth"][0]:+.3f}' if depth else "n/a",
         "D20": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "DBOTH": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
+        # Bare keys: the substitution loop below adds the braces itself.
+        **{f"MC_{m.upper()}{k}":
+           (f'{mcx[k]["ds8" if m == "ds" else "sd15"]:+.3f}' if k in mcx else "n/a")
+           for k in (5, 10, 20) for m in ("sd", "ds")},
         "IMG_CROSS": data_uri("panel_crossover.png"),
         "IMG_SCALE": data_uri("panel_scaling.png"),
     }
@@ -408,6 +413,32 @@ a{color:var(--accent)}
     <p>A decaying benefit plus a roughly constant cost is sufficient to produce a sign
     change. That is an explanation, and explanations are cheap — so it was made to
     predict something that could fail.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Is it just this one model?</div>
+    <h2>A second checkpoint reverses in the same place</h2>
+    <p class="lead">The obvious objection: perhaps the crossover is a property of Stable
+    Diffusion 1.5 rather than of augmentation. Dreamshaper-8 — same architecture, same
+    VRAM budget, <em>better</em> photorealism — answers it.</p>
+    <div class="tw"><table>
+      <thead><tr><th>real views</th><th class="n">SD 1.5</th>
+                 <th class="n">Dreamshaper-8</th></tr></thead>
+      <tbody>
+        <tr><td>5</td><td class="n pos">{{MC_SD5}}</td><td class="n pos">{{MC_DS5}}</td></tr>
+        <tr><td>10</td><td class="n">{{MC_SD10}}</td><td class="n neg">{{MC_DS10}}</td></tr>
+        <tr><td>20</td><td class="n neg">{{MC_SD20}}</td><td class="n neg">{{MC_DS20}}</td></tr>
+      </tbody>
+      <caption>Outpainting at the 200% ratio, paired within seed.</caption>
+    </table></div>
+    <p>Same reversal, different checkpoint. And the better-looking model is
+    <strong>worse at every subset size</strong> — it even crosses over earlier, turning
+    negative at k = 10 where SD 1.5 is still at zero.</p>
+    <p class="muted">A model finetuned to make each image individually more convincing has
+    no reason to be more consistent <em>between</em> images. Photorealism is not what a
+    synthetic view contributes.</p>
   </div>
 </section>
 

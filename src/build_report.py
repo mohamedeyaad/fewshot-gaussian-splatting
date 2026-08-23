@@ -204,6 +204,48 @@ def build_control(recs):
     return out
 
 
+def build_model_crossover(recs):
+    """Does the SIGN CHANGE survive the checkpoint swap, or only the gain?
+
+    build_ablation() below compares the two models at k=5, where outpainting
+    helps. That is the half of the claim least in doubt. The finding of this
+    study is that the same treatment reverses sign as real views accumulate,
+    and for a long time no second model had been run at any subset size where
+    the sign is negative - so the ablation could not distinguish "augmentation
+    crosses over" from "SD 1.5 crosses over".
+
+    This compares both models at the 200% ratio across all three subset sizes.
+    The claim survives only if the second column changes sign too.
+    """
+    NF = {5: 10, 10: 20, 20: 40}          # 200% at each subset size
+    base, runs = {}, defaultdict(list)
+    for r in recs:
+        p = r["provenance"]
+        if p.get("method") == "full":
+            continue
+        k, s, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
+        if k not in NF:
+            continue
+        if nf == 0:
+            base[(k, s)] = r["metrics"]
+        else:
+            runs[(k, p.get("strategy"), nf)].append((s, r["metrics"]))
+
+    def d(k, strat):
+        ds = [m["psnr"]["mean"] - base[(k, s)]["psnr"]["mean"]
+              for s, m in runs.get((k, strat, NF[k]), []) if (k, s) in base]
+        return agg(ds) if ds else None
+
+    out = []
+    for k in (5, 10, 20):
+        a, b = d(k, "outpaint"), d(k, "outpaint_ds8")
+        if not (a and b):
+            continue
+        out.append({"k": k, "sd15": a[0], "sd15_sd": a[1],
+                    "ds8": b[0], "ds8_sd": b[1]})
+    return out
+
+
 def build_ablation(recs):
     """Model-robustness ablation: SD 1.5 vs Dreamshaper-8, outpainting at k=5.
 
@@ -433,6 +475,16 @@ def main():
         for a in ablation)
     abl_all_pos = all(a["ds"] > 0 for a in ablation) if ablation else False
 
+    # --- does the SIGN CHANGE survive the checkpoint swap, not just the gain?
+    mcross = build_model_crossover(recs)
+    mc = {r["k"]: r for r in mcross}
+    mc_rows = "\n".join(
+        f'<tr><td>{r["k"]} real views</td>'
+        + delta_cell(r["sd15"], r["sd15_sd"], abs(r["sd15"]) > r["sd15_sd"] > 0)
+        + delta_cell(r["ds8"], r["ds8_sd"], abs(r["ds8"]) > r["ds8_sd"] > 0)
+        + "</tr>"
+        for r in mcross)
+
     # --- depth regularisation: the 3x2x2 factorial ---
     depth = build_depth()
     depth_rows = ""
@@ -595,6 +647,11 @@ def main():
         "{{SCALING_TABLE}}": scaling_table,
         "{{CONTROL_TABLE}}": ctrl_rows,
         "{{ABLATION_TABLE}}": abl_rows,
+        "{{MODEL_CROSS_TABLE}}": mc_rows,
+        "{{MC5}}": f'{mc[5]["ds8"]:+.3f}' if 5 in mc else "n/a",
+        "{{MC10}}": f'{mc[10]["ds8"]:+.3f}' if 10 in mc else "n/a",
+        "{{MC20}}": f'{mc[20]["ds8"]:+.3f}' if 20 in mc else "n/a",
+        "{{MC10_SD15}}": f'{mc[10]["sd15"]:+.3f}' if 10 in mc else "n/a",
         "{{DEPTH_TABLE}}": depth_rows,
         "{{DEPTH_K5}}": f'{depth["rows"][5]["depth"][0]:+.3f}' if depth else "n/a",
         "{{DEPTH_K20}}": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
@@ -1107,6 +1164,38 @@ agrees with the warp-only control, where diffusion's contribution was geometric 
 than image quality, and with inpainting, which produces convincing images at a perfect pose
 and is nonetheless useless. Across three independent lines of evidence, what a synthetic view
 contributes is <b>coverage, not photorealism</b>.</p>
+
+<p>All of that concerns k = 5, where outpainting helps — the half of the claim least in doubt.
+The finding of this study is the <em>sign change</em>, so the ablation is only worth its name
+if the second model reverses too.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 4b.</b> Both checkpoints at the 200% ratio across every subset size,
+  each paired against the same seed's own baseline. The crossover is a property of
+  augmentation only if the right-hand column changes sign as the left one does.</caption>
+  <thead>
+    <tr><th>real views</th><th class="num">SD 1.5</th>
+        <th class="num">Dreamshaper-8</th></tr>
+  </thead>
+  <tbody>
+{{MODEL_CROSS_TABLE}}
+  </tbody>
+</table>
+</div>
+
+<p>It does. Dreamshaper-8 runs {{MC5}} dB at k = 5 and {{MC20}} dB at k = 20 — the same
+reversal, on a different checkpoint. <b>The crossover is not an artefact of Stable Diffusion
+1.5.</b></p>
+
+<p>Two details sharpen the mechanism further. The second model's curve sits <em>below</em> the
+first at every subset size, so its crossing point arrives <em>earlier</em>: at k = 10, where
+SD 1.5 is indistinguishable from zero ({{MC10_SD15}}), Dreamshaper-8 is already separated and
+negative ({{MC10}}). And Dreamshaper-8 is the <em>more</em> photorealistic model. A checkpoint
+finetuned to make each image individually more convincing has no reason to be more consistent
+<em>between</em> images, and plausibly less — it commits to invented detail with greater
+confidence. Better-looking training data, measurably worse reconstruction, at every subset
+size tested.</p>
 
 <h3>Does it generalise? A second scene</h3>
 <p>The checkpoint swap rules out one model. It does not rule out one <em>scene</em>. Every

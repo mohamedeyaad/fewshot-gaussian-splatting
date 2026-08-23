@@ -130,7 +130,7 @@ a{color:var(--accent)}
     destroying.</p>
     <hr class="rule">
     <div class="cols">
-      <div class="card"><div class="k num">227</div>
+      <div class="card"><div class="k num">236</div>
         <div class="cap">training runs</div></div>
       <div class="card"><div class="k num">2</div>
         <div class="cap">scenes: an outdoor object and an indoor room</div></div>
@@ -208,7 +208,7 @@ a{color:var(--accent)}
     <h2>The measurement has to survive a 0.2 dB effect</h2>
     <ul>
       <li><strong>Frozen held-out split.</strong> Every run of a scene is scored against
-      byte-identical test images — verified by hash across all 227 runs.</li>
+      byte-identical test images — verified by hash across all 236 runs.</li>
       <li><strong>Paired within seed.</strong> Each augmented run is compared to
       <em>its own seed's</em> baseline, so the luck of which five views were drawn
       cancels instead of adding noise.</li>
@@ -302,6 +302,32 @@ a{color:var(--accent)}
 
 <section class="slide">
   <div class="inner">
+    <div class="eyebrow">Is it just this one model?</div>
+    <h2>A second checkpoint reverses in the same place</h2>
+    <p class="lead">The obvious objection: perhaps the crossover is a property of Stable
+    Diffusion 1.5 rather than of augmentation. Dreamshaper-8 — same architecture, same
+    VRAM budget, <em>better</em> photorealism — answers it.</p>
+    <div class="tw"><table>
+      <thead><tr><th>real views</th><th class="n">SD 1.5</th>
+                 <th class="n">Dreamshaper-8</th></tr></thead>
+      <tbody>
+        <tr><td>5</td><td class="n pos">+0.285</td><td class="n pos">+0.193</td></tr>
+        <tr><td>10</td><td class="n">-0.003</td><td class="n neg">-0.163</td></tr>
+        <tr><td>20</td><td class="n neg">-0.618</td><td class="n neg">-0.825</td></tr>
+      </tbody>
+      <caption>Outpainting at the 200% ratio, paired within seed.</caption>
+    </table></div>
+    <p>Same reversal, different checkpoint. And the better-looking model is
+    <strong>worse at every subset size</strong> — it even crosses over earlier, turning
+    negative at k = 10 where SD 1.5 is still at zero.</p>
+    <p class="muted">A model finetuned to make each image individually more convincing has
+    no reason to be more consistent <em>between</em> images. Photorealism is not what a
+    synthetic view contributes.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
     <div class="eyebrow">Prediction 1 &middot; held</div>
     <h2>Constraint without a viewpoint should never cross over</h2>
     <p class="lead">If the harm is <em>inconsistency</em>, an intervention that supplies
@@ -380,7 +406,7 @@ a{color:var(--accent)}
     photographs are. At five views the coverage is worth the inconsistency. By twenty it
     is not — and the same treatment that helped now harms.</p>
     <hr class="rule">
-    <p class="muted">227 runs · 2 scenes · every held-out set hash-verified
+    <p class="muted">236 runs · 2 scenes · every held-out set hash-verified
     identical within its scene · code and full report in the repository.</p>
   </div>
 </section>

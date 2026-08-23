@@ -169,7 +169,7 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
   <div class="inner">
     <p class="eyebrow">Few-shot 3D reconstruction · experimental report</p>
     <h1>Diffusion Augmentation Helps Few-Shot Gaussian Splatting Only When Data Is Scarcest</h1>
-    <p class="standfirst">157 controlled training runs on the <em>truck</em> scene show
+    <p class="standfirst">166 controlled training runs on the <em>truck</em> scene show
     that the value of a synthetic view depends on how many real views you already have. At five
     real images outpainting helps at every ratio; by twenty it hurts at every ratio. The
     crossover is measurable, it reproduces on a second scene indoors (34 further runs),
@@ -178,7 +178,7 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
     <div class="byline">
       <span>Tanks &amp; Temples <b>truck</b> · 251 images</span>
       <span>3 strategies × 4 ratios × 3 subset sizes × 3 seeds</span>
-      <span>157 training runs</span>
+      <span>166 training runs</span>
       <span>RTX 3050 Ti · 4 GB</span>
     </div>
   </div>
@@ -485,6 +485,40 @@ agrees with the warp-only control, where diffusion's contribution was geometric 
 than image quality, and with inpainting, which produces convincing images at a perfect pose
 and is nonetheless useless. Across three independent lines of evidence, what a synthetic view
 contributes is <b>coverage, not photorealism</b>.</p>
+
+<p>All of that concerns k = 5, where outpainting helps — the half of the claim least in doubt.
+The finding of this study is the <em>sign change</em>, so the ablation is only worth its name
+if the second model reverses too.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 4b.</b> Both checkpoints at the 200% ratio across every subset size,
+  each paired against the same seed's own baseline. The crossover is a property of
+  augmentation only if the right-hand column changes sign as the left one does.</caption>
+  <thead>
+    <tr><th>real views</th><th class="num">SD 1.5</th>
+        <th class="num">Dreamshaper-8</th></tr>
+  </thead>
+  <tbody>
+<tr><td>5 real views</td><td class="num pos">+0.285 <span class="sd">± 0.069</span> *</td><td class="num pos">+0.193 <span class="sd">± 0.069</span> *</td></tr>
+<tr><td>10 real views</td><td class="num nil">-0.003 <span class="sd">± 0.064</span></td><td class="num neg">-0.163 <span class="sd">± 0.141</span> *</td></tr>
+<tr><td>20 real views</td><td class="num neg">-0.618 <span class="sd">± 0.195</span> *</td><td class="num neg">-0.825 <span class="sd">± 0.173</span> *</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>It does. Dreamshaper-8 runs +0.193 dB at k = 5 and -0.825 dB at k = 20 — the same
+reversal, on a different checkpoint. <b>The crossover is not an artefact of Stable Diffusion
+1.5.</b></p>
+
+<p>Two details sharpen the mechanism further. The second model's curve sits <em>below</em> the
+first at every subset size, so its crossing point arrives <em>earlier</em>: at k = 10, where
+SD 1.5 is indistinguishable from zero (-0.003), Dreamshaper-8 is already separated and
+negative (-0.163). And Dreamshaper-8 is the <em>more</em> photorealistic model. A checkpoint
+finetuned to make each image individually more convincing has no reason to be more consistent
+<em>between</em> images, and plausibly less — it commits to invented detail with greater
+confidence. Better-looking training data, measurably worse reconstruction, at every subset
+size tested.</p>
 
 <h3>Does it generalise? A second scene</h3>
 <p>The checkpoint swap rules out one model. It does not rule out one <em>scene</em>. Every
@@ -807,7 +841,7 @@ land on that camera's pose.</p>
 <hr class="rule">
 <footer>
 <p>Few-Shot Gaussian Splatting with Diffusion-Based Data Augmentation ·
-Tanks &amp; Temples <code>truck</code> · 157 training runs ·
+Tanks &amp; Temples <code>truck</code> · 166 training runs ·
 metrics computed on 32 held-out real photographs.</p>
 </footer>
 </div>

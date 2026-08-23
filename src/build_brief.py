@@ -141,6 +141,13 @@ def main():
     ctrl_max = max(c["contribution"] for c in control)
     ctrl_worst = min(c["warp"] for c in control)
     abl = ablation[-1] if ablation else None
+    # The checkpoint swap across every subset size: a swap tested only at k=5
+    # cannot distinguish "augmentation crosses over" from "SD 1.5 does".
+    mcx = {r["k"]: r for r in R.build_model_crossover(recs)}
+    mc_ds5 = mcx[5]["ds8"] if 5 in mcx else float("nan")
+    mc_ds10 = mcx[10]["ds8"] if 10 in mcx else float("nan")
+    mc_ds20 = mcx[20]["ds8"] if 20 in mcx else float("nan")
+    mc_sd10 = mcx[10]["sd15"] if 10 in mcx else float("nan")
 
     # ---- second scene ----------------------------------------------------
     gen_rows = ""
@@ -306,6 +313,9 @@ count, no fabricated content.</td>
 <tr><td><b>Checkpoint swap</b></td>
 <td>Does the result belong to one diffusion model? Dreamshaper-8 in place of SD 1.5.</td>
 <td class="num">Holds: {abl['ds']:+.3f} dB vs {abl['sd']:+.3f} at the same ratio</td></tr>
+<tr><td><b>Checkpoint swap, across k</b></td>
+<td>Does the <em>sign change</em> belong to one model, or only the gain?</td>
+<td class="num">Reverses too: {mc_ds5:+.3f} at k=5 → {mc_ds20:+.3f} at k=20</td></tr>
 <tr><td><b>Noise floor</b></td>
 <td>How large must an effect be to be real? One configuration repeated three times.</td>
 <td class="num">σ = {noise['psnr'][1]:.3f} dB (±0.055 paired)</td></tr>
@@ -318,6 +328,14 @@ hallucinated content or warping artifacts but <b>pose novelty itself</b>. Togeth
 checkpoint swap (better photorealism, marginally <em>worse</em> result) and inpainting's flatness,
 three independent lines agree: what a synthetic view contributes is <b>coverage, not
 photorealism</b>.</p>
+
+<p>The checkpoint swap was extended across every subset size, because a swap tested only where
+augmentation helps cannot tell whether the <em>crossover</em> belongs to Stable Diffusion 1.5.
+It does not: Dreamshaper-8 runs {mc_ds5:+.3f} dB at k = 5 and {mc_ds20:+.3f} at k = 20, the same
+reversal. Its curve also sits below SD 1.5 at every size, so it crosses <em>earlier</em> — at
+k = 10, where SD 1.5 is indistinguishable from zero ({mc_sd10:+.3f}), the better-looking model
+is already separated and negative ({mc_ds10:+.3f}). A checkpoint finetuned to make each image
+individually more convincing has no reason to be more consistent <em>between</em> images.</p>
 
 <h2><span class="n">5</span>Does it generalise?</h2>
 <table>

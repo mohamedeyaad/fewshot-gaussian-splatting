@@ -21,12 +21,20 @@ set -u
 cd "$HOME/fewshot_gs" || exit 1
 VPY="$HOME/fewshot_gs/venv/bin/python"
 
-SCENE=truck
-SOURCE=data/tandt/truck
+# Scene-parameterised so the prior can be tested on the second scene. The
+# defaults reproduce the original truck run exactly.
+#
+#   SCENE=drjohnson SOURCE=data/db/drjohnson RES=4 bash src/run_depth_reg.sh
+#
+# RES must match the rest of that scene's runs: drjohnson trains at -r 4
+# because a 230-view run at -r 2 exceeds the 4 GB card. Mixing resolutions
+# within a scene makes its deltas incomparable.
+SCENE="${SCENE:-truck}"
+SOURCE="${SOURCE:-data/tandt/truck}"
 K="${K:-5}"
 SEEDS="${SEEDS:-0 1 2}"
-ITERS=7000
-RES=2
+ITERS="${ITERS:-7000}"
+RES="${RES:-2}"
 NF="${NF:-10}"   # synthetic count for the 200% ratio at this k
 
 t0=$(date +%s)

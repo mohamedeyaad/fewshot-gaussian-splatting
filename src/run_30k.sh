@@ -31,8 +31,16 @@ set -u
 cd "$HOME/fewshot_gs" || exit 1
 VPY="$HOME/fewshot_gs/venv/bin/python"
 
-ITERS=30000
-OUTDIR=runs_30k
+# Parameterised so the same driver can fill in a third point on the
+# training-length axis:
+#
+#   ITERS=15000 OUTDIR=runs_15k bash src/run_30k.sh
+#
+# 15,000 is where densification stops, and it is the point that decides whether
+# 7,000 is genuinely near this regime's optimum or merely the setting that
+# happened to be used. Two points cannot distinguish those.
+ITERS="${ITERS:-30000}"
+OUTDIR="${OUTDIR:-runs_30k}"
 mkdir -p "$OUTDIR"
 
 t0=$(date +%s)
@@ -61,22 +69,24 @@ for K in 5 20; do
 done
 
 echo
-echo "############## 7,000 vs 30,000 ITERATIONS ##############"
+echo "############## TRAINING LENGTH vs THE EFFECT ##############"
 "$VPY" - <<'PY'
 import json, os
 from statistics import mean, stdev
 os.chdir(os.path.expanduser("~/fewshot_gs"))
 
 NF = {5: 10, 20: 40}
+# Every training length present, so a third point slots in without edits.
+DIRS = [("runs", "7,000"), ("runs_15k", "15,000"), ("runs_30k", "30,000")]
 
 def psnr(d, tag):
     p = f"{d}/{tag}/results.json"
     return json.load(open(p))["metrics"]["psnr"]["mean"] if os.path.exists(p) else None
 
-print(f"{'':>6} {'':>9} {'baseline':>9} {'+200%':>9} {'delta':>17}")
+print(f"{'':>6} {'iters':>9} {'baseline':>9} {'+200%':>9} {'delta':>17}")
 print("-" * 56)
 for k in (5, 20):
-    for d, lab in (("runs", "7,000"), ("runs_30k", "30,000")):
+    for d, lab in DIRS:
         ds, bs = [], []
         for s in (0, 1, 2):
             b = psnr(d, f"truck_k{k}_seed{s}_fps_fake0")
@@ -90,8 +100,10 @@ for k in (5, 20):
         print(f"k={k:<3} {lab:>9} {mean(bs):9.2f} {mean(bs)+mean(ds):9.2f} "
               f"{mean(ds):+9.3f} ± {sd:5.3f}{star}")
     print()
-print("The reported crossover is +0.285 at k=5 and -0.618 at k=20, both at")
-print("7,000. It survives convergence only if the 30,000 rows keep those signs.")
+print("Two things to read off the BASELINE column. If it peaks at or near")
+print("7,000, early stopping is this regime's optimum and the reported gain")
+print("sits at the right operating point. If it is still rising at 15,000,")
+print("then 7,000 was simply the setting used, and the report has to say so.")
 PY
 t1=$(date +%s)
 printf '\n30K SWEEP COMPLETE in %dh %dm\n' $(( (t1-t0)/3600 )) $(( ((t1-t0)%3600)/60 ))

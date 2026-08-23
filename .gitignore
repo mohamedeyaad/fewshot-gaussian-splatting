@@ -67,3 +67,10 @@ runs_30k/**
 !runs_30k/
 !runs_30k/*/
 !runs_30k/*/results.json
+
+# 15,000-iteration point on the training-length axis, isolated for the same
+# reason as runs_30k/.
+runs_15k/**
+!runs_15k/
+!runs_15k/*/
+!runs_15k/*/results.json

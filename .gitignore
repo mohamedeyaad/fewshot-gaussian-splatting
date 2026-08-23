@@ -60,3 +60,10 @@ synthetic/
 # history at commit aa17381 if it is ever wanted back.
 # ---------------------------------------------------------------------------
 archive_isolated/
+
+# 30,000-iteration convergence check, isolated from runs/ so it cannot
+# collide with the 7,000-iteration run of the same condition.
+runs_30k/**
+!runs_30k/
+!runs_30k/*/
+!runs_30k/*/results.json

@@ -715,7 +715,8 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <h2><span class="n">06</span> Full results</h2>
 <div class="tw">
 <table>
-  <caption><b>Table 5.</b> All 108 augmented conditions. Paired change against the same-seed,
+  <caption><b>Table 5.</b> All 36 augmented conditions (108 runs).
+  Paired change against the same-seed,
   same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
   <thead>
     <tr>
@@ -799,11 +800,21 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
   divides cleanly into 25/50/100/200%; at k = 5 and k = 10 the 25% point is fractional
   (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>
-  <li><b>7,000 iterations, not 30,000.</b> Densification is scheduled to run to 15,000, so it
-  is truncated. Applied identically to every condition, so comparisons hold, but absolute
-  numbers are not fully-converged 3DGS.</li>
-  <li><b>One diffusion model.</b> Only SD 1.5 inpainting was tested; SDXL and FLUX exceed
-  4 GB of VRAM.</li>
+  <li><b>7,000 iterations, not 30,000 — and the choice is load-bearing.</b> Densification is
+  scheduled to 15,000, so training stops while the model is still gaining primitives. It is
+  applied identically to every condition, so the comparisons hold; but re-running the two
+  headline cells at 30,000 shows the <em>benefit</em> does not survive it. Outpainting at
+  k = 5 falls from +0.285 dB to -0.078, while the harm at k = 20 persists
+  (-0.618 to -0.743). The unaugmented baselines fall too
+  (15.20&nbsp;&rarr;&nbsp;15.04 dB at k = 5), so 30,000 is past this regime's
+  optimum rather than better converged — few-shot 3DGS overfits long before it. The
+  positive result is therefore specific to the early-stopped operating point, which is the
+  right one here but must be stated as a condition on the claim.</li>
+  <li><b>Two checkpoints, one architecture.</b> SD 1.5 inpainting and Dreamshaper-8 were both
+  swept, and both reverse sign — but Dreamshaper-8 is an SD 1.5 <em>finetune</em>, so the
+  ablation varies image quality while holding the architecture fixed. A genuinely different
+  generator was out of reach: SDXL inpainting needs ~6.5 GB and FLUX ~54 GB against this
+  card's 4 GB.</li>
   <li><b>The crossover is bracketed, not located.</b> Outpainting is positive at k = 5 and
   negative at k = 20. The sign change lies somewhere between, but with only three subset sizes
   its position is not resolved.</li>

@@ -301,14 +301,19 @@ views costs about half a decibel.</li>
 </ul>
 
 <h3>Limitations</h3>
-<p>7,000 iterations rather than 30,000, so densification is truncated — applied identically to
-every condition, but absolute numbers sit below fully-converged 3DGS. Three seeds supports a
-consistency check (|mean| &gt; σ), not a formal significance test. The crossover is bracketed
-between k = 5 and k = 20, not located. The depth loss weight is upstream's default, untuned for
-few-shot, so its gain is likely a floor. Depth and the second scene were each swept partially —
-one scene and one ratio respectively. Only SD 1.5-class models fit the 4&nbsp;GB budget;
-multi-view-consistent generators (Zero123++, SV3D) are the natural next step and are arguably
-what pose-guided augmentation is really reaching for.</p>
+<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the two headline cells
+at 30,000 shows the <em>benefit</em> does not survive: outpainting at k = 5 falls from
++0.285 to -0.078&nbsp;dB, while the harm at k = 20 persists (-0.618 to -0.743). The
+unaugmented baselines fall too (15.20&nbsp;→&nbsp;15.04 at k = 5), so 30,000 is past this
+regime's optimum rather than better converged — few-shot 3DGS overfits long before it. Early
+stopping is the correct setting here, but the positive result is conditional on it.</p>
+
+<p>Three seeds supports a consistency check (|mean| &gt; σ), not a formal significance test. The
+crossover is bracketed between k = 5 and k = 20, not located. The depth loss weight is upstream's
+default, untuned for few-shot, so its gain is likely a floor. Depth and the second scene were each
+swept partially — one scene and one ratio respectively. Both checkpoints tested are SD 1.5-class,
+the only ones fitting 4&nbsp;GB; multi-view-consistent generators (Zero123++, SV3D) are the
+natural next step and are arguably what pose-guided augmentation is really reaching for.</p>
 
 <p class="foot">All 236 runs, raw metrics, patches and code:
 <code>github.com/mohamedeyaad/fewshot-gaussian-splatting</code> · every number above is read

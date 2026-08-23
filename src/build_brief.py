@@ -148,6 +148,11 @@ def main():
     mc_ds10 = mcx[10]["ds8"] if 10 in mcx else float("nan")
     mc_ds20 = mcx[20]["ds8"] if 20 in mcx else float("nan")
     mc_sd10 = mcx[10]["sd15"] if 10 in mcx else float("nan")
+    # 7,000 vs 30,000, read from runs_30k/ - see build_convergence().
+    cv = R.build_convergence()
+    k5_7k, k5_30k = cv["{{K5_7K}}"], cv["{{K5_30K}}"]
+    k20_7k, k20_30k = cv["{{K20_7K}}"], cv["{{K20_30K}}"]
+    b5_7k, b5_30k = cv["{{B5_7K}}"], cv["{{B5_30K}}"]
 
     # ---- second scene ----------------------------------------------------
     gen_rows = ""
@@ -406,14 +411,19 @@ views costs about half a decibel.</li>
 </ul>
 
 <h3>Limitations</h3>
-<p>7,000 iterations rather than 30,000, so densification is truncated — applied identically to
-every condition, but absolute numbers sit below fully-converged 3DGS. Three seeds supports a
-consistency check (|mean| &gt; σ), not a formal significance test. The crossover is bracketed
-between k = 5 and k = 20, not located. The depth loss weight is upstream's default, untuned for
-few-shot, so its gain is likely a floor. Depth and the second scene were each swept partially —
-one scene and one ratio respectively. Only SD 1.5-class models fit the 4&nbsp;GB budget;
-multi-view-consistent generators (Zero123++, SV3D) are the natural next step and are arguably
-what pose-guided augmentation is really reaching for.</p>
+<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the two headline cells
+at 30,000 shows the <em>benefit</em> does not survive: outpainting at k = 5 falls from
+{k5_7k} to {k5_30k}&nbsp;dB, while the harm at k = 20 persists ({k20_7k} to {k20_30k}). The
+unaugmented baselines fall too ({b5_7k}&nbsp;→&nbsp;{b5_30k} at k = 5), so 30,000 is past this
+regime's optimum rather than better converged — few-shot 3DGS overfits long before it. Early
+stopping is the correct setting here, but the positive result is conditional on it.</p>
+
+<p>Three seeds supports a consistency check (|mean| &gt; σ), not a formal significance test. The
+crossover is bracketed between k = 5 and k = 20, not located. The depth loss weight is upstream's
+default, untuned for few-shot, so its gain is likely a floor. Depth and the second scene were each
+swept partially — one scene and one ratio respectively. Both checkpoints tested are SD 1.5-class,
+the only ones fitting 4&nbsp;GB; multi-view-consistent generators (Zero123++, SV3D) are the
+natural next step and are arguably what pose-guided augmentation is really reaching for.</p>
 
 <p class="foot">All {n_total} runs, raw metrics, patches and code:
 <code>github.com/mohamedeyaad/fewshot-gaussian-splatting</code> · every number above is read

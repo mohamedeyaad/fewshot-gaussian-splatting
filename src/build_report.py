@@ -204,6 +204,43 @@ def build_control(recs):
     return out
 
 
+def build_convergence():
+    """7,000 vs 30,000 iterations, for the two headline cells.
+
+    Reads runs_30k/, not runs/. A 30,000-iteration run of an existing condition
+    agrees with it on scene, k, seed, selection method and strategy, so keeping
+    both in runs/ would collide in every paired key in this file. Each delta is
+    therefore paired against the baseline from its OWN directory - comparing a
+    30k augmented run to a 7k baseline would report the training-length
+    difference as an augmentation effect.
+
+    Returns "n/a" strings rather than failing when the sweep has not been run,
+    so the report still builds on a fresh clone.
+    """
+    NF = {5: 10, 20: 40}
+
+    def psnr(d, tag):
+        p = ROOT / d / tag / "results.json"
+        if not p.exists():
+            return None
+        return json.loads(p.read_text())["metrics"]["psnr"]["mean"]
+
+    out = {}
+    for k in (5, 20):
+        for d, lab in (("runs", "7K"), ("runs_30k", "30K")):
+            ds, bs = [], []
+            for s in (0, 1, 2):
+                b = psnr(d, f"truck_k{k}_seed{s}_fps_fake0")
+                a = psnr(d, f"truck_k{k}_seed{s}_fps_outpaint_fake{NF[k]}")
+                if b is not None:
+                    bs.append(b)
+                if b is not None and a is not None:
+                    ds.append(a - b)
+            out[f"{{{{K{k}_{lab}}}}}"] = f"{mean(ds):+.3f}" if ds else "n/a"
+            out[f"{{{{B{k}_{lab}}}}}"] = f"{mean(bs):.2f}" if bs else "n/a"
+    return out
+
+
 def build_model_crossover(recs):
     """Does the SIGN CHANGE survive the checkpoint swap, or only the gain?
 
@@ -475,6 +512,12 @@ def main():
         for a in ablation)
     abl_all_pos = all(a["ds"] > 0 for a in ablation) if ablation else False
 
+    # --- 30,000-iteration convergence check ------------------------------
+    # Read from runs_30k/, which is deliberately outside runs/: a 30k run of an
+    # existing condition matches it on scene, k, seed, selection and strategy,
+    # so in runs/ it would overwrite the 7k baseline in every paired key.
+    conv = build_convergence()
+
     # --- does the SIGN CHANGE survive the checkpoint swap, not just the gain?
     mcross = build_model_crossover(recs)
     mc = {r["k"]: r for r in mcross}
@@ -646,6 +689,11 @@ def main():
         "{{CROSSOVER_TABLE}}": crossover_table,
         "{{SCALING_TABLE}}": scaling_table,
         "{{CONTROL_TABLE}}": ctrl_rows,
+        # Counted, not asserted: the caption used to claim 108 conditions when
+        # there are 36 (108 is the RUN count, three seeds each).
+        **conv,
+        "{{N_COND}}": str(len(rows)),
+        "{{N_AUG_RUNS}}": str(sum(r["seeds"] for r in rows)),
         "{{ABLATION_TABLE}}": abl_rows,
         "{{MODEL_CROSS_TABLE}}": mc_rows,
         "{{MC5}}": f'{mc[5]["ds8"]:+.3f}' if 5 in mc else "n/a",
@@ -1380,7 +1428,8 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <h2><span class="n">06</span> Full results</h2>
 <div class="tw">
 <table>
-  <caption><b>Table 5.</b> All 108 augmented conditions. Paired change against the same-seed,
+  <caption><b>Table 5.</b> All {{N_COND}} augmented conditions ({{N_AUG_RUNS}} runs).
+  Paired change against the same-seed,
   same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
   <thead>
     <tr>
@@ -1426,11 +1475,21 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   <li><b>Ratios are not exactly the specified values at every subset size.</b> Only k = 20
   divides cleanly into 25/50/100/200%; at k = 5 and k = 10 the 25% point is fractional
   (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>
-  <li><b>7,000 iterations, not 30,000.</b> Densification is scheduled to run to 15,000, so it
-  is truncated. Applied identically to every condition, so comparisons hold, but absolute
-  numbers are not fully-converged 3DGS.</li>
-  <li><b>One diffusion model.</b> Only SD 1.5 inpainting was tested; SDXL and FLUX exceed
-  4 GB of VRAM.</li>
+  <li><b>7,000 iterations, not 30,000 — and the choice is load-bearing.</b> Densification is
+  scheduled to 15,000, so training stops while the model is still gaining primitives. It is
+  applied identically to every condition, so the comparisons hold; but re-running the two
+  headline cells at 30,000 shows the <em>benefit</em> does not survive it. Outpainting at
+  k = 5 falls from {{K5_7K}} dB to {{K5_30K}}, while the harm at k = 20 persists
+  ({{K20_7K}} to {{K20_30K}}). The unaugmented baselines fall too
+  ({{B5_7K}}&nbsp;&rarr;&nbsp;{{B5_30K}} dB at k = 5), so 30,000 is past this regime's
+  optimum rather than better converged — few-shot 3DGS overfits long before it. The
+  positive result is therefore specific to the early-stopped operating point, which is the
+  right one here but must be stated as a condition on the claim.</li>
+  <li><b>Two checkpoints, one architecture.</b> SD 1.5 inpainting and Dreamshaper-8 were both
+  swept, and both reverse sign — but Dreamshaper-8 is an SD 1.5 <em>finetune</em>, so the
+  ablation varies image quality while holding the architecture fixed. A genuinely different
+  generator was out of reach: SDXL inpainting needs ~6.5 GB and FLUX ~54 GB against this
+  card's 4 GB.</li>
   <li><b>The crossover is bracketed, not located.</b> Outpainting is positive at k = 5 and
   negative at k = 20. The sign change lies somewhere between, but with only three subset sizes
   its position is not resolved.</li>

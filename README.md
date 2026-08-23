@@ -6,7 +6,7 @@ Splatting when you only have a handful of real photographs?
 **Short answer: only when you have very few real views, and even then barely.**
 The value of a synthetic image depends on how much real data you already have —
 it crosses from beneficial to harmful somewhere between 5 and 20 real views.
-This repository contains the full pipeline, all 142 training runs, and the
+This repository contains the full pipeline, all 236 training runs, and the
 analysis behind that claim.
 
 University of Genoa (UNIGE) — robotics project.
@@ -225,11 +225,22 @@ from the experiments:
 |---|---|
 | [`results/report_brief.html`](results/report_brief.html) | **the ~5-page submission report** — the argument, print-ready |
 | [`results/report.html`](results/report.html) | the full write-up — every table, every control, truck only |
+| [`results/slides.html`](results/slides.html) | the presentation — arrow keys to advance, **F** fullscreen, **P** print |
+| `results/report.docx` | the brief as Word, converted from the HTML |
+| `results/report_full.docx` | the full report as Word |
+| `results/presentation.pptx` | the deck as PowerPoint, 16:9 |
 
 ```bash
 $VPY src/build_brief.py     # -> results/report_brief.html
 $VPY src/build_report.py    # -> results/report.html
+$VPY src/build_slides.py    # -> results/slides.html
+$VPY src/export_office.py   # -> the .docx and .pptx versions
 ```
+
+The HTML files are canonical: they are what the build scripts generate and what
+every number is read into. The Office files are conversions of those same
+files, produced by script rather than written by hand, so the two cannot drift
+apart. Edit the builders, never the .docx.
 
 To produce a PDF: open the brief in a browser → **Ctrl+P** → A4 → margins
 *Default* → **background graphics ON** → Save as PDF.
@@ -243,7 +254,7 @@ src/                    all pipeline code (see "Reproducing" below)
 patches/                the three required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
-runs/*/results.json     raw metrics for all 142 runs - the experimental record
+runs/*/results.json     raw metrics for all 236 runs - the experimental record
 results/                figures, summary tables, and the final report
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
@@ -390,14 +401,46 @@ $VPY -u src/run_experiment.py --scene scenes/drjohnson_k230_seed0_full_fake0 \
      --iterations 7000 --resolution 4
 bash src/run_drjohnson_sweep.sh          # 24 runs, ~2.5 h
 
+# 7c. Robustness sweeps. Each answers one objection to the headline result and
+#     is independent of the others, so they can be run in any order or skipped.
+bash src/run_random_sweep.sh    # 18 runs, ~2.5 h. Subsets drawn at RANDOM rather
+                                # than by FPS: does the crossover depend on having
+                                # chosen the five views well?
+bash src/run_ds8_crossover.sh   #  9 runs, ~1.5 h. Dreamshaper-8 at k=10 and k=20,
+                                # completing a checkpoint swap that previously
+                                # covered only k=5.
+bash src/run_30k.sh             # 12 runs, ~5 h. The two headline cells at 30,000
+                                # iterations instead of 7,000.
+bash src/run_30k_depth.sh       # 12 runs, ~5 h. The depth 2x2 at 30,000, to see
+                                # whether constraint survives where invention does
+                                # not.
+
+# The last two write to runs_30k/, NOT runs/. A 30,000-iteration run of an
+# existing condition matches it on scene, k, seed, selection method and
+# strategy, so in runs/ it would overwrite the 7,000-iteration baseline in
+# every paired key in the analysis.
+
 # 8. Analysis and deliverables.
 $VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv (all scenes)
+$VPY src/validate_runs.py     # four internal-consistency checks, all scenes
 $VPY src/crossover_table.py             # truck: the headline matrix, to stdout
 $VPY src/crossover_table.py drjohnson   # the same matrix for the second scene
 $VPY src/plot_curves.py       # -> results/{curves_paired,scaling,curves_absolute}.png
 $VPY src/make_panels.py       # -> results/panel_*.png
+$VPY src/make_panels_extra.py # -> the panels make_panels.py does not cover
 $VPY src/build_report.py      # -> results/report.html (self-contained)
+$VPY src/build_brief.py       # -> results/report_brief.html (the ~5-page version)
+$VPY src/build_slides.py      # -> results/slides.html (presentation)
+$VPY src/export_office.py     # -> results/{report,report_full}.docx, presentation.pptx
 ```
+
+`validate_runs.py` is worth running after any sweep. It checks four things that
+need no external reference: that every run of a scene is scored against
+byte-identical held-out images, that train and test never overlap, that each
+training set really holds `k + n_synthetic` images, and that baselines do not
+get worse as real views are added. The first is the one that matters — two
+conditions disagreeing about the answer sheet are not comparable, however
+correct the training was.
 
 Synthetic counts differ per subset size because the ratio is relative to `k`:
 
@@ -410,7 +453,7 @@ Synthetic counts differ per subset size because the ratio is relative to `k`:
 Only k=20 divides cleanly into the spec's 25/50/100/200%; at k=5 and k=10 the
 25% point is fractional (1.25 and 2.5 images) and rounds down.
 
-> **Disk.** The 142 runs produce ~15 GB of Gaussian checkpoints
+> **Disk.** The 236 runs produce ~3 GB once each block deletes its checkpoints
 > (`runs/*/point_cloud`). Every metric is extracted into `results.json` during
 > the run, so the checkpoints can be deleted afterwards — `rm -rf
 > runs/*/point_cloud runs/*/input.ply` — without losing anything the analysis
@@ -459,7 +502,7 @@ diffusion and 3DGS training never run concurrently.
 ## Experimental design notes
 
 - **Frozen test set.** 32 views chosen by the LLFF `idx % 8` rule and held
-  constant across all 142 runs. No synthetic image is ever derived from a test
+  constant across all 236 runs. No synthetic image is ever derived from a test
   view.
 - **Nested synthetic sets.** The 5-image condition contains the 2-image
   condition's images, and so on, so the ratio sweep is a genuine dose-response
@@ -502,7 +545,7 @@ diffusion and 3DGS training never run concurrently.
   alternatives that were considered, including the multi-view-consistent
   generators (Zero123++, SV3D, ImageDream) that are arguably the actual fix for
   what pose-guided augmentation is trying to do.
-- **7000 iterations**, not the upstream 30000, to keep 142 runs tractable. The
+- **7000 iterations**, not the upstream 30000, to keep 236 runs tractable. The
   full-data run reaches 25.23 dB against ≈ 25.4 dB published at full schedule,
   so the pipeline is validated, but absolute numbers are slightly below
   literature values.

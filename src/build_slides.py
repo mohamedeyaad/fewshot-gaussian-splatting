@@ -96,6 +96,9 @@ def main():
         "D10": f'{depth["rows"][10]["depth"][0]:+.3f}' if depth else "n/a",
         "D20": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "DBOTH": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
+        # 7,000 vs 30,000. build_convergence() returns brace-wrapped keys for
+        # build_report's substitution style, so strip them for this one.
+        **{k.strip("{}"): v for k, v in R.build_convergence().items()},
         # Bare keys: the substitution loop below adds the braces itself.
         **{f"MC_{m.upper()}{k}":
            (f'{mcx[k]["ds8" if m == "ds" else "sd15"]:+.3f}' if k in mcx else "n/a")
@@ -496,12 +499,15 @@ a{color:var(--accent)}
     <div class="eyebrow">Limitations</div>
     <h2>What this does not show</h2>
     <ul>
-      <li><strong>7,000 iterations, not 30,000.</strong> Densification is scheduled to
-      15,000, so it is truncated. Applied identically everywhere, so comparisons hold,
-      but absolute numbers are not fully converged 3DGS.</li>
-      <li><strong>One diffusion model.</strong> Only SD 1.5 inpainting; SDXL and FLUX
-      exceed the 4 GB card. A pose-conditioned multi-view model would be the right tool
-      and was out of reach.</li>
+      <li><strong>The 7,000-iteration setting is load-bearing.</strong> At 30,000 the
+      benefit does not survive — outpainting at k = 5 falls from {{K5_7K}} to
+      {{K5_30K}} dB, while the harm at k = 20 persists. The plain baselines fall too
+      ({{B5_7K}} → {{B5_30K}}), so 30,000 is <em>past</em> this regime's optimum, not
+      better converged. Early stopping is correct here, but the gain is conditional
+      on it.</li>
+      <li><strong>Two checkpoints, one architecture.</strong> Dreamshaper-8 is an
+      SD 1.5 finetune, so the swap varies image quality, not architecture. SDXL needs
+      ~6.5 GB and FLUX ~54 GB against this card's 4 GB.</li>
       <li><strong>Three seeds.</strong> A consistency check, not statistical
       significance.</li>
       <li><strong>Two scenes, one partially swept.</strong> The second scene was swept

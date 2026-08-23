@@ -204,6 +204,41 @@ def build_control(recs):
     return out
 
 
+def build_selection():
+    """Does the crossover depend on having chosen the K views well?
+
+    Every other result uses farthest-point sampling, which spreads the views
+    over the camera trajectory - the best case, and the obvious objection,
+    since nobody taking five casual photographs gets an optimal spread. The
+    `random` manifests were written by select_subsets.py at the start of the
+    project and sat untrained until late.
+
+    Loaded with select="random" and paired against RANDOM baselines. Pairing a
+    random augmented run against an fps baseline would book the entire
+    coverage difference as an augmentation effect.
+    """
+    NF = {5: 10, 10: 20, 20: 40}
+    out = {}
+    for sel in ("fps", "random"):
+        recs = load_runs("truck", select=sel)
+        base, runs = {}, defaultdict(list)
+        for r in recs:
+            p = r["provenance"]
+            if p.get("method") == "full":
+                continue
+            k, s, nf = p.get("k"), p.get("seed"), p.get("n_synthetic", 0)
+            if nf == 0:
+                base[(k, s)] = r["metrics"]
+            else:
+                runs[(k, p.get("strategy"), nf)].append((s, r["metrics"]))
+        for k in (5, 10, 20):
+            ds = [m["psnr"]["mean"] - base[(k, s)]["psnr"]["mean"]
+                  for s, m in runs.get((k, "outpaint", NF[k]), [])
+                  if (k, s) in base]
+            out[(sel, k)] = agg(ds) if ds else None
+    return out
+
+
 def build_convergence():
     """7,000 vs 30,000 iterations, for the two headline cells.
 
@@ -517,6 +552,7 @@ def main():
     # existing condition matches it on scene, k, seed, selection and strategy,
     # so in runs/ it would overwrite the 7k baseline in every paired key.
     conv = build_convergence()
+    sel = build_selection()
 
     # --- does the SIGN CHANGE survive the checkpoint swap, not just the gain?
     mcross = build_model_crossover(recs)
@@ -692,6 +728,9 @@ def main():
         # Counted, not asserted: the caption used to claim 108 conditions when
         # there are 36 (108 is the RUN count, three seeds each).
         **conv,
+        **{f"{{{{SEL_{('F' if s == 'fps' else 'R')}{k}}}}}":
+           (f"{sel[(s, k)][0]:+.3f}" if sel.get((s, k)) else "n/a")
+           for s in ("fps", "random") for k in (5, 10, 20)},
         "{{N_COND}}": str(len(rows)),
         "{{N_AUG_RUNS}}": str(sum(r["seeds"] for r in rows)),
         "{{ABLATION_TABLE}}": abl_rows,
@@ -1490,6 +1529,19 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   ablation varies image quality while holding the architecture fixed. A genuinely different
   generator was out of reach: SDXL inpainting needs ~6.5 GB and FLUX ~54 GB against this
   card's 4 GB.</li>
+  <li><b>The K views are chosen well, and augmentation does not rescue views that are
+  not.</b> Every result above uses farthest-point sampling, which spreads the views over the
+  trajectory. Repeating the sweep on uniformly random draws — which cover the scene
+  measurably worse, mean nearest-neighbour gap 1.588 against 1.472, worst gap 5.15 against
+  3.54 — does <em>not</em> produce a larger benefit, as a purely coverage-driven account
+  would predict. Outpainting is worth {{SEL_R5}} dB at k = 5 on random subsets against
+  {{SEL_F5}} on spread ones, and is <em>more</em> harmful at k = 20 ({{SEL_R20}} against
+  {{SEL_F20}}). The likely reason is that outpainting widens the frustum of cameras that
+  already exist, so it supplies <em>local</em> coverage and cannot reach regions a
+  badly-spread set never came near — but that explanation is post-hoc and was not predicted.
+  The defensible statement is the negative one: augmentation does not compensate for poorly
+  chosen viewpoints. Random subsets also scatter roughly five times more between seeds
+  (±0.37 against ±0.07), so at three seeds only the k = 20 row is separated from zero.</li>
   <li><b>The crossover is bracketed, not located.</b> Outpainting is positive at k = 5 and
   negative at k = 20. The sign change lies somewhere between, but with only three subset sizes
   its position is not resolved.</li>

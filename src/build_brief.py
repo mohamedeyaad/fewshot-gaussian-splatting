@@ -153,6 +153,13 @@ def main():
     k5_7k, k5_30k = cv["{{K5_7K}}"], cv["{{K5_30K}}"]
     k20_7k, k20_30k = cv["{{K20_7K}}"], cv["{{K20_30K}}"]
     b5_7k, b5_30k = cv["{{B5_7K}}"], cv["{{B5_30K}}"]
+    # fps vs random view selection - see build_selection().
+    sl = R.build_selection()
+    def _s(sel, k):
+        v = sl.get((sel, k))
+        return f"{v[0]:+.3f}" if v else "n/a"
+    sel_f5, sel_r5 = _s("fps", 5), _s("random", 5)
+    sel_f20, sel_r20 = _s("fps", 20), _s("random", 20)
 
     # ---- second scene ----------------------------------------------------
     gen_rows = ""
@@ -417,6 +424,14 @@ at 30,000 shows the <em>benefit</em> does not survive: outpainting at k = 5 fall
 unaugmented baselines fall too ({b5_7k}&nbsp;→&nbsp;{b5_30k} at k = 5), so 30,000 is past this
 regime's optimum rather than better converged — few-shot 3DGS overfits long before it. Early
 stopping is the correct setting here, but the positive result is conditional on it.</p>
+
+<p><b>The K views are chosen well, and augmentation does not rescue views that are not.</b>
+Every result above uses farthest-point sampling. Repeating the sweep on uniformly random draws
+— which cover the scene worse (worst gap 5.15 against 3.54) — does <em>not</em> give a larger
+benefit, as a purely coverage-driven account would predict: {sel_r5} against {sel_f5}&nbsp;dB at
+k = 5, and <em>more</em> harmful at k = 20 ({sel_r20} against {sel_f20}). Outpainting widens the
+frustum of cameras that already exist, so it cannot reach regions a badly-spread set never came
+near — though that reading is post-hoc. The defensible claim is the negative one.</p>
 
 <p>Three seeds supports a consistency check (|mean| &gt; σ), not a formal significance test. The
 crossover is bracketed between k = 5 and k = 20, not located. The depth loss weight is upstream's

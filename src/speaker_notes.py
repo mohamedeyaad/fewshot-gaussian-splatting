@@ -322,5 +322,94 @@ def main():
     print(f"wrote {out}  ({out.stat().st_size/1024:,.0f} KB)")
 
 
+def cheat_sheet():
+    """One page to hold while presenting.
+
+    Not a summary of the report - a recall aid. Only what is hard to
+    reconstruct under pressure: the exact numbers, the mechanism in three
+    lines, and the one-sentence answer to each likely question.
+    """
+    doc = docx.Document()
+    for s in doc.sections:
+        s.top_margin = s.bottom_margin = Inches(0.5)
+        s.left_margin = s.right_margin = Inches(0.55)
+    doc.styles["Normal"].font.name = "Calibri"
+    doc.styles["Normal"].font.size = Pt(9)
+
+    def head(txt, size=11, colour=ACCENT, before=7):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(before)
+        p.paragraph_format.space_after = Pt(2)
+        r = p.add_run(txt.upper())
+        r.bold = True
+        r.font.size = Pt(size)
+        r.font.color.rgb = colour
+        return p
+
+    def line(txt, bold=False, size=9):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(1)
+        r = p.add_run(txt)
+        r.bold = bold
+        r.font.size = Pt(size)
+        r.font.color.rgb = INK
+        return p
+
+    p = doc.add_paragraph()
+    r = p.add_run("Few-Shot Gaussian Splatting — one page")
+    r.bold = True
+    r.font.size = Pt(15)
+    r.font.color.rgb = INK
+
+    head("The three numbers", 11, ACCENT, 4)
+    line("5 real views  →  +0.285 dB     10 →  −0.003     20 →  −0.618", True, 10)
+    line("Same treatment (outpainting, 200%). Only the number of real photos changed.")
+    line("Scale: 5 more REAL photos = +1.91 dB. Ceiling (219 views) = 25.23. Floor (5) = 15.20.")
+
+    head("The mechanism, in three lines")
+    line("A fake view gives COVERAGE + CONTRADICTIONS, together.")
+    line("Coverage decays as real views accumulate. Contradictions do not.")
+    line("Shrinking benefit + constant cost = sign change.")
+
+    head("Predictions it made")
+    line("Depth prior (constraint, no invented camera) → never crosses over.  "
+         "+0.259 / +0.163 / +0.155 at k=5/10/20.  HELD", True)
+    line("Combined with outpainting at k=5: +0.714 dB — best result in the study.")
+    line("Pose-guided invents most → should hurt most. −1.013 at k=5.  HELD", True)
+
+    head("Controls (what they rule out)")
+    line("Duplicate real views  → not mere view count")
+    line("Warp-only, no diffusion → −3.94 vs −1.45: diffusion REPAIRS, the pose is the damage")
+    line("Dreamshaper-8 → reverses in the same place; better-looking model is WORSE everywhere")
+    line("Noise floor → σ = 0.039 dB, so 0.2 dB is real")
+
+    head("Second scene (drjohnson, indoor)")
+    line("Same sign flip. Stronger at k=5. Baselines scatter 0.52 dB between seeds vs 0.07 "
+         "outdoors — which is why pairing matters.")
+
+    head("The honest limits")
+    line("30,000 iterations: gain disappears (+0.285 → −0.078). BUT baselines fall too "
+         "(15.20 → 15.04) — few-shot overfits, so early stopping is correct.", True)
+    line("Random view selection: augmentation does NOT rescue badly-chosen views.")
+    line("Three seeds = consistency check, not significance. Both checkpoints are SD 1.5-class.")
+
+    head("If asked…")
+    for q, a in QA:
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(1)
+        r = p.add_run(q + "  ")
+        r.bold = True
+        r.font.size = Pt(8.5)
+        r.font.color.rgb = INK
+        r = p.add_run(re.sub(r"\s+", " ", a))
+        r.font.size = Pt(8.5)
+        r.font.color.rgb = MUTED
+
+    out = RES / "cheat_sheet.docx"
+    doc.save(str(out))
+    print(f"wrote {out}  ({out.stat().st_size/1024:,.0f} KB)")
+
+
 if __name__ == "__main__":
     main()
+    cheat_sheet()

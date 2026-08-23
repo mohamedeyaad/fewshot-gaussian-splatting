@@ -815,6 +815,19 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   ablation varies image quality while holding the architecture fixed. A genuinely different
   generator was out of reach: SDXL inpainting needs ~6.5 GB and FLUX ~54 GB against this
   card's 4 GB.</li>
+  <li><b>The K views are chosen well, and augmentation does not rescue views that are
+  not.</b> Every result above uses farthest-point sampling, which spreads the views over the
+  trajectory. Repeating the sweep on uniformly random draws — which cover the scene
+  measurably worse, mean nearest-neighbour gap 1.588 against 1.472, worst gap 5.15 against
+  3.54 — does <em>not</em> produce a larger benefit, as a purely coverage-driven account
+  would predict. Outpainting is worth +0.261 dB at k = 5 on random subsets against
+  +0.285 on spread ones, and is <em>more</em> harmful at k = 20 (-0.929 against
+  -0.618). The likely reason is that outpainting widens the frustum of cameras that
+  already exist, so it supplies <em>local</em> coverage and cannot reach regions a
+  badly-spread set never came near — but that explanation is post-hoc and was not predicted.
+  The defensible statement is the negative one: augmentation does not compensate for poorly
+  chosen viewpoints. Random subsets also scatter roughly five times more between seeds
+  (±0.37 against ±0.07), so at three seeds only the k = 20 row is separated from zero.</li>
   <li><b>The crossover is bracketed, not located.</b> Outpainting is positive at k = 5 and
   negative at k = 20. The sign change lies somewhere between, but with only three subset sizes
   its position is not resolved.</li>

@@ -74,3 +74,5 @@ runs_15k/**
 !runs_15k/
 !runs_15k/*/
 !runs_15k/*/results.json
+
+logs/

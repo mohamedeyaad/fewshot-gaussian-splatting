@@ -197,6 +197,8 @@ def main():
         noise_psnr=f'{noise["psnr"][1]:.3f}' if noise else "n/a",
         out5=d(out5["d_psnr"], out5["d_psnr_sd"], star=out5["sig_psnr"]),
         out5p=f'{out5["d_psnr"]:+.3f}',
+        o20_100=f'{get("outpaint", 20, 100)["d_psnr"]:+.3f}',
+        o20_200=f'{get("outpaint", 20, 200)["d_psnr"]:+.3f}',
         out5s=f'{out5["d_ssim"]:+.4f}',
         out20=d(out20["d_psnr"], out20["d_psnr_sd"], star=out20["sig_psnr"]),
         out20p=f'{out20["d_psnr"]:+.3f}',
@@ -375,7 +377,8 @@ TEX = r"""\documentclass{{article}}
 Diffusion models can invent photographs that look convincing, which suggests an
 obvious remedy when a 3D scene has been captured from too few viewpoints:
 generate more views. This report tests that idea on {n_runs} Gaussian-splatting
-training runs and finds that it is conditionally false. The same augmentation
+training runs of an outdoor scene, replicated on a second indoor scene, and
+finds that it is conditionally false. The same augmentation
 that improves a five-view reconstruction by {out5p}\,dB degrades a twenty-view
 one by {out20p}\,dB. Ordering three augmentation strategies by how much
 \emph{{camera pose}} they invent orders them exactly by how much damage they do,
@@ -510,9 +513,10 @@ quantities against the measured noise floor.
 \subsection{{The crossover}}
 
 Outpainting is positive at every ratio at five real views and negative at every
-ratio at twenty: {out5}\,dB at $k = 5$ against {out20}\,dB at $k = 20$. The
+ratio at twenty: {out5p}\,dB at $k = 5$ against {out20p}\,dB at $k = 20$
+(both means exceed their between-seed spread). The
 sign of the effect depends on how much real data is already present, not on the
-method or on the ratio.
+ratio --- and, as the next paragraph shows, on which strategy is used.
 
 The other two strategies bracket the explanation. Inpainting, which reuses the
 camera pose exactly, is flat everywhere --- between {inp_lo} and {inp_hi}\,dB
@@ -583,8 +587,8 @@ noisier axis, because the GPU also drives a desktop --- the $k = 10$ baseline at
 371\,s is visibly anomalous, longer than its own $k = 20$ counterpart, and it
 should not be read as a real effect. Taking the memory column as the reliable
 one, pose-guided synthesis is the worst trade in the study on both axes at once:
-it costs about half again as much as the baseline \emph{{and}} it is the only
-strategy harmful at every subset size.
+it costs up to half again as much memory as the baseline \emph{{and}} it is the
+only strategy harmful at every subset size.
 
 \subsection{{Controls}}
 
@@ -619,14 +623,18 @@ because it now contradicts a better-determined geometry. Two terms, one
 decaying and one roughly constant, are sufficient to produce a sign change, and
 that is what the grid shows.
 
-\paragraph{{Increasing reliance on synthetic data.}} Reliance can be increased
-along two axes, and they behave differently. Raising the \emph{{ratio}} at fixed
-$k$ is comparatively benign where the balance is already favourable --- at
-$k = 5$ outpainting stays positive from 25\% to 200\% --- and monotonically
-damaging where it is not. Lowering the proportion of \emph{{real}} data at a
-fixed ratio is what actually reverses the sign. The practical reading is that
-synthetic images are a substitute for photographs only in the regime where
-photographs are very scarce, and never a supplement to an adequate capture.
+\paragraph{{Increasing reliance on synthetic data.}} Reliance can be raised two
+ways, and only one of them changes the sign. Raising the \emph{{ratio}} at fixed
+$k$ moves the size of the effect but not its direction: at $k = 5$ outpainting
+is positive at all four ratios and grows with them, and at $k = 20$ it is
+negative at all four. Within a harmful row the damage is not even monotonic ---
+$k = 20$ is worst at 100\% ({o20_100}\,dB) and partially recovers at 200\%
+({o20_200}) --- so the ratio is a poor lever in either direction. What
+\emph{{does}} set the sign is the number of real photographs: the same
+treatment at the same ratio reverses between $k = 5$ and $k = 20$. The
+practical reading is that synthetic images substitute for photographs only
+where photographs are very scarce, and never supplement an adequate
+capture.
 
 \paragraph{{A constraint that does not cross over.}} If the harm comes from
 invented viewpoints rather than from augmentation as such, then an intervention

@@ -563,8 +563,9 @@ a{color:var(--accent)}
     <h2>What this does not show</h2>
     <ul>
       <li><strong>Early stopping is load-bearing.</strong> The gain decays with
-      training length: {{K5_7K}} → {{K5_15K}} → {{K5_30K}} dB at 7k, 15k, 30k. The
-      depth prior does not.</li>
+      training length: {{K5_7K}} → {{K5_15K}} → {{K5_30K}} dB at 7k, 15k, 30k. But the
+      baseline does not improve either ({{B5_7K}} → {{B5_15K}} → {{B5_30K}}), so 7,000
+      is a fair operating point, not a flattering one. The depth prior survives 30k.</li>
       <li><strong>Two checkpoints, one architecture.</strong> SDXL needs ~6.5 GB and
       FLUX ~54 GB against this card's 4 GB.</li>
       <li><strong>Three seeds, two scenes.</strong> A consistency check, not

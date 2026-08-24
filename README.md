@@ -214,6 +214,14 @@ Outpainting's benefit is gone; the prior's is not. Fabricated pixels give the
 optimiser more contradictory data to memorise as training lengthens. A depth
 constraint invents nothing, so it has no contradiction to accumulate.
 
+A third training length was measured to check that 7,000 is not a flattering
+choice. Outpainting at k=5 decays monotonically — +0.285 at 7,000, +0.045 at
+15,000, −0.078 at 30,000 — but the unaugmented baseline does not improve
+either: 15.20 → 15.22 → 15.04 dB across the same three points. Flat to 15,000
+and lower by 30,000 means few-shot splatting is over-training, not converging,
+so 7,000 is a fair operating point. The augmentation gain is still conditional
+on it; the depth prior is not.
+
 **Two results that run against this**, both stated in the report rather than
 buried:
 

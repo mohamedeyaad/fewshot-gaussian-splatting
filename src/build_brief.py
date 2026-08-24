@@ -262,8 +262,8 @@ of {ce - fl[5]['psnr']:.2f}&nbsp;dB. Augmenting with diffusion-generated views i
 remedy, and this study measures it properly: three strategies × four ratios × three subset sizes
 × three seeds, paired within seed. The value of a synthetic view turns out to
 <b>depend on how much real data already exists</b> — outpainting is worth
-{out(5,200)['d_psnr']:+.3f}&nbsp;dB at five real views and {out(20,100)['d_psnr']:+.3f}&nbsp;dB at
-twenty. Four controls locate the cause in <b>pose novelty</b>, not in image quality or hallucinated
+{out(5,200)['d_psnr']:+.3f}&nbsp;dB at five real views and {out(20,200)['d_psnr']:+.3f}&nbsp;dB at
+twenty, at the same 200&nbsp;% ratio. Four controls locate the cause in <b>pose novelty</b>, not in image quality or hallucinated
 content. That account predicts an intervention supplying geometric constraint without inventing a
 viewpoint should not cross over; a monocular depth prior does not, staying positive at every
 subset size and combining super-additively with augmentation for
@@ -337,7 +337,8 @@ term that makes synthetic coverage worth less as data accumulates.</p>
 <b>The central finding.</b> Diffusion augmentation helps when real views are scarce and
 <b>actively harms</b> once enough exist. Outpainting is positive at every ratio at five real
 views and negative at every ratio at twenty. The sign of the effect depends on the amount of
-real data, not on the method or the ratio.
+real data, not on the ratio — and, as the next paragraph shows, on which
+method is used.
 </div>
 
 <p>The other two strategies bracket the explanation. <b>Inpainting</b>, which copies the camera
@@ -437,7 +438,7 @@ so absolute PSNR is not comparable between scenes — the deltas are.</caption>
 at k = 20 every statistically separated point is negative in both. Indoors the effect is
 <em>stronger</em> — {gen['rows'][-1]['k5']:+.3f}&nbsp;dB against truck's
 {out(5,200)['d_psnr']:+.3f} — and all three metrics move together, where on truck outpainting
-bought PSNR while SSIM stayed flat. drjohnson's baselines scatter {gen['floor_sd']:.2f}&nbsp;dB
+bought PSNR while SSIM moved slightly the other way. drjohnson's baselines scatter {gen['floor_sd']:.2f}&nbsp;dB
 between seeds against truck's {fl[5]['psnr_sd']:.2f}, so an unpaired comparison could not have
 resolved a 0.2&nbsp;dB effect at all.</p>
 

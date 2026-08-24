@@ -137,6 +137,33 @@ def main():
                 else '<td class="num">—</td>'
         cross += f'<tr><td>{ratio}%</td>{tds}</tr>\n'
 
+    # ---- all three strategies, both required metrics ---------------------
+    # The crossover table above is outpainting only, and reports PSNR only.
+    # This brief is the five-page deliverable, so the specified grid - three
+    # strategies, PSNR AND SSIM - has to be legible here and not only in the
+    # full report's appendix.
+    def at200(strategy, k):
+        for (s, kk, rt), r in by.items():
+            if s == strategy and kk == k and abs(rt - 200) <= 10:
+                return r
+        return None
+
+    out5 = at200("outpaint", 5)
+    strat_rows = ""
+    for label, key in (("Inpainting", "inpaint"),
+                       ("Outpainting", "outpaint"),
+                       ("Pose-guided", "guided")):
+        tds = ""
+        for k in (5, 10, 20):
+            r = at200(key, k)
+            if not r:
+                tds += '<td class="num">&mdash;</td><td class="num">&mdash;</td>'
+                continue
+            tds += cell(r["d_psnr"], sig=r["sig_psnr"])
+            sig_ssim = abs(r["d_ssim"]) > r["d_ssim_sd"] > 0
+            tds += cell(r["d_ssim"], sig=sig_ssim, dp=4)
+        strat_rows += f'<tr><td>{label}</td>{tds}</tr>\n'
+
     # ---- controls summary ------------------------------------------------
     ctrl_max = max(c["contribution"] for c in control)
     ctrl_worst = min(c["warp"] for c in control)
@@ -304,6 +331,29 @@ subset size and gets worse as k grows, reaching
 strategies by how much new <em>camera pose</em> they invent orders them exactly by how much damage
 they do.</p>
 
+<table>
+<caption><b>Table 3.</b> All three strategies at the 200% ratio, three seeds, each paired against
+the same seed's own baseline. Both specified metrics are shown; * marks a mean exceeding its
+between-seed spread. Showing both metrics is what exposes the qualification below: at k = 5 they
+<em>disagree</em>.</caption>
+<thead>
+<tr><th rowspan="2">Strategy</th><th class="num" colspan="2">k = 5</th>
+<th class="num" colspan="2">k = 10</th><th class="num" colspan="2">k = 20</th></tr>
+<tr><th class="num">&Delta;PSNR</th><th class="num">&Delta;SSIM</th>
+<th class="num">&Delta;PSNR</th><th class="num">&Delta;SSIM</th>
+<th class="num">&Delta;PSNR</th><th class="num">&Delta;SSIM</th></tr>
+</thead>
+<tbody>
+{strat_rows}</tbody></table>
+
+<p><b>The headline gain is PSNR-only.</b> Outpainting at k = 5 is worth
+{out5['d_psnr']:+.3f}&nbsp;dB but {out5['d_ssim']:+.4f} SSIM &mdash; small, but consistent across
+all three seeds. PSNR rewards the reduction in large errors where synthetic coverage fills an
+unobserved region; SSIM penalises the local structural noise the fabricated pixels introduce. The
+<em>ordering</em> of the three strategies by pose novelty holds on both metrics, and that ordering
+is this report's central claim. The <em>sign</em> of outpainting's benefit at k = 5 does not, and
+the claim is therefore conditional on the metric as well as on the training length.</p>
+
 {fig_cross}
 
 <h3>Why the sign flips</h3>
@@ -316,7 +366,7 @@ constant, are sufficient to produce a sign change.</p>
 <div class="pb"></div>
 <h2><span class="n">4</span>Four controls</h2>
 <table>
-<caption><b>Table 3.</b> Each control isolates one candidate explanation. All are paired within
+<caption><b>Table 4.</b> Each control isolates one candidate explanation. All are paired within
 seed on <code>truck</code>.</caption>
 <thead><tr><th>Control</th><th>Question</th><th class="num">Result</th></tr></thead>
 <tbody>
@@ -358,7 +408,7 @@ individually more convincing has no reason to be more consistent <em>between</em
 
 <h2><span class="n">5</span>Does it generalise?</h2>
 <table>
-<caption><b>Table 4.</b> Outpainting on both scenes, each paired against its own same-seed
+<caption><b>Table 5.</b> Outpainting on both scenes, each paired against its own same-seed
 baseline. <code>drjohnson</code> (Deep Blending, indoor, 230 views) trains at quarter resolution,
 so absolute PSNR is not comparable between scenes — the deltas are.</caption>
 <thead><tr><th>Ratio</th><th class="num">truck k=5</th><th class="num">drjohnson k=5</th>
@@ -384,7 +434,7 @@ training photo, anchored to scene scale against the sparse COLMAP points that vi
 supervision — estimating depth from a fabricated image to constrain geometry would be circular.</p>
 
 <table>
-<caption><b>Table 5.</b> A 3×2×2 factorial: subset size × outpainting × depth prior, three seeds,
+<caption><b>Table 6.</b> A 3×2×2 factorial: subset size × outpainting × depth prior, three seeds,
 paired within seed. The last row is the interaction — how far <em>+ both</em> exceeds the sum of
 the two applied separately.</caption>
 <thead><tr><th></th><th class="num">k = 5</th><th class="num">k = 10</th>

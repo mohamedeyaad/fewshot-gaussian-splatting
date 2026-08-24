@@ -12,6 +12,7 @@ import base64
 import io
 import json
 import os
+import re
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
@@ -466,6 +467,32 @@ def build_depth(scene="truck"):
     return out if out["ks"] else None
 
 
+def number_labels(html):
+    """Assign table and figure numbers by position in the finished document.
+
+    They were hand-written, and drifted as sections were added: Table 1, 5 and
+    6 each appeared twice, a "Table 4b" sat where 6 belonged, and two different
+    figures were both "Figure 3". Numbers are now tokens - {{T:key}} in a
+    caption, the same token wherever the prose refers to it - and this assigns
+    them in caption order, so a reference cannot disagree with its caption and
+    inserting a table renumbers everything after it automatically.
+    """
+    for prefix, pat in (("T", r"<caption>\s*<b>Table \{\{T:(\w+)\}\}"),
+                        ("F", r"<figcaption>Figure \{\{F:(\w+)\}\}")):
+        order = []
+        for m in re.finditer(pat, html):
+            if m.group(1) not in order:
+                order.append(m.group(1))
+        # a token used in prose but never defined by a caption is a dangling
+        # reference; surface it rather than shipping "{{T:whatever}}"
+        used = set(re.findall(r"\{\{" + prefix + r":(\w+)\}\}", html))
+        for k in sorted(used - set(order)):
+            print(f"  WARNING: {{{{{prefix}:{k}}}}} referenced but no caption defines it")
+        for i, k in enumerate(order, 1):
+            html = html.replace("{{%s:%s}}" % (prefix, k), str(i))
+    return html
+
+
 def build_depth_convergence():
     """Does the depth prior survive the training length that killed outpainting?
 
@@ -813,7 +840,7 @@ def main():
         "{{DC_O20_30K}}": dcell(20, "30K", "outpaint"),
         "{{DC_B20_30K}}": dcell(20, "30K", "both"),
         "{{FIG_DEPTH30K}}": figure(RES / "panel_depth_30k.png",
-            "Figure 5 \u2014 The depth 2\u00d72 at k = 5 after 30,000 iterations. "
+            "Figure {{F:depth30k}} \u2014 The depth 2\u00d72 at k = 5 after 30,000 iterations. "
             "The + outpainting column is no better than the baseline beside it \u2014 the benefit measured at 7,000 has gone \u2014 while + both remains visibly cleaner. "
             "Views are those whose per-view delta sits closest to the mean effect.",
             1600, 84),
@@ -834,7 +861,7 @@ def main():
         "{{CTRL_MAX}}": f'{ctrl_max:+.2f}',
         "{{CTRL_WORST}}": f'{ctrl_worst:.2f}',
         "{{FIG_SCALING}}": figure(RES / "scaling.png",
-            "Figure 2 — Left: held-out quality against the number of real training views, "
+            "Figure {{F:scaling}} — Left: held-out quality against the number of real training views, "
             "with the full-data ceiling marked. Right: the same quantities on one axis. "
             "Adding five real photographs is worth several times the best synthetic condition "
             "measured anywhere in this study, and the worst synthetic condition costs more "
@@ -843,29 +870,30 @@ def main():
         "{{NOISE_PSNR}}": f'{noise["psnr"][1]:.3f}' if noise else "n/a",
         "{{GEN_ROWS}}": gen_rows,
         "{{FIG_TRAINING}}": figure(RES / "panel_training_data.png",
-            "Figure 1 — Synthetic training images beside the real view they derive from. "
+            "Figure {{F:training}} — Synthetic training images beside the real view they derive from. "
             "Inpainting has given the truck a second rear axle and an invented white box; "
             "outpainting fabricates the scene beyond the original frame; pose-guided renders "
             "a genuinely different viewpoint, with roughly 10% of its pixels invented.", 1500, 82),
         "{{FIG_PAIRED}}": figure(RES / "curves_paired.png",
-            "Figure 3 — Change in PSNR against the same seed's own zero-synthetic baseline, "
+            "Figure {{F:paired}} — Change in PSNR against the same seed's own zero-synthetic baseline, "
             "one line per subset size. Error bars are the standard deviation across three "
             "seeds; the grey band is the measured noise floor. Inpainting is flat and "
             "independent of subset size; outpainting crosses from beneficial at five views to "
             "harmful at twenty; pose-guided is harmful everywhere and worsens as real views "
             "accumulate.", 1600, 88, "PNG"),
         "{{FIG_STRATEGIES}}": figure(RES / "panel_strategies.png",
-            "Figure 3 — Held-out renderings at the 100% synthetic ratio. Degradation appears "
+            "Figure {{F:strategies}} — Held-out renderings at the 100% synthetic ratio. Degradation appears "
             "as smearing and semi-transparent floaters, most severely under pose-guided "
             "synthesis.", 1500, 82),
         "{{FIG_RATIO}}": figure(RES / "panel_ratio_guided.png",
-            "Figure 4 — Pose-guided synthesis as the synthetic ratio increases. Unlike the "
+            "Figure {{F:ratio}} — Pose-guided synthesis as the synthetic ratio increases. Unlike the "
             "other two strategies this degrades monotonically; there is no recovery at 200%.",
             1500, 82),
     }
     for k, v in subs.items():
         tpl = tpl.replace(k, v)
 
+    tpl = number_labels(tpl)
     OUT.write_text(tpl, encoding="utf-8")
     kb = OUT.stat().st_size / 1024
     print(f"wrote {OUT}  ({kb:,.0f} KB)")
@@ -1094,7 +1122,7 @@ augmentation would have to close.</p>
 measured directly rather than assumed:</p>
 
 <table class="tbl">
-  <caption><b>Table 1.</b> Held-out quality against the number of real training views.
+  <caption><b>Table {{T:floors}}.</b> Held-out quality against the number of real training views.
   Three seeds per row except the full-data ceiling, which is a single deterministic
   split.</caption>
   <thead>
@@ -1178,7 +1206,7 @@ densification amplifies the difference. Three repeats of an identical configurat
 
 <div class="tw">
 <table>
-  <caption><b>Table 1.</b> Run-to-run variation under an identical configuration (3 repeats).
+  <caption><b>Table {{T:noise}}.</b> Run-to-run variation under an identical configuration (3 repeats).
   Any effect smaller than roughly √2 × these values is indistinguishable from noise.</caption>
   <thead><tr><th>Quantity</th><th class="num">PSNR</th><th class="num">SSIM</th><th class="num">LPIPS</th></tr></thead>
   <tbody><tr><td>Standard deviation</td>{{NOISE_CELLS}}</tr></tbody>
@@ -1201,7 +1229,7 @@ changes sign depending on how many real views it is added to.</p>
 
 <div class="tw">
 <table>
-  <caption><b>Table 2.</b> Change in PSNR against the same-seed zero-synthetic baseline, by
+  <caption><b>Table {{T:ratios}}.</b> Change in PSNR against the same-seed zero-synthetic baseline, by
   synthetic ratio (down) and number of real views (across). Green is an improvement, red a
   degradation.</caption>
   <thead>
@@ -1261,7 +1289,7 @@ identically whether or not diffusion runs. The only variable is the hole content
 
 <div class="tw">
 <table>
-  <caption><b>Table 3.</b> Warp-only control at k = 10, three seeds. The final column is
+  <caption><b>Table {{T:warponly}}.</b> Warp-only control at k = 10, three seeds. The final column is
   (with diffusion) − (without), which is the diffusion step's isolated contribution.</caption>
   <thead>
     <tr><th>Ratio</th><th class="num">Pose-guided<br><span class="sd">warp + SD</span></th>
@@ -1305,7 +1333,7 @@ capacity, and does not fit in 4 GB regardless.</p>
 
 <div class="tw">
 <table>
-  <caption><b>Table 4.</b> Outpainting at k = 5 under two diffusion checkpoints, three seeds.
+  <caption><b>Table {{T:ckpt5}}.</b> Outpainting at k = 5 under two diffusion checkpoints, three seeds.
   The real image region is preserved byte-for-byte in both; only the fabricated periphery
   differs (mean |Δ| of 0.07 inside the frame versus 30.3 outside).</caption>
   <thead>
@@ -1335,7 +1363,7 @@ if the second model reverses too.</p>
 
 <div class="tablewrap">
 <table>
-  <caption><b>Table 4b.</b> Both checkpoints at the 200% ratio across every subset size,
+  <caption><b>Table {{T:ckptall}}.</b> Both checkpoints at the 200% ratio across every subset size,
   each paired against the same seed's own baseline. The crossover is a property of
   augmentation only if the right-hand column changes sign as the left one does.</caption>
   <thead>
@@ -1373,7 +1401,7 @@ regime — at k = 5 and k = 20, the two ends of the crossover.</p>
 
 <div class="tablewrap">
 <table>
-  <caption><b>Table 5.</b> Outpainting on both scenes, paired against each scene's own
+  <caption><b>Table {{T:scenes}}.</b> Outpainting on both scenes, paired against each scene's own
   same-seed baseline, three seeds. Absolute PSNR is not comparable across the two
   (<code>{{GEN_SCENE}}</code> trains at quarter resolution); the deltas are.</caption>
   <thead>
@@ -1394,7 +1422,8 @@ twenty.</p>
 
 <p>Indoors the effect is not merely present but <em>stronger</em>, and on better evidence. The
 k = 5 benefit reaches {{GEN_BEST}} dB against truck's {{BEST_D}}, and all three metrics move
-together: where truck bought PSNR while SSIM stayed flat, <code>{{GEN_SCENE}}</code> improves
+together: where truck bought PSNR while SSIM moved slightly the <em>other</em> way,
+<code>{{GEN_SCENE}}</code> improves
 SSIM by {{GEN_BEST_SSIM}} and LPIPS by {{GEN_BEST_LPIPS}} at the same point. Agreement across
 three metrics with different failure modes is considerably harder to obtain by chance than
 agreement in one.</p>
@@ -1413,7 +1442,7 @@ scene it was not designed for.</p>
 
 <h3>Why the sign flips</h3>
 <p>A synthetic view supplies coverage and inconsistency in fixed proportion. Coverage has
-diminishing value as real views accumulate — the per-view column in Table 1 falls by an order
+diminishing value as real views accumulate — the per-view column in Table {{T:floors}} falls by an order
 of magnitude between the first step and the last. Inconsistency does not diminish; a
 contradictory view is just as harmful at twenty views as at five, and arguably more so
 because it now contradicts a better-determined geometry. Two terms, one decaying and one
@@ -1436,7 +1465,7 @@ circular — so the prior acts on real photographs only.</p>
 
 <div class="tablewrap">
 <table>
-  <caption><b>Table 6.</b> Depth regularisation crossed with outpainting at every subset size —
+  <caption><b>Table {{T:depth}}.</b> Depth regularisation crossed with outpainting at every subset size —
   a 3&times;2&times;2 factorial, three seeds, every cell paired against the same seed's own
   unaugmented baseline. The final row is the interaction: how far <em>+ both</em> exceeds the
   sum of the two interventions applied separately.</caption>
@@ -1487,7 +1516,7 @@ as predicted.</p>
 
 <div class="tablewrap">
 <table>
-  <caption><b>Table 7.</b> The same interventions at two training lengths, three seeds, each
+  <caption><b>Table {{T:depthconv}}.</b> The same interventions at two training lengths, three seeds, each
   paired against the baseline from its <em>own</em> sweep so that the training-length
   difference cancels rather than being booked as an effect.</caption>
   <thead>
@@ -1593,7 +1622,7 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
 <h2><span class="n">06</span> Full results</h2>
 <div class="tw">
 <table>
-  <caption><b>Table 5.</b> All {{N_COND}} augmented conditions ({{N_AUG_RUNS}} runs).
+  <caption><b>Table {{T:appendix}}.</b> All {{N_COND}} augmented conditions ({{N_AUG_RUNS}} runs).
   Paired change against the same-seed,
   same-subset-size zero-synthetic baseline. LPIPS is inverted so that lower is better.</caption>
   <thead>
@@ -1684,7 +1713,7 @@ files by the script that generates it, so the document cannot drift from the exp
 
 <div class="tw">
 <table>
-  <caption><b>Table 6.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
+  <caption><b>Table {{T:gencost}}.</b> Generation cost per synthetic image, measured on the RTX 3050 Ti.</caption>
   <thead><tr><th>Strategy</th><th class="num">Seconds / image</th></tr></thead>
   <tbody>{{GEN_ROWS}}</tbody>
 </table>

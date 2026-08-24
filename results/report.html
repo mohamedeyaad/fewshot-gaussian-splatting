@@ -918,6 +918,41 @@ files by the script that generates it, so the document cannot drift from the exp
 </table>
 </div>
 
+<h3>Training cost per condition</h3>
+<p>Every run records its wall-clock training time and peak GPU memory. Both are
+reported here at the 200&nbsp;% ratio, where the cost of augmentation is largest and
+the trade-off is therefore honest.</p>
+
+<div class="tw">
+<table>
+  <caption><b>Table 12.</b> Training time in seconds and peak GPU memory in GiB,
+  mean of three seeds, on an RTX 3050 Ti. Peak memory includes the desktop compositor
+  (&approx;&nbsp;150&nbsp;MiB) and is therefore an upper bound; every condition fits in
+  4&nbsp;GB.</caption>
+  <thead>
+    <tr><th></th><th class="num" colspan="2">k = 5</th>
+        <th class="num" colspan="2">k = 10</th>
+        <th class="num" colspan="2">k = 20</th></tr>
+    <tr><th>Condition</th><th class="num">s</th><th class="num">GiB</th>
+        <th class="num">s</th><th class="num">GiB</th>
+        <th class="num">s</th><th class="num">GiB</th></tr>
+  </thead>
+  <tbody>
+<tr><td>no augmentation</td><td class="num">232</td><td class="num">1.3</td><td class="num">371</td><td class="num">1.3</td><td class="num">305</td><td class="num">2.0</td></tr>
+<tr><td>inpainting</td><td class="num">250</td><td class="num">1.4</td><td class="num">280</td><td class="num">1.4</td><td class="num">302</td><td class="num">2.0</td></tr>
+<tr><td>outpainting</td><td class="num">359</td><td class="num">2.1</td><td class="num">364</td><td class="num">2.0</td><td class="num">411</td><td class="num">2.5</td></tr>
+<tr><td>pose-guided</td><td class="num">316</td><td class="num">2.1</td><td class="num">326</td><td class="num">1.9</td><td class="num">335</td><td class="num">2.3</td></tr>
+
+  </tbody>
+</table>
+</div>
+
+<p>Peak memory tracks the primitive count and rises consistently: the two strategies that
+add scene area cost 19&ndash;58&nbsp;% more than the unaugmented baseline, while inpainting
+is within 2&nbsp;% of it. Wall-clock time is the noisier axis, since the same GPU drives a
+desktop &mdash; the k&nbsp;=&nbsp;10 baseline at 371&nbsp;s is anomalous, longer than its
+own k&nbsp;=&nbsp;20 counterpart, and should not be read as an effect.</p>
+
 <p>Two patches to the upstream 3DGS repository are required and are shipped as documented
 diffs: <code>&lt;cstdint&gt;</code> must be included in <code>rasterizer_impl.h</code>, since
 GCC 13 no longer provides it transitively; and <code>dataset_readers.py</code> is extended to

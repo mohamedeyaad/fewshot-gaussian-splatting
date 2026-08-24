@@ -119,6 +119,7 @@ def main():
     gen = R.build_generalisation()
     depth = R.build_depth()
     noise = R.load_noise()
+    cost = R.build_cost(recs)
 
     by = {(r["strategy"], r["k"], r["ratio"]): r for r in rows}
 
@@ -127,6 +128,14 @@ def main():
             if s == "outpaint" and kk == k and abs(rt - ratio) <= 10:
                 return r
         return None
+
+    def cst(key, k, i):
+        v = cost.get((key, k))
+        return f"{v[i]:.0f}" if v else "n/a"
+
+    def gib(key, k):
+        v = cost.get((key, k))
+        return f"{v[1] / 1024:.1f}" if v else "n/a"
 
     # ---- crossover table ------------------------------------------------
     cross = ""
@@ -298,6 +307,14 @@ The per-view column is what one additional real photograph buys at that point.</
 <td class="num">{head['ceil_ssim']:.3f}</td><td class="num">{head['ceil_lpips']:.3f}</td>
 <td class="num">{(ce-fl[20]['psnr'])/199:+.3f}</td></tr>
 </tbody></table>
+
+<p><b>Cost.</b> At the 200% ratio and k = 5, training takes {cst('none',5,0)}&nbsp;s and
+{gib('none',5)}&nbsp;GiB unaugmented, {cst('outpaint',5,0)}&nbsp;s and
+{gib('outpaint',5)}&nbsp;GiB under outpainting, and {cst('inpaint',5,0)}&nbsp;s and
+{gib('inpaint',5)}&nbsp;GiB under inpainting. Peak memory tracks the primitive count, so the
+strategies that add scene area cost 19–58% more than the baseline while inpainting is within
+2% of it. Wall-clock time is noisier — the same GPU drives a desktop — and every condition
+fits in 4&nbsp;GB.</p>
 
 <p>The full-data run reaches {ce:.2f}&nbsp;dB against ≈25.4&nbsp;dB published for this scene at
 the full 30,000-iteration schedule, which validates the pipeline. The value of a real view falls

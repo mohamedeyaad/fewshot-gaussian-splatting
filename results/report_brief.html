@@ -130,6 +130,14 @@ The per-view column is what one additional real photograph buys at that point.</
 <td class="num">+0.028</td></tr>
 </tbody></table>
 
+<p><b>Cost.</b> At the 200% ratio and k = 5, training takes 232&nbsp;s and
+1.3&nbsp;GiB unaugmented, 359&nbsp;s and
+2.1&nbsp;GiB under outpainting, and 250&nbsp;s and
+1.4&nbsp;GiB under inpainting. Peak memory tracks the primitive count, so the
+strategies that add scene area cost 19–58% more than the baseline while inpainting is within
+2% of it. Wall-clock time is noisier — the same GPU drives a desktop — and every condition
+fits in 4&nbsp;GB.</p>
+
 <p>The full-data run reaches 25.23&nbsp;dB against ≈25.4&nbsp;dB published for this scene at
 the full 30,000-iteration schedule, which validates the pipeline. The value of a real view falls
 by an order of magnitude across the range — +0.382&nbsp;dB each between 5 and

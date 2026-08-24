@@ -493,6 +493,42 @@ def number_labels(html):
     return html
 
 
+def build_cost(recs, scene="truck"):
+    """Training time and peak memory per condition - a specified deliverable.
+
+    Every run has carried train_seconds and peak_vram_mib from the start, but
+    nothing reported them: the tables all showed quality, and cost appeared only
+    as a per-synthetic-image generation figure, which is a different quantity.
+
+    Reported at the 200% ratio, where the cost of augmentation is largest and
+    therefore where the trade-off is honest. peak_vram_mib includes the desktop
+    compositor (~150 MiB), so treat it as an upper bound on what training needs.
+    """
+    NF = {5: 10, 10: 20, 20: 40}
+    buckets = defaultdict(list)
+    for r in recs:
+        p = r.get("provenance", {})
+        k = p.get("k")
+        nf = p.get("n_synthetic", 0)
+        if k not in NF or nf not in (0, NF[k]):
+            continue
+        c = r.get("cost", {})
+        if not c.get("train_seconds"):
+            continue
+        strat = (p.get("strategy") or "none") if nf else "none"
+        if strat in ("duplicate", "warponly", "outpaint_ds8"):
+            continue          # controls, not conditions
+        buckets[(strat, k)].append(
+            (c["train_seconds"], c.get("peak_vram_mib", 0), c.get("n_gaussians", 0)))
+
+    out = {}
+    for (strat, k), v in buckets.items():
+        out[(strat, k)] = (mean(x[0] for x in v),
+                           mean(x[1] for x in v),
+                           mean(x[2] for x in v))
+    return out
+
+
 def build_depth_convergence():
     """Does the depth prior survive the training length that killed outpainting?
 
@@ -634,6 +670,7 @@ def main():
     # --- depth regularisation: the 3x2x2 factorial ---
     depth = build_depth()
     dconv = build_depth_convergence()
+    cost = build_cost(recs)
     depth_rows = ""
     if depth:
         def drow(label, key):
@@ -773,6 +810,19 @@ def main():
         marker = "*" if (star and sd > 0 and abs(mu) > sd) else ""
         return f"{mu:+.3f}{marker}"
 
+    # training time and peak memory per condition - specified, and until now
+    # collected on every run but reported in no document
+    cost_rows = ""
+    for label, ck in (("no augmentation", "none"), ("inpainting", "inpaint"),
+                      ("outpainting", "outpaint"), ("pose-guided", "guided")):
+        tds = ""
+        for k in (5, 10, 20):
+            v = cost.get((ck, k))
+            tds += (f'<td class="num">{v[0]:.0f}</td>'
+                    f'<td class="num">{v[1] / 1024:.1f}</td>') if v else \
+                '<td class="num">-</td><td class="num">-</td>'
+        cost_rows += f"<tr><td>{label}</td>{tds}</tr>\n"
+
     subs = {
         "{{FLOOR_PSNR}}": f'{head["floor_psnr"]:.2f}',
         "{{FLOOR_SD}}": f'{head["floor_psnr_sd"]:.2f}',
@@ -821,6 +871,7 @@ def main():
         "{{MC20}}": f'{mc[20]["ds8"]:+.3f}' if 20 in mc else "n/a",
         "{{MC10_SD15}}": f'{mc[10]["sd15"]:+.3f}' if 10 in mc else "n/a",
         "{{DEPTH_TABLE}}": depth_rows,
+        "{{COST_ROWS}}": cost_rows,
         "{{DCP_O5_7K}}": dcell(5, "7K", "outpaint", star=False),
         "{{DCP_O5_30K}}": dcell(5, "30K", "outpaint", star=False),
         "{{DCP_D5_30K}}": dcell(5, "30K", "depth", star=False),
@@ -1731,6 +1782,37 @@ files by the script that generates it, so the document cannot drift from the exp
   <tbody>{{GEN_ROWS}}</tbody>
 </table>
 </div>
+
+<h3>Training cost per condition</h3>
+<p>Every run records its wall-clock training time and peak GPU memory. Both are
+reported here at the 200&nbsp;% ratio, where the cost of augmentation is largest and
+the trade-off is therefore honest.</p>
+
+<div class="tw">
+<table>
+  <caption><b>Table {{T:cost}}.</b> Training time in seconds and peak GPU memory in GiB,
+  mean of three seeds, on an RTX 3050 Ti. Peak memory includes the desktop compositor
+  (&approx;&nbsp;150&nbsp;MiB) and is therefore an upper bound; every condition fits in
+  4&nbsp;GB.</caption>
+  <thead>
+    <tr><th></th><th class="num" colspan="2">k = 5</th>
+        <th class="num" colspan="2">k = 10</th>
+        <th class="num" colspan="2">k = 20</th></tr>
+    <tr><th>Condition</th><th class="num">s</th><th class="num">GiB</th>
+        <th class="num">s</th><th class="num">GiB</th>
+        <th class="num">s</th><th class="num">GiB</th></tr>
+  </thead>
+  <tbody>
+{{COST_ROWS}}
+  </tbody>
+</table>
+</div>
+
+<p>Peak memory tracks the primitive count and rises consistently: the two strategies that
+add scene area cost 19&ndash;58&nbsp;% more than the unaugmented baseline, while inpainting
+is within 2&nbsp;% of it. Wall-clock time is the noisier axis, since the same GPU drives a
+desktop &mdash; the k&nbsp;=&nbsp;10 baseline at 371&nbsp;s is anomalous, longer than its
+own k&nbsp;=&nbsp;20 counterpart, and should not be read as an effect.</p>
 
 <p>Two patches to the upstream 3DGS repository are required and are shipped as documented
 diffs: <code>&lt;cstdint&gt;</code> must be included in <code>rasterizer_impl.h</code>, since

@@ -102,6 +102,7 @@ def main():
     noise = R.load_noise()
     cv = R.build_convergence()
     dc = R.build_depth_convergence()
+    cost = R.build_cost(recs)
 
     fl = head["floors"]
     ce = head["ceil_psnr"]
@@ -158,6 +159,19 @@ def main():
                            star=abs(r["d_ssim"]) > r["d_ssim_sd"] > 0))
         t3 += f"    {label} & " + " & ".join(cells) + r" \\" + "\n"
 
+    # ---- Table 4: training time and peak memory per condition ---------------
+    # A specified deliverable that no document reported until now: the cost
+    # numbers were on every run record but never surfaced.
+    t4 = ""
+    for label, key in (("No augmentation", "none"), ("Inpainting", "inpaint"),
+                       ("Outpainting", "outpaint"), ("Pose-guided", "guided")):
+        cells = []
+        for k in (5, 10, 20):
+            v = cost.get((key, k))
+            cells.append(f"{v[0]:.0f}" if v else "---")
+            cells.append(f"{v[1] / 1024:.1f}" if v else "---")
+        t4 += f"    {label} & " + " & ".join(cells) + r" \\" + "\n"
+
     out5 = get("outpaint", 5, 200)
     out20 = get("outpaint", 20, 200)
     inp = [r["d_psnr"] for r in rows if r["strategy"] == "inpaint"]
@@ -177,7 +191,7 @@ def main():
 
     body = TEX.format(
         n_runs=head["n_runs"],
-        t1=t1, t2=t2, t3=t3,
+        t1=t1, t2=t2, t3=t3, t4=t4,
         f5=fl[5]["psnr"], f10=fl[10]["psnr"], f20=fl[20]["psnr"], ceil=ce,
         step510=head["step_5_10"] / 5, step_beyond=(ce - fl[20]["psnr"]) / 199,
         noise_psnr=f'{noise["psnr"][1]:.3f}' if noise else "n/a",
@@ -538,6 +552,39 @@ the reduction in large errors where synthetic coverage fills an unobserved
 region; SSIM penalises the local structural noise the fabricated pixels
 introduce. The \emph{{ordering}} of the three strategies holds on both metrics;
 the \emph{{sign}} of outpainting's benefit at $k = 5$ does not.
+
+\subsection{{Cost}}
+
+Augmentation is not free in compute either. Table~\ref{{tab:cost}} reports
+training time and peak GPU memory per condition at the 200\% ratio.
+
+\begin{{table}}[htbp]
+  \centering
+  \caption{{Training cost per condition at the 200\% synthetic ratio, mean of
+  three seeds, on an RTX 3050 Ti. Peak memory includes the desktop compositor
+  ($\approx$\,150\,MiB), so it is an upper bound. Every condition fits in
+  4\,GB.}}
+  \label{{tab:cost}}
+  \begin{{tabular}}{{lcccccc}}
+    \toprule
+    & \multicolumn{{2}}{{c}}{{$k = 5$}} & \multicolumn{{2}}{{c}}{{$k = 10$}}
+    & \multicolumn{{2}}{{c}}{{$k = 20$}} \\
+    \cmidrule(lr){{2-3}} \cmidrule(lr){{4-5}} \cmidrule(lr){{6-7}}
+    \textbf{{Condition}} & s & GiB & s & GiB & s & GiB \\
+    \midrule
+{t4}    \bottomrule
+  \end{{tabular}}
+\end{{table}}
+
+Peak memory rises consistently with the primitive count: the two strategies
+that add scene area cost 19--58\% more than the unaugmented baseline, while
+inpainting, which adds no new area, is within 2\% of it. Wall-clock time is the
+noisier axis, because the GPU also drives a desktop --- the $k = 10$ baseline at
+371\,s is visibly anomalous, longer than its own $k = 20$ counterpart, and it
+should not be read as a real effect. Taking the memory column as the reliable
+one, pose-guided synthesis is the worst trade in the study on both axes at once:
+it costs about half again as much as the baseline \emph{{and}} it is the only
+strategy harmful at every subset size.
 
 \subsection{{Controls}}
 

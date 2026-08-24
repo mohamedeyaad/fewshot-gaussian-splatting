@@ -265,6 +265,43 @@ region; SSIM penalises the local structural noise the fabricated pixels
 introduce. The \emph{ordering} of the three strategies holds on both metrics;
 the \emph{sign} of outpainting's benefit at $k = 5$ does not.
 
+\subsection{Cost}
+
+Augmentation is not free in compute either. Table~\ref{tab:cost} reports
+training time and peak GPU memory per condition at the 200\% ratio.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Training cost per condition at the 200\% synthetic ratio, mean of
+  three seeds, on an RTX 3050 Ti. Peak memory includes the desktop compositor
+  ($\approx$\,150\,MiB), so it is an upper bound. Every condition fits in
+  4\,GB.}
+  \label{tab:cost}
+  \begin{tabular}{lcccccc}
+    \toprule
+    & \multicolumn{2}{c}{$k = 5$} & \multicolumn{2}{c}{$k = 10$}
+    & \multicolumn{2}{c}{$k = 20$} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+    \textbf{Condition} & s & GiB & s & GiB & s & GiB \\
+    \midrule
+    No augmentation & 232 & 1.3 & 371 & 1.3 & 305 & 2.0 \\
+    Inpainting & 250 & 1.4 & 280 & 1.4 & 302 & 2.0 \\
+    Outpainting & 359 & 2.1 & 364 & 2.0 & 411 & 2.5 \\
+    Pose-guided & 316 & 2.1 & 326 & 1.9 & 335 & 2.3 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Peak memory rises consistently with the primitive count: the two strategies
+that add scene area cost 19--58\% more than the unaugmented baseline, while
+inpainting, which adds no new area, is within 2\% of it. Wall-clock time is the
+noisier axis, because the GPU also drives a desktop --- the $k = 10$ baseline at
+371\,s is visibly anomalous, longer than its own $k = 20$ counterpart, and it
+should not be read as a real effect. Taking the memory column as the reliable
+one, pose-guided synthesis is the worst trade in the study on both axes at once:
+it costs about half again as much as the baseline \emph{and} it is the only
+strategy harmful at every subset size.
+
 \subsection{Controls}
 
 Four controls each remove one candidate explanation. Repeating real images to

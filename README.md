@@ -60,7 +60,7 @@ effects are real even where small.
 
 ### The finding
 
-**Pose novelty explains all three behaviours.** Order the strategies by how much
+Pose novelty explains all three behaviours. Order the strategies by how much
 new *camera pose* each invents:
 
 | | new pose | new information | new contradiction | effect |
@@ -74,7 +74,7 @@ Coverage loses value as real views accumulate; inconsistency does not. Two
 terms, one decaying and one roughly constant, produce a sign change — which is
 what the data show.
 
-**The exchange rate:** the best synthetic condition anywhere (+0.285 dB) is
+The exchange rate: the best synthetic condition anywhere (+0.285 dB) is
 6.7× less valuable than simply taking five more photographs (+1.91 dB).
 
 ### The control: is diffusion to blame?
@@ -91,7 +91,7 @@ Diffusion (`src/gen_warponly.py`).
 | 100 % | −1.404 \* | −3.441 \* | **+2.037** |
 | 200 % | −1.451 \* | −3.939 \* | **+2.488** |
 
-**Removing diffusion makes it far worse.** The diffusion step contributes up to
+Removing diffusion makes it far worse. The diffusion step contributes up to
 +2.49 dB of repair; SSIM and LPIPS agree at every ratio. So the pose-guided
 damage is *not* caused by hallucinated hole content or warping artifacts — the
 stage responsible for both is the stage holding the result up. What remains is
@@ -114,7 +114,7 @@ ends of the crossover — k = 5 and k = 20, 3 seeds, 24 runs.
 | 100 % | +0.182 \* | **+0.829** \* | −0.983 \* | −0.242 |
 | 200 % | +0.285 \* | **+0.989** \* | −0.618 \* | +0.195 |
 
-**The sign flip reproduces.** k = 5 is positive at every ratio in both scenes;
+The sign flip reproduces. k = 5 is positive at every ratio in both scenes;
 k = 20 is negative at every statistically separated point in both.
 
 The effect is *stronger* indoors, and on better evidence:
@@ -129,7 +129,7 @@ pattern softens — and LPIPS is worse there at *every* ratio, 200 % included, s
 the one positive PSNR cell is not a counterexample so much as a metric
 disagreement.
 
-**Why the paired design earns its keep here.** drjohnson's baselines scatter
+Why the paired design earns its keep here. drjohnson's baselines scatter
 across seeds far more than truck's (± 1.68 dB at k = 5, vs truck's ± 0.33). An
 unpaired comparison at that noise level could not resolve a 0.2 dB effect at
 all. Pairing each augmented run against *its own seed's* baseline holds the
@@ -172,7 +172,7 @@ A 3×2×2 factorial (subset size × outpainting × depth prior), 3 seeds, paired
 | **+ both** | +0.714 \* | +0.294 \* | −0.355 \* |
 | *interaction* | +0.169 \* | +0.134 | +0.108 \* |
 
-**The prediction holds. Coverage crosses over; constraint does not.** The depth
+The prediction holds. Coverage crosses over; constraint does not. The depth
 prior is positive and statistically separated at *every* subset size, including
 k=20 where outpainting costs 0.618 dB. The two interventions differ in exactly
 one respect — whether a camera that never existed is invented — and only the one
@@ -284,6 +284,7 @@ synthetic/              every generated image + poses.json (source-view linkage)
 runs/*/results.json     raw metrics for all 242 runs - the experimental record
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
+CAPTURE.md              capturing a custom scene with COLMAP
 ```
 
 Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded),

@@ -89,3 +89,6 @@ logs/
 # ---------------------------------------------------------------------------
 results/
 latex/
+
+# Overleaf upload bundle, built from latex/ which is itself ignored.
+fewshot_gs_latex.zip

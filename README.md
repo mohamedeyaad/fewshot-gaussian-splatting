@@ -6,7 +6,7 @@ Splatting when you only have a handful of real photographs?
 **Short answer: only when you have very few real views, and even then barely.**
 The value of a synthetic image depends on how much real data you already have —
 it crosses from beneficial to harmful somewhere between 5 and 20 real views.
-This repository contains the full pipeline, all 236 training runs, and the
+This repository contains the full pipeline, all 242 training runs, and the
 analysis behind that claim.
 
 University of Genoa (UNIGE) — robotics project.
@@ -36,8 +36,8 @@ run.
 
 | ratio | k=5 | k=10 | k=20 |
 |---|---|---|---|
-| 20–25 % | **+0.140** \* | **+0.172** \* | −0.283 \* |
-| 40–50 % | **+0.140** \* | +0.013 | −0.542 \* |
+| 20–25 % | +0.140 \* | **+0.172** \* | −0.283 \* |
+| 40–50 % | +0.140 \* | +0.013 | −0.542 \* |
 | 100 % | **+0.182** \* | −0.423 \* | −0.983 \* |
 | 200 % | **+0.285** \* | −0.003 | −0.618 \* |
 
@@ -75,13 +75,13 @@ terms, one decaying and one roughly constant, produce a sign change — which is
 what the data show.
 
 **The exchange rate:** the best synthetic condition anywhere (+0.285 dB) is
-**6.7× less valuable than simply taking five more photographs** (+1.91 dB).
+6.7× less valuable than simply taking five more photographs (+1.91 dB).
 
 ### The control: is diffusion to blame?
 
 Pose-guided changes two things at once — the camera pose, and the ~10% of pixels
 diffusion invents to fill disocclusions. A control separates them: warp to
-bit-identical poses, then leave the holes **black** and never load Stable
+bit-identical poses, then leave the holes black and never load Stable
 Diffusion (`src/gen_warponly.py`).
 
 | ratio | pose-guided (warp + SD) | warp-only (holes black) | diffusion's contribution |
@@ -92,10 +92,10 @@ Diffusion (`src/gen_warponly.py`).
 | 200 % | −1.451 \* | −3.939 \* | **+2.488** |
 
 **Removing diffusion makes it far worse.** The diffusion step contributes up to
-**+2.49 dB of repair**; SSIM and LPIPS agree at every ratio. So the pose-guided
++2.49 dB of repair; SSIM and LPIPS agree at every ratio. So the pose-guided
 damage is *not* caused by hallucinated hole content or warping artifacts — the
 stage responsible for both is the stage holding the result up. What remains is
-**pose novelty itself**.
+pose novelty itself.
 
 Caveat: black rectangles are a severe artifact, so part of that +2.49 dB is
 diffusion beating a low bar. The control proves diffusion is net positive —
@@ -119,10 +119,10 @@ k = 20 is negative at every statistically separated point in both.
 
 The effect is *stronger* indoors, and on better evidence:
 
-- the k = 5 benefit is **3.5× larger** (+0.989 vs +0.285 at 200 %);
+- the k = 5 benefit is 3.5× larger (+0.989 vs +0.285 at 200 %);
 - **all three metrics agree.** On truck, outpainting bought PSNR while SSIM sat
-  flat (−0.001 at 200 %). On drjohnson SSIM improves **+0.049** and LPIPS
-  improves **−0.011** alongside it.
+  flat (−0.001 at 200 %). On drjohnson SSIM improves +0.049 and LPIPS
+  improves −0.011 alongside it.
 
 The two non-significant k = 20 cells (100 %, 200 %) are the only places the
 pattern softens — and LPIPS is worse there at *every* ratio, 200 % included, so
@@ -152,14 +152,14 @@ scene's internal scaling curve is self-consistent.
 ### Testing the mechanism: a depth prior
 
 The explanation above predicts something that could fail. If the harm comes from
-**inconsistency** rather than from augmentation as such, then an intervention
+inconsistency rather than from augmentation as such, then an intervention
 supplying geometric constraint *without inventing a viewpoint* should never
 cross over — it has no contradictory geometry to accumulate.
 
 Monocular depth regularisation is that intervention: a depth network predicts an
 inverse-depth map per real training photo, anchored to scene scale against the
 sparse COLMAP points that view observes (median R² 0.964). No camera is
-invented, no pixel fabricated. Synthetic views get **no** depth supervision —
+invented, no pixel fabricated. Synthetic views get no depth supervision —
 estimating depth from a fabricated image to constrain geometry would be
 circular.
 
@@ -169,7 +169,7 @@ A 3×2×2 factorial (subset size × outpainting × depth prior), 3 seeds, paired
 |---|---|---|---|
 | **+ depth prior** | +0.259 \* | +0.163 \* | **+0.155** \* |
 | **+ outpainting (200%)** | +0.285 \* | −0.003 | **−0.618** \* |
-| **+ both** | **+0.714** \* | +0.294 \* | −0.355 \* |
+| **+ both** | +0.714 \* | +0.294 \* | −0.355 \* |
 | *interaction* | +0.169 \* | +0.134 | +0.108 \* |
 
 **The prediction holds. Coverage crosses over; constraint does not.** The depth
@@ -182,7 +182,7 @@ The shape agrees too: the prior's benefit *decays* (+0.259 → +0.163 → +0.155
 exactly as diminishing returns on constraint predict. It simply never turns
 negative, because there is no contradiction term to overtake it.
 
-They also **compound**. At k=5 the combination reaches **+0.714 dB — the largest
+They also compound. At k=5 the combination reaches **+0.714 dB — the largest
 improvement anywhere in this study** — with a positive interaction at all three
 subset sizes. They repair different deficiencies: outpainting supplies
 peripheral *content* no real view recorded; the prior supplies *constraint* on
@@ -192,13 +192,12 @@ geometry already observed.
 
 | you have | do this | gain |
 |---|---|---|
-| 5 real views | both | **+0.714** |
+| 5 real views | both | +0.714 |
 | 10 real views | both | **+0.294** (outpainting alone is inert) |
 | 20 real views | **depth only** | +0.155 (adding synthetic costs ~0.5 dB) |
 
 Depth is also the cheaper and cleaner intervention: it improves all three
-metrics where outpainting buys PSNR while degrading SSIM, and costs **+6.6%
-Gaussians** against outpainting's **+103%**.
+metrics where outpainting buys PSNR while degrading SSIM, and costs +6.6% Gaussians against outpainting's +103%.
 
 #### It also outlasts augmentation
 
@@ -218,11 +217,11 @@ constraint invents nothing, so it has no contradiction to accumulate.
 **Two results that run against this**, both stated in the report rather than
 buried:
 
-- At **k=20** the prior is **+0.130 dB** at 30,000 — no longer separated from
+- At k=20 the prior is +0.130 dB at 30,000 — no longer separated from
   zero — and the combination stays negative (−0.372). The prior does not
   rescue augmentation once twenty real views already pin the geometry.
-- The super-additivity is **single-scene**. On drjohnson the interaction is
-  **+0.075 ± 0.672 dB** — additive within noise. What reproduces on both scenes
+- The super-additivity is single-scene. On drjohnson the interaction is
+  +0.075 ± 0.672 dB — additive within noise. What reproduces on both scenes
   is only the weaker claim: the interaction is never *negative*, which is what
   two interventions repairing the same deficiency would show.
 
@@ -238,7 +237,7 @@ OUTDIR=runs_30k K=20 NF=40 $VPY src/depth_compare.py        # k=20 at 30,000
 ```
 
 > `depth_compare.py` hardcoded `truck_` and `runs/` until commit `41d18a8`, so
-> running it after a `SCENE=drjohnson` sweep printed the **truck** table under
+> running it after a `SCENE=drjohnson` sweep printed the truck table under
 > six correct drjohnson runs. The table named no scene, which is exactly why it
 > would have been believed. Its header now names scene and iteration budget.
 
@@ -254,32 +253,16 @@ OUTDIR=runs_30k K=20 NF=40 $VPY src/depth_compare.py        # k=20 at 30,000
 
 ## Reports
 
-Two documents, both generated from `runs/*/results.json` so neither can drift
-from the experiments:
-
-| file | what it is |
-|---|---|
-| [`results/report_brief.html`](results/report_brief.html) | **the ~5-page submission report** — the argument, print-ready |
-| [`results/report.html`](results/report.html) | the full write-up — every table, every control, truck only |
-| [`results/slides.html`](results/slides.html) | the presentation — arrow keys to advance, **F** fullscreen, **P** print |
-| `results/report.docx` | the brief as Word, converted from the HTML |
-| `results/report_full.docx` | the full report as Word |
-| `results/presentation.pptx` | the deck as PowerPoint, 16:9 |
+The findings are in this README. The write-ups exist for the coursework
+submission and are generated from `runs/*/results.json`, never hand-edited:
 
 ```bash
-$VPY src/build_brief.py     # -> results/report_brief.html
-$VPY src/build_report.py    # -> results/report.html
-$VPY src/build_slides.py    # -> results/slides.html
-$VPY src/export_office.py   # -> the .docx and .pptx versions
+$VPY src/build_brief.py     # -> results/report_brief.html   (~5 pages)
+$VPY src/build_report.py    # -> results/report.html         (full write-up)
+$VPY src/build_slides.py    # -> results/slides.html         (presentation)
+$VPY src/export_office.py   # -> .docx and .pptx conversions
+$VPY src/build_latex.py     # -> latex/report.tex
 ```
-
-The HTML files are canonical: they are what the build scripts generate and what
-every number is read into. The Office files are conversions of those same
-files, produced by script rather than written by hand, so the two cannot drift
-apart. Edit the builders, never the .docx.
-
-To produce a PDF: open the brief in a browser → **Ctrl+P** → A4 → margins
-*Default* → **background graphics ON** → Save as PDF.
 
 ---
 
@@ -290,7 +273,7 @@ src/                    all pipeline code (see "Reproducing" below)
 patches/                the three required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
-runs/*/results.json     raw metrics for all 236 runs - the experimental record
+runs/*/results.json     raw metrics for all 242 runs - the experimental record
 results/                figures, summary tables, and the final report
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
@@ -300,14 +283,11 @@ Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded)
 `gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (~15 GB),
 and `scenes/` (symlink farms with absolute paths — regenerate them).
 
-Every number in the report is read back out of `runs/*/results.json` at build
-time by `src/build_report.py`, so the prose cannot drift away from the data.
-
 ---
 
 ## Setup
 
-Built and tested on **WSL2 Ubuntu 24.04**, RTX 3050 Ti Laptop (**4 GB VRAM**),
+Built and tested on WSL2 Ubuntu 24.04, RTX 3050 Ti Laptop (4 GB VRAM),
 7.6 GB RAM. The 4 GB budget is the binding constraint throughout and is why
 several design decisions look the way they do.
 
@@ -356,7 +336,7 @@ Verified against upstream `54c035f` (main repo) and `9c5c202`
 | patch | reason |
 |---|---|
 | `02-rasterizer-cstdint` | GCC 13 stopped including `<cstdint>` transitively. Without it the build dies on `'uintptr_t' is not a member of 'std'`. One line; purely a compiler-compatibility fix. |
-| `01-dataset_readers-split-and-uint8` | **Two fixes in one file.** (a) Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the **test set stays byte-identical across every run**; the patch lets a `split.json` in the scene root override the rule, and with no such file behaviour is exactly as upstream. (b) The Blender loader builds frames with `dtype=np.byte`, which is *signed* int8 — values above 127 wrap negative and PIL rejects the buffer (`Cannot handle this data type: (1,1,3), \|i1`). Fatal on any recent numpy. |
+| `01-dataset_readers-split-and-uint8` | **Two fixes in one file.** (a) Upstream picks the test set with the LLFF rule `idx % 8 == 0` and trains on *everything else*. This project needs an arbitrary K-image training subset while the test set stays byte-identical across every run; the patch lets a `split.json` in the scene root override the rule, and with no such file behaviour is exactly as upstream. (b) The Blender loader builds frames with `dtype=np.byte`, which is *signed* int8 — values above 127 wrap negative and PIL rejects the buffer (`Cannot handle this data type: (1,1,3), \|i1`). Fatal on any recent numpy. |
 | `03-camera_utils-composite-rgba` | The Blender loader composites each RGBA frame over the requested background and then **discards the result**, keeping only `image.size` to compute the FOV; `loadCam` re-opens the raw file. So `--white_background` never reaches the pixels — it only recolours the rasteriser's background, *creating* a mismatch. The retained alpha then becomes a mask that `train.py` multiplies into the loss, so background pixels are never penalised, while evaluation applies no mask and scores the resulting floaters over ~70% of each frame. Measured on `lego` with all 100 views: **2.61 dB** with `-w`, **6.08 dB** without, **33.77 dB** once `loadCam` composites the RGBA itself — against ~33 dB published. Only needed for NeRF-Synthetic scenes; the COLMAP path never enters this code. |
 
 ### 4. Build the CUDA submodules
@@ -392,7 +372,7 @@ Expected at `data/tandt/truck/` with `images/` (251 JPEGs, 979×546) and
 
 ## Reproducing the experiments
 
-Total compute ≈ **15 hours** on the 4 GB laptop GPU. Every stage is idempotent —
+Total compute ≈ 15 hours on the 4 GB laptop GPU. Every stage is idempotent —
 `run_experiment.py` skips any scene that already has a `results.json`, so an
 interrupted batch can simply be re-run. This matters: the sweep was interrupted
 twice during development (once by a full host disk, once by a CUDA OOM) and both
@@ -489,7 +469,7 @@ Synthetic counts differ per subset size because the ratio is relative to `k`:
 Only k=20 divides cleanly into the spec's 25/50/100/200%; at k=5 and k=10 the
 25% point is fractional (1.25 and 2.5 images) and rounds down.
 
-> **Disk.** The 236 runs produce ~3 GB once each block deletes its checkpoints
+> **Disk.** The 242 runs produce ~3 GB once each block deletes its checkpoints
 > (`runs/*/point_cloud`). Every metric is extracted into `results.json` during
 > the run, so the checkpoints can be deleted afterwards — `rm -rf
 > runs/*/point_cloud runs/*/input.ply` — without losing anything the analysis
@@ -503,7 +483,7 @@ Geometry unit tests for the pose-guided warp (CPU only, no GPU needed):
 $VPY src/test_warp.py
 ```
 
-Test 1 warps a view onto its own pose: 99.43 % coverage, mean |diff| **0.0000**,
+Test 1 warps a view onto its own pose: 99.43 % coverage, mean |diff| 0.0000,
 rotation error 1.1e-16. Test 2 checks that hole fraction grows monotonically
 with baseline (4.47 % → 8.84 % → 16.65 %) and that interpolation fraction 1.0
 lands on the neighbour pose to 2.2e-16.
@@ -512,18 +492,18 @@ lands on the neighbour pose to 2.2e-16.
 
 ## The three strategies
 
-Each is defined by **how it obtains a camera pose for the synthetic image** —
+Each is defined by how it obtains a camera pose for the synthetic image —
 that turns out to be what determines whether it helps or hurts.
 
 | | pose | what is synthesised | src |
 |---|---|---|---|
 | **Inpainting** | copied exactly from the real view | a random 8–22 % rectangle/ellipse, composited back at native resolution so only masked pixels are synthetic | [`gen_inpaint.py`](src/gen_inpaint.py) |
-| **Outpainting** | same centre, **widened intrinsics** | the border ring around the real frame; focal lengths unchanged, principal point shifted, FOV 80.1°×50.5° → 92.9°×61.1° | [`gen_outpaint.py`](src/gen_outpaint.py) |
+| **Outpainting** | same centre, widened intrinsics | the border ring around the real frame; focal lengths unchanged, principal point shifted, FOV 80.1°×50.5° → 92.9°×61.1° | [`gen_outpaint.py`](src/gen_outpaint.py) |
 | **Pose-guided** | a **new** pose interpolated between two real cameras | monocular depth (Depth Anything V2) anchored to sparse COLMAP points, forward-warped with a z-buffer, disocclusion holes filled by diffusion | [`gen_guided.py`](src/gen_guided.py) |
 
 Depth anchoring solves a least-squares scale/shift in disparity space
 (`pred_disp * a + b ≈ 1/z_colmap`) at the sparse keypoints, with 95th-percentile
-residual trimming. Mean R² across views = **0.988**.
+residual trimming. Mean R² across views = 0.988.
 
 Filenames encode the linkage the brief asks for:
 `synth_<strategy>_<source_view>_v<NN>.jpg`, with full camera parameters in each
@@ -538,7 +518,7 @@ diffusion and 3DGS training never run concurrently.
 ## Experimental design notes
 
 - **Frozen test set.** 32 views chosen by the LLFF `idx % 8` rule and held
-  constant across all 236 runs. No synthetic image is ever derived from a test
+  constant across all 242 runs. No synthetic image is ever derived from a test
   view.
 - **Nested synthetic sets.** The 5-image condition contains the 2-image
   condition's images, and so on, so the ratio sweep is a genuine dose-response
@@ -571,7 +551,7 @@ diffusion and 3DGS training never run concurrently.
   sizes do not resolve where.
 - **Two scenes, one of them partial.** The crossover is confirmed on `truck`
   (outdoor object) and `drjohnson` (indoor room), but drjohnson was swept for
-  **outpainting only**, at k = 5 and k = 20 — the two ends of the crossover.
+  outpainting only, at k = 5 and k = 20 — the two ends of the crossover.
   Inpainting and pose-guided were not repeated there, so "inpainting is flat"
   and "pose-guided always hurts" remain single-scene claims. drjohnson also
   runs at a different resolution (`-r 4`), so only within-scene deltas
@@ -581,7 +561,7 @@ diffusion and 3DGS training never run concurrently.
   alternatives that were considered, including the multi-view-consistent
   generators (Zero123++, SV3D, ImageDream) that are arguably the actual fix for
   what pose-guided augmentation is trying to do.
-- **7000 iterations**, not the upstream 30000, to keep 236 runs tractable. The
+- 7000 iterations, not the upstream 30000, to keep 242 runs tractable. The
   full-data run reaches 25.23 dB against ≈ 25.4 dB published at full schedule,
   so the pipeline is validated, but absolute numbers are slightly below
   literature values.

@@ -9,8 +9,8 @@ It is NOT a summary written by hand. Every number is imported from
 build_report.py's own loaders, so the brief and the full report cannot
 disagree - and neither can drift from runs/*/results.json.
 
-Print to PDF from a browser: Ctrl+P, A4, margins "Default", background
-graphics ON.
+Print it from a browser with background graphics on, or the tinted callouts
+come out white.
 
   python src/build_brief.py      # -> results/report_brief.html
 """
@@ -557,7 +557,6 @@ programmatically from <code>runs/*/results.json</code> · full write-up in
     OUT.write_text(html, encoding="utf-8")
     kb = OUT.stat().st_size / 1024
     print(f"wrote {OUT}  ({kb:,.0f} KB)")
-    print("print to PDF: open in a browser, Ctrl+P, A4, background graphics ON")
 
 
 if __name__ == "__main__":

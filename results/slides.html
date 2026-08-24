@@ -130,7 +130,7 @@ a{color:var(--accent)}
     destroying.</p>
     <hr class="rule">
     <div class="cols">
-      <div class="card"><div class="k num">236</div>
+      <div class="card"><div class="k num">242</div>
         <div class="cap">training runs</div></div>
       <div class="card"><div class="k num">2</div>
         <div class="cap">scenes: an outdoor object and an indoor room</div></div>
@@ -208,7 +208,7 @@ a{color:var(--accent)}
     <h2>The measurement has to survive a 0.2 dB effect</h2>
     <ul>
       <li><strong>Frozen held-out split.</strong> Every run of a scene is scored against
-      byte-identical test images — verified by hash across all 236 runs.</li>
+      byte-identical test images — verified by hash across all 242 runs.</li>
       <li><strong>Paired within seed.</strong> Each augmented run is compared to
       <em>its own seed's</em> baseline, so the luck of which five views were drawn
       cancels instead of adding noise.</li>
@@ -362,7 +362,8 @@ a{color:var(--accent)}
       repetition.</li>
       <li><strong>Constraint beats invention.</strong> A depth prior is positive at every
       subset size and compounds with augmentation; anything that invents a camera
-      eventually reverses sign.</li>
+      eventually reverses sign. It also outlasts it: at 30,000 iterations outpainting
+      is worth -0.078 dB and the prior still +0.208.</li>
       <li><strong>The two effects are separable.</strong> Outpainting supplies peripheral
       content, the depth prior supplies constraint — and combining them exceeds the sum
       of the parts at every subset size.</li>
@@ -380,12 +381,13 @@ a{color:var(--accent)}
     <div class="eyebrow">Limitations</div>
     <h2>What this does not show</h2>
     <ul>
-      <li><strong>The 7,000-iteration setting is load-bearing.</strong> At 30,000 the
-      benefit does not survive — outpainting at k = 5 falls from +0.285 to
-      -0.078 dB, while the harm at k = 20 persists. The plain baselines fall too
-      (15.20 → 15.04), so 30,000 is <em>past</em> this regime's optimum, not
-      better converged. Early stopping is correct here, but the gain is conditional
-      on it.</li>
+      <li><strong>The 7,000-iteration setting is load-bearing.</strong> The benefit
+      decays monotonically with training length — outpainting at k = 5 goes
+      +0.285 → +0.045 → -0.078 dB at 7k, 15k and 30k. The baseline is flat
+      from 7k to 15k (15.20 → 15.22) and lower by 30k (15.04), so the
+      setting is not mis-chosen: 30,000 is <em>past</em> this regime's optimum, not
+      better converged. The augmentation gain is conditional on early stopping; the
+      depth prior is not.</li>
       <li><strong>Two checkpoints, one architecture.</strong> Dreamshaper-8 is an
       SD 1.5 finetune, so the swap varies image quality, not architecture. SDXL needs
       ~6.5 GB and FLUX ~54 GB against this card's 4 GB.</li>
@@ -394,8 +396,10 @@ a{color:var(--accent)}
       <li><strong>Two scenes, one partially swept.</strong> The second scene was swept
       for outpainting only, at k = 5 and k = 20. "Inpainting is flat" and "pose-guided
       always hurts" remain single-scene claims.</li>
-      <li><strong>The depth prior was tested on one scene, at one ratio.</strong> Whether
-      its immunity to the crossover survives indoors is untested.</li>
+      <li><strong>The depth prior's compounding is single-scene.</strong> It reproduces
+      on drjohnson as a gain, but the interaction there is +0.075 ± 0.672 dB — additive,
+      not super-additive. And at k = 20 after 30,000 iterations it is +0.130 dB,
+      no longer clear of the noise floor.</li>
     </ul>
   </div>
 </section>
@@ -409,7 +413,7 @@ a{color:var(--accent)}
     photographs are. At five views the coverage is worth the inconsistency. By twenty it
     is not — and the same treatment that helped now harms.</p>
     <hr class="rule">
-    <p class="muted">236 runs · 2 scenes · every held-out set hash-verified
+    <p class="muted">242 runs · 2 scenes · every held-out set hash-verified
     identical within its scene · code and full report in the repository.</p>
   </div>
 </section>

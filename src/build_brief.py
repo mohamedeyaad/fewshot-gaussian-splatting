@@ -150,9 +150,16 @@ def main():
     mc_sd10 = mcx[10]["sd15"] if 10 in mcx else float("nan")
     # 7,000 vs 30,000, read from runs_30k/ - see build_convergence().
     cv = R.build_convergence()
+    dc = R.build_depth_convergence()
+
+    def dcp(k, lab, name):
+        """A depth-convergence delta, unstarred - these are quoted in prose."""
+        v = dc.get((k, lab, name))
+        return f"{v[0]:+.3f}" if v else "n/a"
     k5_7k, k5_30k = cv["{{K5_7K}}"], cv["{{K5_30K}}"]
     k20_7k, k20_30k = cv["{{K20_7K}}"], cv["{{K20_30K}}"]
     b5_7k, b5_30k = cv["{{B5_7K}}"], cv["{{B5_30K}}"]
+    k5_15k, b5_15k = cv["{{K5_15K}}"], cv["{{B5_15K}}"]
     # fps vs random view selection - see build_selection().
     sl = R.build_selection()
     def _s(sel, k):
@@ -402,6 +409,16 @@ interaction at all three sizes. They repair different deficiencies — outpainti
 peripheral <em>content</em>, the prior supplies <em>constraint</em> — which agrees with the
 duplication control.</p>
 
+<p><b>The prior survives the training length that kills outpainting.</b> At 30,000 iterations
+outpainting at k = 5 is worth {dcp(5,'30K','outpaint')}&nbsp;dB — the {k5_7k} measured at 7,000
+is gone — while the depth prior still returns {dcp(5,'30K','depth')} and the combination
+{dcp(5,'30K','both')}. Fabricated pixels lose their value to longer training; a geometric
+constraint does not. Two caveats run against this: at k = 20 the prior is
+{dcp(20,'30K','depth')}&nbsp;dB at 30,000, no longer clear of the noise floor, and the
+super-additivity is single-scene — on drjohnson the interaction is +0.075&nbsp;±&nbsp;0.672&nbsp;dB,
+additive rather than super-additive. What holds on both scenes is only that it is never
+<em>negative</em>.</p>
+
 <h2><span class="n">7</span>Conclusions</h2>
 <ul>
 <li><b>Diffusion augmentation is not free coverage.</b> It helps only while real views are scarce,
@@ -418,12 +435,14 @@ views costs about half a decibel.</li>
 </ul>
 
 <h3>Limitations</h3>
-<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the two headline cells
-at 30,000 shows the <em>benefit</em> does not survive: outpainting at k = 5 falls from
-{k5_7k} to {k5_30k}&nbsp;dB, while the harm at k = 20 persists ({k20_7k} to {k20_30k}). The
-unaugmented baselines fall too ({b5_7k}&nbsp;→&nbsp;{b5_30k} at k = 5), so 30,000 is past this
-regime's optimum rather than better converged — few-shot 3DGS overfits long before it. Early
-stopping is the correct setting here, but the positive result is conditional on it.</p>
+<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the headline cells at
+15,000 and 30,000 shows the <em>benefit</em> decays monotonically: outpainting at k = 5 falls from
+{k5_7k} to {k5_15k} to {k5_30k}&nbsp;dB, while the harm at k = 20 persists throughout ({k20_7k} to
+{k20_30k}). The unaugmented baseline is flat from 7,000 to 15,000 ({b5_7k}&nbsp;→&nbsp;{b5_15k} at
+k = 5, inside the noise floor) and lower by 30,000 ({b5_30k}), so the setting is not mis-chosen —
+30,000 is past this regime's optimum rather than better converged, and few-shot 3DGS overfits long
+before it. The positive result is nonetheless conditional on early stopping. The depth prior is
+not: it survives 30,000.</p>
 
 <p><b>The K views are chosen well, and augmentation does not rescue views that are not.</b>
 Every result above uses farthest-point sampling. Repeating the sweep on uniformly random draws
@@ -435,8 +454,8 @@ near — though that reading is post-hoc. The defensible claim is the negative o
 
 <p>Three seeds supports a consistency check (|mean| &gt; σ), not a formal significance test. The
 crossover is bracketed between k = 5 and k = 20, not located. The depth loss weight is upstream's
-default, untuned for few-shot, so its gain is likely a floor. Depth and the second scene were each
-swept partially — one scene and one ratio respectively. Both checkpoints tested are SD 1.5-class,
+default, untuned for few-shot, so its gain is likely a floor. The second scene was swept for outpainting only, at one ratio; the
+depth prior now covers two scenes and two training lengths. Both checkpoints tested are SD 1.5-class,
 the only ones fitting 4&nbsp;GB; multi-view-consistent generators (Zero123++, SV3D) are the
 natural next step and are arguably what pose-guided augmentation is really reaching for.</p>
 

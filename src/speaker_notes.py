@@ -136,7 +136,7 @@ NOTES = [
   "view contributes is coverage, not photorealism.",
  ]),
 
- ("Constraint without a viewpoint", 70, [
+ ("Constraint without a viewpoint", 92, [
   "Second and sharper prediction.",
   "If the harm comes from inventing a camera, then something that helps the "
   "geometry WITHOUT inventing a camera should never turn negative.",
@@ -149,6 +149,11 @@ NOTES = [
   "respect, and it is the one the theory says matters.",
   "And they compound: together at five views they reach 0.714 dB, the best "
   "result in the study — because they repair different deficiencies.",
+  "One more thing, and it is the strongest evidence I have. Train to thirty "
+  "thousand iterations and the outpainting gain dies — minus 0.078, nothing. "
+  "The depth prior at the same length is still plus 0.208, and the two together "
+  "plus 0.469. Fabricated pixels lose their value to longer training. A "
+  "geometric constraint does not.",
  ]),
 
  ("What both scenes say together", 50, [
@@ -162,14 +167,20 @@ NOTES = [
   "more photographs.",
  ]),
 
- ("What this does not show", 60, [
+ ("What this does not show", 88, [
   "The honest limits.",
-  "The biggest one is training length. I train for 7,000 iterations. At 30,000 "
-  "the benefit disappears entirely.",
-  "But — and this is the point — the plain baselines get WORSE at 30,000 too. "
-  "With five photos, long training memorises them instead of learning the scene. "
-  "So 30,000 is not better converged, it is over-trained. Early stopping is the "
-  "correct setting for few-shot, and the gain is conditional on it.",
+  "The biggest one is training length. I train for 7,000 iterations. I measured "
+  "three points — the gain decays from plus 0.285, to plus 0.045 at fifteen "
+  "thousand, to minus 0.078 at thirty thousand.",
+  "But — and this is the point — the plain baselines do not improve either. Flat "
+  "from seven to fifteen thousand, and lower by thirty. With five photos, long "
+  "training memorises them instead of learning the scene. So 30,000 is not "
+  "better converged, it is over-trained, and 7,000 is a fair operating point. "
+  "The augmentation gain is still conditional on early stopping — the depth "
+  "prior is not.",
+  "Two things run against my own claim. At twenty views the prior is only plus "
+  "0.130 after long training, inside the noise. And the compounding is "
+  "single-scene: on the indoor scene the two are additive, not super-additive.",
   "Three seeds is a consistency check, not a significance test. Both diffusion "
   "checkpoints share an architecture, because SDXL and FLUX do not fit in four "
   "gigabytes.",
@@ -187,10 +198,12 @@ NOTES = [
 
 QA = [
  ("Why 7,000 iterations and not 30,000?",
-  "Because 30,000 is past the optimum for few-shot. I measured it: the plain "
-  "5-view baseline drops from 15.20 to 15.04 and the 20-view from 19.74 to "
-  "19.49. With few photos, longer training overfits. I state in the report that "
-  "the gain is conditional on early stopping."),
+  "Because 30,000 is past the optimum for few-shot. I measured three lengths: "
+  "the plain 5-view baseline is 15.20 at seven thousand, 15.22 at fifteen "
+  "thousand — flat, inside the noise floor — and 15.04 at thirty. With few "
+  "photos, longer training overfits. I state in the report that the "
+  "augmentation gain is conditional on early stopping. The depth prior is the "
+  "exception: it still returns plus 0.208 at thirty thousand."),
  ("You chose the five views optimally with farthest-point sampling. Isn't that cheating?",
   "It is the best case, so I also trained the random draws. Augmentation does "
   "not rescue badly-chosen views — it is no better there, and worse at twenty. "
@@ -375,6 +388,10 @@ def cheat_sheet():
     line("Depth prior (constraint, no invented camera) → never crosses over.  "
          "+0.259 / +0.163 / +0.155 at k=5/10/20.  HELD", True)
     line("Combined with outpainting at k=5: +0.714 dB — best result in the study.")
+    line("At 30k: outpaint −0.078 (dead), depth +0.208, both +0.469 — constraint outlasts "
+         "invention.")
+    line("Against me: k=20 depth at 30k is +0.130 (n.s.); drjohnson interaction +0.075 "
+         "± 0.672 — additive, not super-additive.")
     line("Pose-guided invents most → should hurt most. −1.013 at k=5.  HELD", True)
 
     head("Controls (what they rule out)")
@@ -388,8 +405,9 @@ def cheat_sheet():
          "outdoors — which is why pairing matters.")
 
     head("The honest limits")
-    line("30,000 iterations: gain disappears (+0.285 → −0.078). BUT baselines fall too "
-         "(15.20 → 15.04) — few-shot overfits, so early stopping is correct.", True)
+    line("Training length: gain decays +0.285 → +0.045 (15k) → −0.078 (30k). Baseline "
+         "flat 7k→15k (15.20 → 15.22), lower at 30k (15.04) — few-shot overfits, so "
+         "early stopping is correct. Depth prior survives 30k: +0.208.", True)
     line("Random view selection: augmentation does NOT rescue badly-chosen views.")
     line("Three seeds = consistency check, not significance. Both checkpoints are SD 1.5-class.")
 

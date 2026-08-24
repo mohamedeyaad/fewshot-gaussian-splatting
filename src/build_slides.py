@@ -68,6 +68,12 @@ def main():
     head, rows = R.build_tables(recs)
     gen = R.build_generalisation()
     depth = R.build_depth()
+    dc = R.build_depth_convergence()
+
+    def dcp(k, lab, name):
+        """A depth-convergence delta, unstarred - slides quote these in prose."""
+        v = dc.get((k, lab, name))
+        return f"{v[0]:+.3f}" if v else "n/a"
     mcx = {r["k"]: r for r in R.build_model_crossover(recs)}
 
     def out(k, ratio):
@@ -96,6 +102,10 @@ def main():
         "D10": f'{depth["rows"][10]["depth"][0]:+.3f}' if depth else "n/a",
         "D20": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "DBOTH": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
+        "D5_30K": dcp(5, "30K", "depth"),
+        "O5_30K": dcp(5, "30K", "outpaint"),
+        "B5_30K_D": dcp(5, "30K", "both"),
+        "D20_30K": dcp(20, "30K", "depth"),
         # 7,000 vs 30,000. build_convergence() returns brace-wrapped keys for
         # build_report's substitution style, so strip them for this one.
         **{k.strip("{}"): v for k, v in R.build_convergence().items()},
@@ -481,7 +491,8 @@ a{color:var(--accent)}
       repetition.</li>
       <li><strong>Constraint beats invention.</strong> A depth prior is positive at every
       subset size and compounds with augmentation; anything that invents a camera
-      eventually reverses sign.</li>
+      eventually reverses sign. It also outlasts it: at 30,000 iterations outpainting
+      is worth {{O5_30K}} dB and the prior still {{D5_30K}}.</li>
       <li><strong>The two effects are separable.</strong> Outpainting supplies peripheral
       content, the depth prior supplies constraint — and combining them exceeds the sum
       of the parts at every subset size.</li>
@@ -499,12 +510,13 @@ a{color:var(--accent)}
     <div class="eyebrow">Limitations</div>
     <h2>What this does not show</h2>
     <ul>
-      <li><strong>The 7,000-iteration setting is load-bearing.</strong> At 30,000 the
-      benefit does not survive — outpainting at k = 5 falls from {{K5_7K}} to
-      {{K5_30K}} dB, while the harm at k = 20 persists. The plain baselines fall too
-      ({{B5_7K}} → {{B5_30K}}), so 30,000 is <em>past</em> this regime's optimum, not
-      better converged. Early stopping is correct here, but the gain is conditional
-      on it.</li>
+      <li><strong>The 7,000-iteration setting is load-bearing.</strong> The benefit
+      decays monotonically with training length — outpainting at k = 5 goes
+      {{K5_7K}} → {{K5_15K}} → {{K5_30K}} dB at 7k, 15k and 30k. The baseline is flat
+      from 7k to 15k ({{B5_7K}} → {{B5_15K}}) and lower by 30k ({{B5_30K}}), so the
+      setting is not mis-chosen: 30,000 is <em>past</em> this regime's optimum, not
+      better converged. The augmentation gain is conditional on early stopping; the
+      depth prior is not.</li>
       <li><strong>Two checkpoints, one architecture.</strong> Dreamshaper-8 is an
       SD 1.5 finetune, so the swap varies image quality, not architecture. SDXL needs
       ~6.5 GB and FLUX ~54 GB against this card's 4 GB.</li>
@@ -513,8 +525,10 @@ a{color:var(--accent)}
       <li><strong>Two scenes, one partially swept.</strong> The second scene was swept
       for outpainting only, at k = 5 and k = 20. "Inpainting is flat" and "pose-guided
       always hurts" remain single-scene claims.</li>
-      <li><strong>The depth prior was tested on one scene, at one ratio.</strong> Whether
-      its immunity to the crossover survives indoors is untested.</li>
+      <li><strong>The depth prior's compounding is single-scene.</strong> It reproduces
+      on drjohnson as a gain, but the interaction there is +0.075 ± 0.672 dB — additive,
+      not super-additive. And at k = 20 after 30,000 iterations it is {{D20_30K}} dB,
+      no longer clear of the noise floor.</li>
     </ul>
   </div>
 </section>

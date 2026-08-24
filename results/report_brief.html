@@ -74,7 +74,7 @@ table,figure,.key{break-inside:avoid}
 
 <h1>When do diffusion-generated views help few-shot Gaussian Splatting?</h1>
 <p class="sub">Mohamed Eyad · Robotics Engineering, Università degli Studi di Genova ·
-236 controlled training runs, two scenes, single 4&nbsp;GB GPU</p>
+242 controlled training runs, two scenes, single 4&nbsp;GB GPU</p>
 
 <div class="abstract">
 <b>Summary.</b> 3D Gaussian Splatting collapses when trained on few photographs: five views of
@@ -285,6 +285,16 @@ interaction at all three sizes. They repair different deficiencies — outpainti
 peripheral <em>content</em>, the prior supplies <em>constraint</em> — which agrees with the
 duplication control.</p>
 
+<p><b>The prior survives the training length that kills outpainting.</b> At 30,000 iterations
+outpainting at k = 5 is worth -0.078&nbsp;dB — the +0.285 measured at 7,000
+is gone — while the depth prior still returns +0.208 and the combination
++0.469. Fabricated pixels lose their value to longer training; a geometric
+constraint does not. Two caveats run against this: at k = 20 the prior is
++0.130&nbsp;dB at 30,000, no longer clear of the noise floor, and the
+super-additivity is single-scene — on drjohnson the interaction is +0.075&nbsp;±&nbsp;0.672&nbsp;dB,
+additive rather than super-additive. What holds on both scenes is only that it is never
+<em>negative</em>.</p>
+
 <h2><span class="n">7</span>Conclusions</h2>
 <ul>
 <li><b>Diffusion augmentation is not free coverage.</b> It helps only while real views are scarce,
@@ -301,12 +311,14 @@ views costs about half a decibel.</li>
 </ul>
 
 <h3>Limitations</h3>
-<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the two headline cells
-at 30,000 shows the <em>benefit</em> does not survive: outpainting at k = 5 falls from
-+0.285 to -0.078&nbsp;dB, while the harm at k = 20 persists (-0.618 to -0.743). The
-unaugmented baselines fall too (15.20&nbsp;→&nbsp;15.04 at k = 5), so 30,000 is past this
-regime's optimum rather than better converged — few-shot 3DGS overfits long before it. Early
-stopping is the correct setting here, but the positive result is conditional on it.</p>
+<p><b>The 7,000-iteration operating point is load-bearing.</b> Re-running the headline cells at
+15,000 and 30,000 shows the <em>benefit</em> decays monotonically: outpainting at k = 5 falls from
++0.285 to +0.045 to -0.078&nbsp;dB, while the harm at k = 20 persists throughout (-0.618 to
+-0.743). The unaugmented baseline is flat from 7,000 to 15,000 (15.20&nbsp;→&nbsp;15.22 at
+k = 5, inside the noise floor) and lower by 30,000 (15.04), so the setting is not mis-chosen —
+30,000 is past this regime's optimum rather than better converged, and few-shot 3DGS overfits long
+before it. The positive result is nonetheless conditional on early stopping. The depth prior is
+not: it survives 30,000.</p>
 
 <p><b>The K views are chosen well, and augmentation does not rescue views that are not.</b>
 Every result above uses farthest-point sampling. Repeating the sweep on uniformly random draws
@@ -318,12 +330,12 @@ near — though that reading is post-hoc. The defensible claim is the negative o
 
 <p>Three seeds supports a consistency check (|mean| &gt; σ), not a formal significance test. The
 crossover is bracketed between k = 5 and k = 20, not located. The depth loss weight is upstream's
-default, untuned for few-shot, so its gain is likely a floor. Depth and the second scene were each
-swept partially — one scene and one ratio respectively. Both checkpoints tested are SD 1.5-class,
+default, untuned for few-shot, so its gain is likely a floor. The second scene was swept for outpainting only, at one ratio; the
+depth prior now covers two scenes and two training lengths. Both checkpoints tested are SD 1.5-class,
 the only ones fitting 4&nbsp;GB; multi-view-consistent generators (Zero123++, SV3D) are the
 natural next step and are arguably what pose-guided augmentation is really reaching for.</p>
 
-<p class="foot">All 236 runs, raw metrics, patches and code:
+<p class="foot">All 242 runs, raw metrics, patches and code:
 <code>github.com/mohamedeyaad/fewshot-gaussian-splatting</code> · every number above is read
 programmatically from <code>runs/*/results.json</code> · full write-up in
 <code>results/report.html</code></p>

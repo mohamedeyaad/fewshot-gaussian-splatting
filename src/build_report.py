@@ -240,7 +240,7 @@ def build_selection():
 
 
 def build_convergence():
-    """7,000 vs 30,000 iterations, for the two headline cells.
+    """7,000 vs 15,000 vs 30,000 iterations, for the two headline cells.
 
     Reads runs_30k/, not runs/. A 30,000-iteration run of an existing condition
     agrees with it on scene, k, seed, selection method and strategy, so keeping
@@ -262,7 +262,8 @@ def build_convergence():
 
     out = {}
     for k in (5, 20):
-        for d, lab in (("runs", "7K"), ("runs_30k", "30K")):
+        for d, lab in (("runs", "7K"), ("runs_15k", "15K"),
+                       ("runs_30k", "30K")):
             ds, bs = [], []
             for s in (0, 1, 2):
                 b = psnr(d, f"truck_k{k}_seed{s}_fps_fake0")
@@ -465,6 +466,45 @@ def build_depth(scene="truck"):
     return out if out["ks"] else None
 
 
+def build_depth_convergence():
+    """Does the depth prior survive the training length that killed outpainting?
+
+    This is the sharpest test the two-term account has faced. Outpainting
+    supplies coverage AND inconsistency; the prior supplies constraint and
+    invents nothing. Train long enough for the optimiser to memorise the
+    contradictions and the two should part company - and they do.
+
+    Same pairing discipline as build_convergence(): every delta is computed
+    against the baseline from its OWN directory, so the training-length
+    difference cancels instead of being booked as an effect.
+    """
+    NF = {5: 10, 20: 40}
+
+    def m(d, tag):
+        f = ROOT / d / tag / "results.json"
+        if not f.exists():
+            return None
+        return json.loads(f.read_text())["metrics"]["psnr"]["mean"]
+
+    out = {}
+    for k in (5, 20):
+        pats = {
+            "depth": f"truck_k{k}_seed{{s}}_fps_fake0_depth",
+            "outpaint": f"truck_k{k}_seed{{s}}_fps_outpaint_fake{NF[k]}",
+            "both": f"truck_k{k}_seed{{s}}_fps_outpaint_fake{NF[k]}_depth",
+        }
+        for d, lab in (("runs", "7K"), ("runs_30k", "30K")):
+            for name, pat in pats.items():
+                ds = []
+                for s in (0, 1, 2):
+                    b = m(d, f"truck_k{k}_seed{s}_fps_fake0")
+                    v = m(d, pat.format(s=s))
+                    if b is not None and v is not None:
+                        ds.append(v - b)
+                out[(k, lab, name)] = agg(ds) if ds else None
+    return out
+
+
 def load_noise():
     vals = {"psnr": [], "ssim": [], "lpips": []}
     for p in sorted((ROOT / "runs_noise").glob("repeat*/results.json")):
@@ -566,6 +606,7 @@ def main():
 
     # --- depth regularisation: the 3x2x2 factorial ---
     depth = build_depth()
+    dconv = build_depth_convergence()
     depth_rows = ""
     if depth:
         def drow(label, key):
@@ -692,6 +733,19 @@ def main():
         for s, v in gen.items() if v)
 
     tpl = TEMPLATE
+    def dcell(k, lab, name, star=True):
+        """One depth-convergence delta, starred on the same rule as everywhere else.
+
+        star=False for the copies used inside sentences: a trailing asterisk in
+        running prose reads as a footnote marker, not as a consistency flag.
+        """
+        v = dconv.get((k, lab, name))
+        if not v:
+            return "n/a"
+        mu, sd = v
+        marker = "*" if (star and sd > 0 and abs(mu) > sd) else ""
+        return f"{mu:+.3f}{marker}"
+
     subs = {
         "{{FLOOR_PSNR}}": f'{head["floor_psnr"]:.2f}',
         "{{FLOOR_SD}}": f'{head["floor_psnr_sd"]:.2f}',
@@ -740,6 +794,29 @@ def main():
         "{{MC20}}": f'{mc[20]["ds8"]:+.3f}' if 20 in mc else "n/a",
         "{{MC10_SD15}}": f'{mc[10]["sd15"]:+.3f}' if 10 in mc else "n/a",
         "{{DEPTH_TABLE}}": depth_rows,
+        "{{DCP_O5_7K}}": dcell(5, "7K", "outpaint", star=False),
+        "{{DCP_O5_30K}}": dcell(5, "30K", "outpaint", star=False),
+        "{{DCP_D5_30K}}": dcell(5, "30K", "depth", star=False),
+        "{{DCP_B5_30K}}": dcell(5, "30K", "both", star=False),
+        "{{DCP_D20_30K}}": dcell(20, "30K", "depth", star=False),
+        "{{DCP_B20_30K}}": dcell(20, "30K", "both", star=False),
+        "{{DC_D5_7K}}": dcell(5, "7K", "depth"),
+        "{{DC_O5_7K}}": dcell(5, "7K", "outpaint"),
+        "{{DC_B5_7K}}": dcell(5, "7K", "both"),
+        "{{DC_D20_7K}}": dcell(20, "7K", "depth"),
+        "{{DC_O20_7K}}": dcell(20, "7K", "outpaint"),
+        "{{DC_B20_7K}}": dcell(20, "7K", "both"),
+        "{{DC_D5_30K}}": dcell(5, "30K", "depth"),
+        "{{DC_O5_30K}}": dcell(5, "30K", "outpaint"),
+        "{{DC_B5_30K}}": dcell(5, "30K", "both"),
+        "{{DC_D20_30K}}": dcell(20, "30K", "depth"),
+        "{{DC_O20_30K}}": dcell(20, "30K", "outpaint"),
+        "{{DC_B20_30K}}": dcell(20, "30K", "both"),
+        "{{FIG_DEPTH30K}}": figure(RES / "panel_depth_30k.png",
+            "Figure 5 \u2014 The depth 2\u00d72 at k = 5 after 30,000 iterations. "
+            "The + outpainting column is no better than the baseline beside it \u2014 the benefit measured at 7,000 has gone \u2014 while + both remains visibly cleaner. "
+            "Views are those whose per-view delta sits closest to the mean effect.",
+            1600, 84),
         "{{DEPTH_K5}}": f'{depth["rows"][5]["depth"][0]:+.3f}' if depth else "n/a",
         "{{DEPTH_K20}}": f'{depth["rows"][20]["depth"][0]:+.3f}' if depth else "n/a",
         "{{DEPTH_BOTH_K5}}": f'{depth["rows"][5]["both"][0]:+.3f}' if depth else "n/a",
@@ -1399,6 +1476,55 @@ costs roughly half a decibel. At k = 10 outpainting by itself is inert, yet comb
 prior it beats the prior alone — a depth constraint makes otherwise worthless synthetic views
 worth having.</p>
 
+<h3>Does the prior survive convergence?</h3>
+
+<p>The two-term account makes a prediction sharp enough to fail. Train long enough for the
+optimiser to memorise its training data and a synthetic view's <em>inconsistency</em> term
+should overtake its <em>coverage</em> term, while a depth prior &mdash; which invents no pixel
+and no camera &mdash; has no contradiction to accumulate and should be unaffected. Re-running
+the k&nbsp;=&nbsp;5 and k&nbsp;=&nbsp;20 cells at 30,000 iterations separates the two exactly
+as predicted.</p>
+
+<div class="tablewrap">
+<table>
+  <caption><b>Table 7.</b> The same interventions at two training lengths, three seeds, each
+  paired against the baseline from its <em>own</em> sweep so that the training-length
+  difference cancels rather than being booked as an effect.</caption>
+  <thead>
+    <tr><th></th><th class="num" colspan="2">k = 5</th>
+        <th class="num" colspan="2">k = 20</th></tr>
+    <tr><th></th><th class="num">7,000</th><th class="num">30,000</th>
+        <th class="num">7,000</th><th class="num">30,000</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>+ depth prior</td><td class="num">{{DC_D5_7K}}</td><td class="num">{{DC_D5_30K}}</td>
+        <td class="num">{{DC_D20_7K}}</td><td class="num">{{DC_D20_30K}}</td></tr>
+    <tr><td>+ outpainting</td><td class="num">{{DC_O5_7K}}</td><td class="num">{{DC_O5_30K}}</td>
+        <td class="num">{{DC_O20_7K}}</td><td class="num">{{DC_O20_30K}}</td></tr>
+    <tr><td>+ both</td><td class="num">{{DC_B5_7K}}</td><td class="num">{{DC_B5_30K}}</td>
+        <td class="num">{{DC_B20_7K}}</td><td class="num">{{DC_B20_30K}}</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>At 30,000 iterations outpainting at k&nbsp;=&nbsp;5 is worth {{DCP_O5_30K}}&nbsp;dB &mdash;
+indistinguishable from zero, the {{DCP_O5_7K}}&nbsp;dB measured at 7,000 entirely gone. The depth
+prior at the same subset size and the same training length is still {{DCP_D5_30K}}, and the
+combination is {{DCP_B5_30K}}. A depth constraint keeps synthetic views worth having at a training
+length where they are worthless on their own. The intervention that fabricates pixels loses its
+benefit to longer training; the intervention that only constrains geometry does not.</p>
+
+<p><b>Two qualifications, both against the claim.</b> At k&nbsp;=&nbsp;20 the prior is worth
+{{DCP_D20_30K}}&nbsp;dB at 30,000, no longer separated from zero, and the combination stays
+negative ({{DCP_B20_30K}}) &mdash; the prior does not rescue augmentation once twenty real views
+already pin the geometry. And the super-additivity is <em>single-scene</em>: on drjohnson the
+interaction is +0.075&nbsp;&plusmn;&nbsp;0.672&nbsp;dB, additive within noise rather than
+super-additive. What reproduces on both scenes is the weaker statement &mdash; the interaction is
+never <em>negative</em>, which is what two interventions repairing the same deficiency would
+show.</p>
+
+{{FIG_DEPTH30K}}
+
 <h3>Gaussian count as a mechanism</h3>
 <p>Model complexity grows sharply under both geometric strategies. Against a baseline of
 {{FLOOR_GAUSS}} Gaussians, inpainting barely moves the count — +3&ndash;5%, since it adds no
@@ -1516,14 +1642,17 @@ guaranteed. Above roughly ten real views, spend the effort on photographs instea
   (1.25 and 2.5 images) and was rounded down, giving 20% and 40% respectively.</li>
   <li><b>7,000 iterations, not 30,000 — and the choice is load-bearing.</b> Densification is
   scheduled to 15,000, so training stops while the model is still gaining primitives. It is
-  applied identically to every condition, so the comparisons hold; but re-running the two
-  headline cells at 30,000 shows the <em>benefit</em> does not survive it. Outpainting at
-  k = 5 falls from {{K5_7K}} dB to {{K5_30K}}, while the harm at k = 20 persists
-  ({{K20_7K}} to {{K20_30K}}). The unaugmented baselines fall too
-  ({{B5_7K}}&nbsp;&rarr;&nbsp;{{B5_30K}} dB at k = 5), so 30,000 is past this regime's
-  optimum rather than better converged — few-shot 3DGS overfits long before it. The
-  positive result is therefore specific to the early-stopped operating point, which is the
-  right one here but must be stated as a condition on the claim.</li>
+  applied identically to every condition, so the comparisons hold; but re-running the headline
+  cells at 15,000 <em>and</em> 30,000 shows the <em>benefit</em> decays monotonically with
+  training length. Outpainting at k = 5 falls from {{K5_7K}} dB to {{K5_15K}} at 15,000 and
+  {{K5_30K}} at 30,000, while the harm at k = 20 persists throughout ({{K20_7K}} to
+  {{K20_15K}} to {{K20_30K}}). The unaugmented baseline is flat between 7,000 and 15,000
+  ({{B5_7K}}&nbsp;&rarr;&nbsp;{{B5_15K}} dB at k = 5, a difference inside the noise floor) and
+  lower by 30,000 ({{B5_30K}}), so the operating point is not mis-chosen: 7,000 and 15,000 are
+  equivalent for the baseline and 30,000 is past this regime's optimum rather than better
+  converged &mdash; few-shot 3DGS overfits long before it. The positive result is nonetheless
+  specific to the early-stopped regime, and that is a condition on the claim, not a detail.
+  The depth prior, by contrast, does survive 30,000.</li>
   <li><b>Two checkpoints, one architecture.</b> SD 1.5 inpainting and Dreamshaper-8 were both
   swept, and both reverse sign — but Dreamshaper-8 is an SD 1.5 <em>finetune</em>, so the
   ablation varies image quality while holding the architecture fixed. A genuinely different

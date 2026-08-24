@@ -51,6 +51,7 @@ caption{
 figure{margin:3mm 0}
 figure img{width:100%;height:auto;display:block;border:.4pt solid var(--line)}
 figcaption{font-size:8.4pt;color:var(--mut);padding-top:1.3mm;line-height:1.42}
+.refs-compact{font-size:8.3pt;line-height:1.5;color:var(--mut)}
 .key{
   border:.8pt solid var(--accent);background:#f4f8fc;
   padding:3mm 4mm;margin:3mm 0;font-size:10pt;
@@ -276,9 +277,12 @@ resolved a 0.2&nbsp;dB effect at all.</p>
 <p>The account in §3 predicts something that can fail. If the harm comes from
 <em>inconsistency</em> rather than augmentation as such, an intervention supplying geometric
 constraint <b>without inventing a viewpoint</b> should never cross over. Monocular depth
-regularisation is that intervention: a depth network predicts an inverse-depth map per real
-training photo, anchored to scene scale against the sparse COLMAP points that view observes
-(median R² 0.964). No camera is invented, no pixel fabricated. Synthetic views receive no depth
+regularisation is that intervention, and it is <b>prior work, not a contribution here</b>:
+Chung <em>et al.</em> [2] propose the same construction for few-shot 3DGS. It is used as a
+<b>control</b> &mdash; the question is not whether a depth prior helps, which is known, but how
+its behaviour differs from augmentation's on identical subsets, splits and seeds. A depth
+network predicts an inverse-depth map per real training photo, anchored to scene scale against
+the sparse COLMAP points that view observes (median R² 0.964). No camera is invented, no pixel fabricated. Synthetic views receive no depth
 supervision — estimating depth from a fabricated image to constrain geometry would be circular.</p>
 
 <table>
@@ -360,6 +364,24 @@ default, untuned for few-shot, so its gain is likely a floor. The second scene w
 depth prior now covers two scenes and two training lengths. Both checkpoints tested are SD 1.5-class,
 the only ones fitting 4&nbsp;GB; multi-view-consistent generators (Zero123++, SV3D) are the
 natural next step and are arguably what pose-guided augmentation is really reaching for.</p>
+
+<h3>References</h3>
+<p class="refs-compact">
+[1] Kerbl et al., <em>3D Gaussian Splatting for Real-Time Radiance Field Rendering</em>, ACM TOG
+42(4), 2023, arXiv:2308.04079 — the splatting implementation this builds on. &nbsp;
+[2] Chung, Oh &amp; Lee, <em>Depth-Regularized Optimization for 3D Gaussian Splatting in Few-Shot
+Images</em>, arXiv:2311.13398, 2023 — prior work for the depth prior of §&nbsp;6, reimplemented
+here as a control. &nbsp;
+[3] Rombach et al., <em>High-Resolution Image Synthesis with Latent Diffusion Models</em>, CVPR
+2022, arXiv:2112.10752 — Stable Diffusion. &nbsp;
+[4] Yang et al., <em>Depth Anything V2</em>, NeurIPS 2024, arXiv:2406.09414 — monocular depth.
+&nbsp;
+[5] Schönberger &amp; Frahm, <em>Structure-from-Motion Revisited</em>, CVPR 2016 — COLMAP. &nbsp;
+[6] Knapitsch et al., ACM TOG 36(4), 2017 — Tanks &amp; Temples (<code>truck</code>). &nbsp;
+[7] Hedman et al., ACM TOG 37(6), 2018 — Deep Blending (<code>drjohnson</code>). &nbsp;
+[8] Zhang et al., CVPR 2018, arXiv:1801.03924 — LPIPS. &nbsp;
+[9] Wang et al., IEEE TIP 13(4), 2004 — SSIM.
+</p>
 
 <p class="foot">All 242 runs, raw metrics, patches and code:
 <code>github.com/mohamedeyaad/fewshot-gaussian-splatting</code> · every number above is read

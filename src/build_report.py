@@ -1044,6 +1044,11 @@ tr.grp td{
   padding:9px 14px;
 }
 
+/* ---- references ---- */
+ol.refs { padding-left: 1.35em; margin-top: .6em; }
+ol.refs li { margin: 0 0 .8em 0; line-height: 1.45; }
+ol.refs .note { display: block; margin-top: .22em; font-size: .93em; }
+
 /* ---- figures ---- */
 .fig{margin:34px 0;padding:0}
 .fig img{width:100%;height:auto;display:block;border:1px solid var(--line);
@@ -1455,7 +1460,15 @@ rather than from augmentation as such, an intervention supplying geometric const
 <em>without inventing a viewpoint</em> should never cross over, because it has no contradictory
 geometry to accumulate.</p>
 
-<p>Monocular depth regularisation is that intervention. A depth network predicts an
+<p>Monocular depth regularisation is that intervention, and it is not a new one: Chung
+<em>et al.</em> (arXiv:2311.13398) propose exactly this construction for few-shot 3DGS &mdash;
+a dense monocular depth map as a geometry guide, scale-aligned against sparse COLMAP points,
+motivated as a cure for overfitting. The implementation below follows that method. It is used
+here as a <em>control</em> rather than as a contribution: the question is not whether a depth
+prior helps, which is known, but how its behaviour differs from augmentation's on identical
+subsets, splits and seeds.</p>
+
+<p>A depth network predicts an
 inverse-depth map for each real training photograph; each map is anchored to true scene scale
 by a least-squares fit against the sparse COLMAP points that view observes (median R&sup2;
 0.964), and training then minimises image error and depth disagreement together. No camera is
@@ -1730,6 +1743,73 @@ level.</p>
 full-data baseline, and 2.7 GB for diffusion. Geometry is covered by unit tests — an identity
 warp must reproduce its source exactly, and interpolating fully to a neighbouring camera must
 land on that camera's pose.</p>
+</section>
+
+<h2><span class="n">09</span> References</h2>
+<p>Each entry was checked against its arXiv or publisher record while this section
+was written, rather than quoted from memory.</p>
+
+<ol class="refs">
+<li>B. Kerbl, G. Kopanas, T. Leimk&uuml;hler, G. Drettakis.
+<b>3D Gaussian Splatting for Real-Time Radiance Field Rendering.</b>
+ACM Transactions on Graphics 42(4), July 2023. arXiv:2308.04079.
+<span class="note">The rasteriser, densification schedule and training loop this project
+builds on. The full-data ceiling reported in Table {{T:floors}} is checked against the
+figure published there for this scene.</span></li>
+
+<li>J. Chung, J. Oh, K. M. Lee.
+<b>Depth-Regularized Optimization for 3D Gaussian Splatting in Few-Shot Images.</b>
+arXiv:2311.13398, November 2023.
+<span class="note"><b>Prior work for the depth arm of this study.</b> It introduces a dense
+monocular depth map as a geometry guide for few-shot 3DGS, aligned to metric scale using
+sparse COLMAP feature points, and motivates it explicitly as a remedy for overfitting on
+few images &mdash; the same construction, the same alignment procedure and the same
+motivation used in &sect;&nbsp;6 above. The depth results here are a reimplementation of
+that method and are not claimed as novel. What is new is the <em>comparison</em>: running
+it as a control against diffusion augmentation on identical subsets, splits and seeds,
+which is what isolates geometric constraint from invented viewpoints.</span></li>
+
+<li>R. Rombach, A. Blattmann, D. Lorenz, P. Esser, B. Ommer.
+<b>High-Resolution Image Synthesis with Latent Diffusion Models.</b>
+CVPR 2022. arXiv:2112.10752.
+<span class="note">Stable Diffusion. The <code>stable-diffusion-v1-5</code> inpainting
+checkpoint generates every synthetic image here;
+<code>Lykon/dreamshaper-8-inpainting</code> is the second checkpoint in the model-swap
+ablation.</span></li>
+
+<li>L. Yang, B. Kang, Z. Huang, Z. Zhao, X. Xu, J. Feng, H. Zhao.
+<b>Depth Anything V2.</b> NeurIPS 2024. arXiv:2406.09414.
+<span class="note">Supplies the monocular inverse-depth maps
+(<code>Depth-Anything-V2-Small</code>) used both for the depth prior and for the warp step
+of pose-guided synthesis.</span></li>
+
+<li>J. L. Sch&ouml;nberger, J.-M. Frahm.
+<b>Structure-from-Motion Revisited.</b> CVPR 2016, pp. 4104&ndash;4113.
+<span class="note">COLMAP, which provides the camera poses and the sparse points that the
+monocular depth maps are anchored against.</span></li>
+
+<li>A. Knapitsch, J. Park, Q.-Y. Zhou, V. Koltun.
+<b>Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction.</b>
+ACM Transactions on Graphics 36(4), 2017.
+<span class="note">Source of <code>truck</code>, the primary scene (219 views).</span></li>
+
+<li>P. Hedman, J. Philip, T. Price, J.-M. Frahm, G. Drettakis, G. Brostow.
+<b>Deep Blending for Free-Viewpoint Image-Based Rendering.</b>
+ACM Transactions on Graphics 37(6), November 2018.
+<span class="note">Source of <code>drjohnson</code>, the indoor second scene
+(230 views).</span></li>
+
+<li>R. Zhang, P. Isola, A. A. Efros, E. Shechtman, O. Wang.
+<b>The Unreasonable Effectiveness of Deep Features as a Perceptual Metric.</b>
+CVPR 2018. arXiv:1801.03924.
+<span class="note">LPIPS, reported alongside the two specified metrics; the VGG trunk is
+used throughout.</span></li>
+
+<li>Z. Wang, A. C. Bovik, H. R. Sheikh, E. P. Simoncelli.
+<b>Image Quality Assessment: From Error Visibility to Structural Similarity.</b>
+IEEE Transactions on Image Processing 13(4), April 2004.
+<span class="note">SSIM.</span></li>
+</ol>
 </section>
 
 <hr class="rule">

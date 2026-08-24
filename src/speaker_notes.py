@@ -34,6 +34,15 @@ ACCENT = RGBColor(0x0B, 0x6E, 0x7F)
 
 # (title fragment, seconds, [paragraphs])
 NOTES = [
+ ("Where this goes", 22, [
+  "Quick map of the next fifteen minutes.",
+  "The problem, then the method and the pipeline, then the grid I ran. Then "
+  "the result, which is a sign change. Then why it happens, and the controls "
+  "that rule out the alternatives. A prediction I tested. And the limits.",
+  "The one thing to carry through: the same treatment can help or harm, and "
+  "which one it does depends on how many real photographs you already have.",
+ ]),
+
  ("When does a generated photograph", 45, [
   "Good morning. My project asks one question: can AI-generated images "
   "replace photographs you never took, when you are reconstructing a 3D scene?",
@@ -71,6 +80,33 @@ NOTES = [
   "Each is generated at four ratios, three subset sizes, three seeds.",
  ]),
 
+ ("One condition, end to end", 48, [
+  "This is one condition, start to finish.",
+  "Two hundred and nineteen photographs go through COLMAP for camera poses and "
+  "sparse points. Then the split, and this is the important box: thirty-two "
+  "photographs are held out and never trained on, in any run, verified by hash.",
+  "From the training pool I select k views by farthest-point sampling — five, "
+  "ten or twenty.",
+  "Then the fork. The top lane trains on those k real images. The bottom lane "
+  "sends them through diffusion augmentation first, and trains on k real plus "
+  "n synthetic.",
+  "Both lanes hit the same trainer for the same seven thousand iterations and "
+  "are scored on the same thirty-two held-out photographs. The only thing that "
+  "differs between the arms is what went into training.",
+ ]),
+
+ ("What was actually run", 38, [
+  "And this is the grid.",
+  "Three strategies, four synthetic ratios, three subset sizes, three seeds. "
+  "A hundred and eight augmented runs, plus baselines, controls and a "
+  "full-data ceiling.",
+  "Each tick in a cell is one training run.",
+  "The critical detail is the pairing. Every augmented cell is compared "
+  "against the baseline built from the SAME seed's subset — so the luck of "
+  "which five views got drawn cancels out, instead of being counted as an "
+  "effect of augmentation.",
+ ]),
+
  ("survive a 0.2 dB effect", 55, [
   "The effects here are small, so the measurement has to be careful.",
   "Every run of a scene is scored against byte-identical held-out images — I "
@@ -98,6 +134,18 @@ NOTES = [
   "of the average. So I picked the views closest to the mean effect and printed "
   "the per-view number on each. Three arbitrary views can contradict the finding "
   "they are supposed to illustrate.",
+ ]),
+
+ ("Every cell, in one picture", 52, [
+  "Here is the whole grid filled in. Green helps, red harms.",
+  "Read the middle row — outpainting — left to right across the three panels. "
+  "Green at five views. Neutral at ten. Red at twenty.",
+  "That is the finding. Same treatment, same ratio, opposite sign.",
+  "The top row, inpainting, is flat everywhere — it reuses the camera pose "
+  "exactly. The bottom row, pose-guided, is red everywhere and gets darker as "
+  "k grows — it invents a whole new camera.",
+  "Colour is clipped at plus or minus one decibel, otherwise pose-guided's "
+  "magnitude washes the crossover out.",
  ]),
 
  ("It reproduces indoors", 45, [
@@ -194,6 +242,11 @@ NOTES = [
   "At five views, worth it. By twenty, the same treatment is actively harmful.",
   "Thank you — happy to take questions.",
  ]),
+
+ ("Thank you", 12, [
+  "Thank you — happy to take questions.",
+ ]),
+
 ]
 
 QA = [

@@ -113,6 +113,9 @@ def main():
         **{f"MC_{m.upper()}{k}":
            (f'{mcx[k]["ds8" if m == "ds" else "sd15"]:+.3f}' if k in mcx else "n/a")
            for k in (5, 10, 20) for m in ("sd", "ds")},
+        "IMG_PIPE": data_uri("diagram_pipeline.png", width=1900, quality=88),
+        "IMG_GRID": data_uri("diagram_grid.png", width=1900, quality=88),
+        "IMG_HEAT": data_uri("heatmap_grid.png", width=1900, quality=88),
         "IMG_CROSS": data_uri("panel_crossover.png"),
         "IMG_SCALE": data_uri("panel_scaling.png"),
     }
@@ -188,6 +191,14 @@ em.q{font-style:normal; color:var(--accent); font-weight:500}
 
 .cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
   gap:clamp(12px,1.6vw,22px)}
+ol.agenda{margin:0; padding-left:1.5em; line-height:1.6}
+ol.agenda li{margin:0 0 .5em 0}
+figure.fill{margin:0; flex:1; min-height:0; display:flex; align-items:center;
+  justify-content:center}
+figure.fill img{max-width:100%; max-height:100%; object-fit:contain;
+  border:1px solid var(--line); border-radius:3px; background:#fff}
+.inner.center{align-items:center; text-align:center}
+h1.thanks{font-size:clamp(2.4rem,7vw,4.6rem); margin:.1em 0}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:3px;
   padding:clamp(14px,1.7vw,22px); display:flex; flex-direction:column; gap:8px;
   box-shadow:var(--shadow)}
@@ -252,11 +263,11 @@ a{color:var(--accent)}
 
 <section class="slide on">
   <div class="inner">
-    <div class="eyebrow">Università degli Studi di Genova &middot; Robotics</div>
-    <h1>When does a generated photograph<br>help a 3D reconstruction?</h1>
-    <p class="lead muted">Few-shot Gaussian Splatting with diffusion-based data
-    augmentation — and the boundary where augmentation stops helping and starts
-    destroying.</p>
+    <div class="eyebrow">Università degli Studi di Genova &middot; DIBRIS
+    &middot; Virtual Reality for Robotics</div>
+    <h1>Few-Shot Gaussian Splatting with<br>Diffusion-Based Data Augmentation</h1>
+    <p class="lead muted">When does a generated photograph help a 3D
+    reconstruction — and when does it start destroying one?</p>
     <hr class="rule">
     <div class="cols">
       <div class="card"><div class="k num">{{NRUNS}}</div>
@@ -268,7 +279,29 @@ a{color:var(--accent)}
       <div class="card"><div class="k num">4</div>
         <div class="cap">controls, plus a depth prior that tests the mechanism</div></div>
     </div>
-    <p class="muted" style="font-size:.9em">Mohamed Eyad</p>
+    <p class="muted" style="font-size:.9em">Mohamed Eyad &middot; Advisors: Prof. Fabio Solari, Prof. Manuela Chessa</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Contents</div>
+    <h2>Where this goes</h2>
+    <ol class="agenda">
+      <li><strong>The problem.</strong> What splatting does when photographs run
+      out.</li>
+      <li><strong>The method.</strong> Three ways to manufacture a training view,
+      and the pipeline that evaluates them.</li>
+      <li><strong>The grid.</strong> 3 strategies &times; 4 ratios &times; 3 subset
+      sizes &times; 3 seeds.</li>
+      <li><strong>The result.</strong> The same treatment helps at five real views
+      and harms at twenty.</li>
+      <li><strong>Why.</strong> Coverage decays, inconsistency does not — and four
+      controls that rule out the alternatives.</li>
+      <li><strong>A prediction, tested.</strong> Constraint without a viewpoint
+      never crosses over.</li>
+      <li><strong>Limits.</strong> What this does not show.</li>
+    </ol>
   </div>
 </section>
 
@@ -333,19 +366,46 @@ a{color:var(--accent)}
 
 <section class="slide">
   <div class="inner">
-    <div class="eyebrow">Design</div>
+    <div class="eyebrow">Method &middot; the pipeline</div>
+    <h2>One condition, end to end</h2>
+    <figure class="fill">
+      <img src="{{IMG_PIPE}}" alt="Block diagram: 219 photographs through COLMAP,
+      a frozen split, subset selection, an optional diffusion augmentation stage,
+      3DGS training and evaluation on 32 held-out photographs.">
+    </figure>
+    <p class="cap">Two lanes — real-only and augmented — converge on the same
+    trainer and the same held-out set. The only difference between the arms is
+    what went into training.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Design &middot; the grid</div>
+    <h2>What was actually run</h2>
+    <figure class="fill">
+      <img src="{{IMG_GRID}}" alt="The factorial design: three strategies by four
+      synthetic ratios by three subset sizes, three seeds each.">
+    </figure>
+    <p class="cap">Every augmented cell is paired against the baseline built from
+    the <em>same seed's</em> subset, so the luck of which k views were drawn
+    cancels instead of being counted as an effect.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Design &middot; rigour</div>
     <h2>The measurement has to survive a 0.2 dB effect</h2>
     <ul>
-      <li><strong>Frozen held-out split.</strong> Every run of a scene is scored against
-      byte-identical test images — verified by hash across all {{NRUNS}} runs.</li>
-      <li><strong>Paired within seed.</strong> Each augmented run is compared to
-      <em>its own seed's</em> baseline, so the luck of which five views were drawn
-      cancels instead of adding noise.</li>
+      <li><strong>Frozen held-out split.</strong> Byte-identical test images in every
+      run — verified by hash across all {{NRUNS}} of them.</li>
       <li><strong>Measured noise floor.</strong> The identical configuration re-run
-      three times varies by <span class="num">0.039</span> dB, so an effect of
-      0.2 dB is resolvable and one of 0.03 dB is not.</li>
+      three times varies by <span class="num">0.039</span> dB, so a 0.2 dB effect is
+      resolvable and a 0.03 dB one is not.</li>
       <li><strong>Farthest-point sampling.</strong> Subsets are spread over the camera
-      trajectory rather than drawn at random; the seed picks only the starting camera.</li>
+      trajectory rather than drawn at random; the seed picks only the starting
+      camera.</li>
     </ul>
     <p class="muted">An asterisk in what follows means |mean| exceeds the between-seed
     spread — a consistency check at n = 3, not a formal significance test.</p>
@@ -380,6 +440,21 @@ a{color:var(--accent)}
       dB either side of the average — three arbitrary views can contradict the finding
       they illustrate.</figcaption>
     </figure>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="eyebrow">Result &middot; the whole grid</div>
+    <h2>Every cell, in one picture</h2>
+    <figure class="fill">
+      <img src="{{IMG_HEAT}}" alt="Heatmap of paired PSNR change across three
+      strategies, four ratios and three subset sizes.">
+    </figure>
+    <p class="cap">Read the outpainting row left to right across the three
+    panels: green at k = 5, neutral at k = 10, red at k = 20. Inpainting is flat
+    everywhere; pose-guided is red everywhere and darkens with k. Colour is
+    clipped at &plusmn;1 dB so the crossover stays visible.</p>
   </div>
 </section>
 
@@ -546,6 +621,28 @@ a{color:var(--accent)}
     identical within its scene · code and full report in the repository.</p>
   </div>
 </section>
+
+<section class="slide">
+  <div class="inner center">
+    <div class="eyebrow">Thank you</div>
+    <h1 class="thanks">Thank you</h1>
+    <p class="lead muted">Questions welcome.</p>
+    <hr class="rule">
+    <div class="cols">
+      <div class="card"><div class="k num">{{NRUNS}}</div>
+        <div class="cap">training runs, every number read programmatically from
+        <span class="tag">runs/*/results.json</span></div></div>
+      <div class="card"><div class="k num">2</div>
+        <div class="cap">scenes, an outdoor object and an indoor room</div></div>
+      <div class="card"><div class="k num">4</div>
+        <div class="cap">controls, plus a depth prior that tests the
+        mechanism</div></div>
+    </div>
+    <p class="muted" style="font-size:.9em">Mohamed Eyad &middot; code, runs and
+    write-up: <span class="tag">github.com/mohamedeyaad/fewshot-gaussian-splatting</span></p>
+  </div>
+</section>
+
 
 </div>
 

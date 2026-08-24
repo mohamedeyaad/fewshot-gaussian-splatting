@@ -76,3 +76,16 @@ runs_15k/**
 !runs_15k/*/results.json
 
 logs/
+
+# ---------------------------------------------------------------------------
+# Generated deliverables. The brief asks for a repository of training and
+# evaluation scripts with a README carrying the findings; the write-ups are
+# coursework artefacts built from runs/*/results.json by src/build_*.py, so
+# committing them stores the same numbers twice and invites the two to
+# disagree. Rebuild: see the "Reports" section of README.md.
+#
+# latex/ also holds the course essay template (.sty and the UniGe/DIBRIS
+# marks), which is the department's to distribute, not this project's.
+# ---------------------------------------------------------------------------
+results/
+latex/

@@ -274,14 +274,15 @@ patches/                the three required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
 runs/*/results.json     raw metrics for all 242 runs - the experimental record
-results/                figures, summary tables, and the final report
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
 ```
 
 Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded),
 `gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (~15 GB),
-and `scenes/` (symlink farms with absolute paths — regenerate them).
+`scenes/` (symlink farms with absolute paths — regenerate them), and
+`results/` and `latex/`, which hold figures and write-ups built from
+`runs/*/results.json` by the scripts above.
 
 ---
 

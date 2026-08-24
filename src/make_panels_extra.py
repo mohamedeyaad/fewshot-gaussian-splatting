@@ -209,6 +209,36 @@ def panel_depth_30k():
              labels)
 
 
+def panel_ratio_extreme():
+    """How far can the synthetic ratio be pushed before it stops helping?
+
+    The swept grid stops at 200%, which is where the specification stops. But
+    runs at 400% and 800% exist at k=5 - 20 and 40 fabricated images against 5
+    real ones - and nothing had ever looked at them. At 800% the training set
+    is 89% invented.
+
+    Ratios here are of the REAL subset size: 40 fakes against 5 real views is
+    800%, not 40%.
+    """
+    b = f"truck_k5_seed{SEED}_fps_fake0"
+    cols = [
+        ("ground truth", None),
+        ("5 real only", b),
+        ("+200%  (10 fake)", f"truck_k5_seed{SEED}_fps_outpaint_fake10"),
+        ("+400%  (20 fake)", f"truck_k5_seed{SEED}_fps_outpaint_fake20"),
+        ("+800%  (40 fake)", f"truck_k5_seed{SEED}_fps_outpaint_fake40"),
+    ]
+    tags = [c[1] for c in cols[2:]]
+    views = representative_views([(tags[-1], b)])
+    rows, labels = cells(cols, views, b, deltas_vs={t: b for t in tags})
+    grid(rows, [c[0] for c in cols], OUT / "panel_ratio_extreme.png",
+         "Pushing the synthetic ratio past the swept grid, at 5 real views. "
+         "Mean paired gain: +0.285 dB at 200%, +0.285 at 400%, +0.426 at 800% "
+         "(3 seeds).\nAt 800% the training set is 40 fabricated images against "
+         "5 real ones. Views chosen as those closest to the mean effect.",
+         labels)
+
+
 def panel_scaling():
     b = f"truck_k5_seed{SEED}_fps_fake0"
     cols = [
@@ -328,6 +358,7 @@ if __name__ == "__main__":
     panel_crossover()
     panel_depth()
     panel_depth_30k()
+    panel_ratio_extreme()
     panel_scaling()
     panel_control()
     panel_scene2()

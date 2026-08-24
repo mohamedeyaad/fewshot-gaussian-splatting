@@ -288,19 +288,13 @@ a{color:var(--accent)}
     <div class="eyebrow">Contents</div>
     <h2>Where this goes</h2>
     <ol class="agenda">
-      <li><strong>The problem.</strong> What splatting does when photographs run
-      out.</li>
-      <li><strong>The method.</strong> Three ways to manufacture a training view,
-      and the pipeline that evaluates them.</li>
-      <li><strong>The grid.</strong> 3 strategies &times; 4 ratios &times; 3 subset
-      sizes &times; 3 seeds.</li>
-      <li><strong>The result.</strong> The same treatment helps at five real views
-      and harms at twenty.</li>
-      <li><strong>Why.</strong> Coverage decays, inconsistency does not — and four
-      controls that rule out the alternatives.</li>
-      <li><strong>A prediction, tested.</strong> Constraint without a viewpoint
-      never crosses over.</li>
-      <li><strong>Limits.</strong> What this does not show.</li>
+      <li><strong>The problem</strong> — splatting without enough photographs</li>
+      <li><strong>The method</strong> — three ways to manufacture a view</li>
+      <li><strong>The grid</strong> — what was run</li>
+      <li><strong>The result</strong> — a sign change</li>
+      <li><strong>Why</strong> — and four controls</li>
+      <li><strong>A prediction, tested</strong></li>
+      <li><strong>Limits</strong></li>
     </ol>
   </div>
 </section>
@@ -309,9 +303,8 @@ a{color:var(--accent)}
   <div class="inner">
     <div class="eyebrow">The problem</div>
     <h2>3D Gaussian Splatting is excellent — given enough photographs</h2>
-    <p class="lead">On <span class="tag">truck</span> (Tanks &amp; Temples), the full
-    219-view reconstruction reaches <span class="num">{{CEIL}}</span> dB. Cut to five
-    photographs and it falls to <span class="num">{{FLOOR5}}</span> dB.</p>
+    <p class="lead">Cut <span class="tag">truck</span> from 219 photographs to five
+    and held-out quality collapses.</p>
     <div class="cols">
       <div class="card"><div class="k num">{{FLOOR5}}</div><div class="cap">dB &middot; 5 views</div></div>
       <div class="card"><div class="k num">{{FLOOR10}}</div><div class="cap">dB &middot; 10 views</div></div>
@@ -359,8 +352,7 @@ a{color:var(--accent)}
         one supplying a genuinely new <strong>viewpoint</strong>.</p>
       </div>
     </div>
-    <p class="muted">Each is generated at 25%, 50%, 100% and 200% of the real subset
-    size, at k = 5, 10 and 20 real views, over three seeds.</p>
+
   </div>
 </section>
 
@@ -400,15 +392,13 @@ a{color:var(--accent)}
     <ul>
       <li><strong>Frozen held-out split.</strong> Byte-identical test images in every
       run — verified by hash across all {{NRUNS}} of them.</li>
-      <li><strong>Measured noise floor.</strong> The identical configuration re-run
-      three times varies by <span class="num">0.039</span> dB, so a 0.2 dB effect is
-      resolvable and a 0.03 dB one is not.</li>
-      <li><strong>Farthest-point sampling.</strong> Subsets are spread over the camera
-      trajectory rather than drawn at random; the seed picks only the starting
-      camera.</li>
+      <li><strong>Measured noise floor.</strong> An identical configuration re-run
+      three times varies by <span class="num">0.039</span> dB.</li>
+      <li><strong>Farthest-point sampling.</strong> Subsets spread over the camera
+      trajectory, not drawn at random.</li>
     </ul>
-    <p class="muted">An asterisk in what follows means |mean| exceeds the between-seed
-    spread — a consistency check at n = 3, not a formal significance test.</p>
+    <p class="muted">* = |mean| exceeds the between-seed spread. A consistency check
+    at n = 3, not a significance test.</p>
   </div>
 </section>
 
@@ -419,10 +409,8 @@ a{color:var(--accent)}
     <div style="display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px)">
       {{CROSS_BARS}}
     </div>
-    <p>Outpainting at the 200% ratio, on <span class="tag">truck</span>, paired within
-    seed. The treatment is <em>identical</em> at every subset size — only the number of
-    real photographs changes. Best single condition anywhere in the study:
-    <span class="num pos">{{BEST}}</span> dB.</p>
+    <p>Outpainting at 200%, paired within seed. The treatment is <em>identical</em>
+    at every subset size — only the number of real photographs changes.</p>
     <p class="muted">For scale: one extra real photograph between k = 5 and k = 10 is
     worth <span class="num">{{STEP510}}</span> dB total. Augmentation buys a fraction of
     a photograph, and only while photographs are scarce.</p>
@@ -462,21 +450,21 @@ a{color:var(--accent)}
   <div class="inner">
     <div class="eyebrow">Generalisation</div>
     <h2>It reproduces indoors</h2>
-    <p class="lead">34 further runs repeat the outpainting sweep on
-    <span class="tag">drjohnson</span> (Deep Blending, 230 views, an indoor room) — a
-    different capture regime, a different scene scale.</p>
+    <p class="lead">34 runs repeat the outpainting sweep on
+    <span class="tag">drjohnson</span> — an indoor room, a different capture
+    regime.</p>
     <div class="cols">
       <div class="card"><div class="k num pos">{{GEN5}}</div>
         <div class="cap">dB at k = 5 — <em>stronger</em> than outdoors</div></div>
       <div class="card"><div class="k num neg">{{GEN20}}</div>
         <div class="cap">dB at k = 20 — the sign flip repeats</div></div>
       <div class="card"><div class="k num">{{GENFLOORSD}}</div>
-        <div class="cap">dB baseline scatter between seeds — which five views you draw
-        matters far more in a room</div></div>
+        <div class="cap">dB baseline scatter between seeds — the draw matters far
+        more in a room</div></div>
     </div>
-    <p>Indoors all three metrics move together, where on truck outpainting bought PSNR
-    while SSIM stayed flat. Agreement across three metrics with different failure modes
-    is much harder to get by chance than agreement in one.</p>
+    <p>Indoors all three metrics move together; on <span class="tag">truck</span>
+    SSIM moved slightly the other way. Three metrics agreeing is harder to get by
+    chance than one.</p>
   </div>
 </section>
 
@@ -487,20 +475,19 @@ a{color:var(--accent)}
     <div class="cols">
       <div class="card">
         <h3>Coverage — decays</h3>
-        <p class="cap">A synthetic view supplies scene content no real camera saw. That
-        is worth a lot at five views and very little at twenty: the per-view value of a
-        real photograph falls by an order of magnitude across the same range.</p>
+        <p class="cap">Scene content no real camera saw. Worth a lot at five views,
+        very little at twenty — the value of a real photograph falls tenfold across
+        that range.</p>
       </div>
       <div class="card">
         <h3>Inconsistency — does not decay</h3>
-        <p class="cap">A fabricated view contradicts the others. A contradiction is just
-        as harmful at twenty views as at five — arguably worse, because it now
-        contradicts a better-determined geometry.</p>
+        <p class="cap">A fabricated view contradicts the others — just as harmful at
+        twenty views as at five, arguably worse against a better-determined
+        geometry.</p>
       </div>
     </div>
-    <p>A decaying benefit plus a roughly constant cost is sufficient to produce a sign
-    change. That is an explanation, and explanations are cheap — so it was made to
-    predict something that could fail.</p>
+    <p>A decaying benefit plus a constant cost produces a sign change. Explanations
+    are cheap — so this one was made to predict something that could fail.</p>
   </div>
 </section>
 
@@ -508,9 +495,8 @@ a{color:var(--accent)}
   <div class="inner">
     <div class="eyebrow">Is it just this one model?</div>
     <h2>A second checkpoint reverses in the same place</h2>
-    <p class="lead">The obvious objection: perhaps the crossover is a property of Stable
-    Diffusion 1.5 rather than of augmentation. Dreamshaper-8 — same architecture, same
-    VRAM budget, <em>better</em> photorealism — answers it.</p>
+    <p>Is the crossover a property of SD 1.5 rather than of augmentation?
+    Dreamshaper-8 — same architecture, better photorealism — answers it.</p>
     <div class="tw"><table>
       <thead><tr><th>real views</th><th class="n">SD 1.5</th>
                  <th class="n">Dreamshaper-8</th></tr></thead>
@@ -519,14 +505,12 @@ a{color:var(--accent)}
         <tr><td>10</td><td class="n">{{MC_SD10}}</td><td class="n neg">{{MC_DS10}}</td></tr>
         <tr><td>20</td><td class="n neg">{{MC_SD20}}</td><td class="n neg">{{MC_DS20}}</td></tr>
       </tbody>
-      <caption>Outpainting at the 200% ratio, paired within seed.</caption>
+      <caption>200% ratio, paired within seed.</caption>
     </table></div>
-    <p>Same reversal, different checkpoint. And the better-looking model is
-    <strong>worse at every subset size</strong> — it even crosses over earlier, turning
-    negative at k = 10 where SD 1.5 is still at zero.</p>
-    <p class="muted">A model finetuned to make each image individually more convincing has
-    no reason to be more consistent <em>between</em> images. Photorealism is not what a
-    synthetic view contributes.</p>
+    <p>Same reversal — and the better-looking model is <em>worse</em> everywhere,
+    crossing over earlier.</p>
+    <p class="muted">A model finetuned to make each image more convincing has no reason
+    to be more consistent <em>between</em> images.</p>
   </div>
 </section>
 
@@ -534,21 +518,20 @@ a{color:var(--accent)}
   <div class="inner">
     <div class="eyebrow">Prediction 1 &middot; held</div>
     <h2>Constraint without a viewpoint should never cross over</h2>
-    <p class="lead">If the harm is <em>inconsistency</em>, an intervention that supplies
-    geometric constraint <strong>without inventing a camera</strong> has no contradictory
-    geometry to accumulate — so it should stay positive at every subset size.</p>
-    <p>Monocular depth regularisation is that intervention: a depth map per real
-    photograph, anchored to true scale against the sparse SfM points that view observes
-    (median R² 0.964). Synthetic views receive no depth supervision — estimating depth
-    from a fabricated image would be circular.</p>
+    <p class="lead">If the harm is inconsistency, constraint <em>without a new
+    camera</em> has no contradiction to accumulate — so it should never turn
+    negative.</p>
+    <p>Monocular depth regularisation — a depth map per real photograph,
+    scale-anchored to the sparse SfM points. Prior work (Chung et al. 2023), used here
+    as a control.</p>
     <div class="cols">
       <div class="card"><div class="k num pos">{{D5}}</div><div class="cap">dB at k = 5</div></div>
       <div class="card"><div class="k num pos">{{D10}}</div><div class="cap">dB at k = 10</div></div>
       <div class="card"><div class="k num pos">{{D20}}</div><div class="cap">dB at k = 20 — still positive</div></div>
       <div class="card"><div class="k num pos">{{DBOTH}}</div><div class="cap">dB combined with outpainting at k = 5 — the largest gain in the study</div></div>
     </div>
-    <p class="muted">Coverage crosses over; constraint does not. The two interventions
-    differ in exactly one respect — whether a camera that never existed is invented.</p>
+    <p><strong>Coverage crosses over; constraint does not.</strong> The two differ in
+    exactly one respect — whether a camera is invented.</p>
   </div>
 </section>
 
@@ -558,24 +541,18 @@ a{color:var(--accent)}
     <div class="eyebrow">Conclusion</div>
     <h2>What both scenes say together</h2>
     <ul>
-      <li><strong>Diffusion augmentation is not free coverage.</strong> It helps only
-      while real views are in the single digits, and the crossover reproduces outdoors
-      and indoors.</li>
-      <li><strong>The mechanism is pose novelty.</strong> Four controls exclude image
-      quality, hallucinated hole content, warping artifacts, and mere view
-      repetition.</li>
-      <li><strong>Constraint beats invention.</strong> A depth prior is positive at every
-      subset size and compounds with augmentation; anything that invents a camera
-      eventually reverses sign. It also outlasts it: at 30,000 iterations outpainting
-      is worth {{O5_30K}} dB and the prior still {{D5_30K}}.</li>
-      <li><strong>The two effects are separable.</strong> Outpainting supplies peripheral
-      content, the depth prior supplies constraint — and combining them exceeds the sum
-      of the parts at every subset size.</li>
+      <li><strong>Augmentation is not free coverage.</strong> It helps only in the
+      single digits, outdoors and indoors alike.</li>
+      <li><strong>The mechanism is invented camera pose.</strong> Four controls exclude
+      image quality, hole content, warping and repetition.</li>
+      <li><strong>Constraint beats invention.</strong> A depth prior never crosses over,
+      and still returns {{D5_30K}} dB at 30,000 iterations where outpainting is
+      {{O5_30K}}.</li>
+      <li><strong>The two are separable</strong> — and combining them beats either
+      alone.</li>
     </ul>
     <hr class="rule">
-    <p class="lead">Practical guidance: use augmentation below about ten real views,
-    prefer the strategy that widens the frustum without moving the camera, and treat any
-    method that invents a viewpoint as a liability. Above ten views, spend the effort on
+    <p class="lead">Below ten real views, use it. Above ten, spend the effort on
     photographs.</p>
   </div>
 </section>
@@ -585,25 +562,15 @@ a{color:var(--accent)}
     <div class="eyebrow">Limitations</div>
     <h2>What this does not show</h2>
     <ul>
-      <li><strong>The 7,000-iteration setting is load-bearing.</strong> The benefit
-      decays monotonically with training length — outpainting at k = 5 goes
-      {{K5_7K}} → {{K5_15K}} → {{K5_30K}} dB at 7k, 15k and 30k. The baseline is flat
-      from 7k to 15k ({{B5_7K}} → {{B5_15K}}) and lower by 30k ({{B5_30K}}), so the
-      setting is not mis-chosen: 30,000 is <em>past</em> this regime's optimum, not
-      better converged. The augmentation gain is conditional on early stopping; the
-      depth prior is not.</li>
-      <li><strong>Two checkpoints, one architecture.</strong> Dreamshaper-8 is an
-      SD 1.5 finetune, so the swap varies image quality, not architecture. SDXL needs
-      ~6.5 GB and FLUX ~54 GB against this card's 4 GB.</li>
-      <li><strong>Three seeds.</strong> A consistency check, not statistical
+      <li><strong>Early stopping is load-bearing.</strong> The gain decays with
+      training length: {{K5_7K}} → {{K5_15K}} → {{K5_30K}} dB at 7k, 15k, 30k. The
+      depth prior does not.</li>
+      <li><strong>Two checkpoints, one architecture.</strong> SDXL needs ~6.5 GB and
+      FLUX ~54 GB against this card's 4 GB.</li>
+      <li><strong>Three seeds, two scenes.</strong> A consistency check, not
       significance.</li>
-      <li><strong>Two scenes, one partially swept.</strong> The second scene was swept
-      for outpainting only, at k = 5 and k = 20. "Inpainting is flat" and "pose-guided
-      always hurts" remain single-scene claims.</li>
-      <li><strong>The depth prior's compounding is single-scene.</strong> It reproduces
-      on drjohnson as a gain, but the interaction there is +0.075 ± 0.672 dB — additive,
-      not super-additive. And at k = 20 after 30,000 iterations it is {{D20_30K}} dB,
-      no longer clear of the noise floor.</li>
+      <li><strong>The compounding is single-scene.</strong> On drjohnson the
+      interaction is +0.075 ± 0.672 dB — additive, not super-additive.</li>
     </ul>
   </div>
 </section>
@@ -613,9 +580,8 @@ a{color:var(--accent)}
     <div class="eyebrow">In one sentence</div>
     <h1 style="max-width:20ch">Augmentation buys coverage, and pays for it in
     consistency.</h1>
-    <p class="lead">Whether that trade is worth taking depends on how scarce the real
-    photographs are. At five views the coverage is worth the inconsistency. By twenty it
-    is not — and the same treatment that helped now harms.</p>
+    <p class="lead">At five views the coverage is worth the inconsistency. By twenty
+    it is not.</p>
     <hr class="rule">
     <p class="muted">{{NRUNS}} runs · 2 scenes · every held-out set hash-verified
     identical within its scene · code and full report in the repository.</p>

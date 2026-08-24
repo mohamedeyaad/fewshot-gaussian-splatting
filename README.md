@@ -200,11 +200,47 @@ Depth is also the cheaper and cleaner intervention: it improves all three
 metrics where outpainting buys PSNR while degrading SSIM, and costs **+6.6%
 Gaussians** against outpainting's **+103%**.
 
+#### It also outlasts augmentation
+
+Train to 30,000 iterations and the two part company — which is the sharpest
+test the account has faced, and it was predicted before the runs:
+
+| k=5, paired | 7,000 | 30,000 |
+|---|---|---|
+| + depth prior | +0.259 \* | **+0.208** \* |
+| + outpainting (200%) | +0.285 \* | **−0.078** |
+| + both | +0.714 \* | **+0.469** \* |
+
+Outpainting's benefit is gone; the prior's is not. Fabricated pixels give the
+optimiser more contradictory data to memorise as training lengthens. A depth
+constraint invents nothing, so it has no contradiction to accumulate.
+
+**Two results that run against this**, both stated in the report rather than
+buried:
+
+- At **k=20** the prior is **+0.130 dB** at 30,000 — no longer separated from
+  zero — and the combination stays negative (−0.372). The prior does not
+  rescue augmentation once twenty real views already pin the geometry.
+- The super-additivity is **single-scene**. On drjohnson the interaction is
+  **+0.075 ± 0.672 dB** — additive within noise. What reproduces on both scenes
+  is only the weaker claim: the interaction is never *negative*, which is what
+  two interventions repairing the same deficiency would show.
+
 ```bash
 bash src/run_depth_reg.sh              # k=5
 bash src/run_depth_k10_k20.sh          # k=10 and k=20
-$VPY src/depth_compare.py              # the 2x2, any K via K=10 env var
+bash src/run_30k_depth.sh              # the same 2x2 at 30,000
+
+# the 2x2 table. K, NF, SCENE and OUTDIR are all environment parameters:
+$VPY src/depth_compare.py                                   # truck, 7,000
+SCENE=drjohnson $VPY src/depth_compare.py                   # second scene
+OUTDIR=runs_30k K=20 NF=40 $VPY src/depth_compare.py        # k=20 at 30,000
 ```
+
+> `depth_compare.py` hardcoded `truck_` and `runs/` until commit `41d18a8`, so
+> running it after a `SCENE=drjohnson` sweep printed the **truck** table under
+> six correct drjohnson runs. The table named no scene, which is exactly why it
+> would have been believed. Its header now names scene and iteration budget.
 
 > **Note on the upstream depth utility.** `gaussian-splatting/utils/make_depth_scale.py`
 > is broken on the OpenCV version this project pins: it slices its `cv2.remap`

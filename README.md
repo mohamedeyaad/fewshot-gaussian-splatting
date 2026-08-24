@@ -4,12 +4,12 @@ Does generating synthetic training views with a diffusion model help 3D Gaussian
 Splatting when you only have a handful of real photographs?
 
 **Short answer: only when you have very few real views, and even then barely.**
-The value of a synthetic image depends on how much real data you already have —
-it crosses from beneficial to harmful somewhere between 5 and 20 real views.
+The value of a synthetic image depends on how much real data you already have.
+It crosses from beneficial to harmful somewhere between 5 and 20 real views.
 This repository contains the full pipeline, all 242 training runs, and the
 analysis behind that claim.
 
-University of Genoa (UNIGE) — robotics project.
+University of Genoa (UNIGE), robotics project.
 
 ---
 
@@ -32,7 +32,7 @@ run.
 ΔPSNR against the same seed's own baseline at the same subset size. 3 seeds.
 `*` = |mean| exceeds the between-seed standard deviation.
 
-**Outpainting** — crosses from helpful to harmful:
+**Outpainting.** Crosses from helpful to harmful:
 
 | ratio | k=5 | k=10 | k=20 |
 |---|---|---|---|
@@ -41,14 +41,14 @@ run.
 | 100 % | **+0.182** \* | −0.423 \* | −0.983 \* |
 | 200 % | **+0.285** \* | −0.003 | −0.618 \* |
 
-**Inpainting** — flat, and the only strategy independent of subset size:
+**Inpainting.** Flat, and the only strategy independent of subset size:
 
 | ratio | k=5 | k=10 | k=20 |
 |---|---|---|---|
 | 100 % | −0.166 \* | −0.213 \* | −0.161 \* |
 | 200 % | +0.029 | −0.141 | −0.102 \* |
 
-**Pose-guided** — harmful everywhere, and worse the more real data it is added to:
+**Pose-guided.** Harmful everywhere, and worse the more real data it is added to:
 
 | ratio | k=5 | k=10 | k=20 |
 |---|---|---|---|
@@ -79,7 +79,7 @@ The exchange rate: the best synthetic condition anywhere (+0.285 dB) is
 
 ### The control: is diffusion to blame?
 
-Pose-guided changes two things at once — the camera pose, and the ~10% of pixels
+Pose-guided changes two things at once: the camera pose, and the ~10% of pixels
 diffusion invents to fill disocclusions. A control separates them: warp to
 bit-identical poses, then leave the holes black and never load Stable
 Diffusion (`src/gen_warponly.py`).
@@ -98,14 +98,14 @@ stage responsible for both is the stage holding the result up. What remains is
 pose novelty itself.
 
 Caveat: black rectangles are a severe artifact, so part of that +2.49 dB is
-diffusion beating a low bar. The control proves diffusion is net positive —
-enough to rule it out as the cause — not that its output is good.
+diffusion beating a low bar. The control proves diffusion is net positive,
+which rules it out as the cause. It does not prove the output is good.
 
 ### Does it generalise? A second scene
 
 Everything above is `truck`: one outdoor scene, one object. Deep Blending's
 `drjohnson` (230 views, indoor room) repeats the outpainting sweep at the two
-ends of the crossover — k = 5 and k = 20, 3 seeds, 24 runs.
+ends of the crossover: k = 5 and k = 20, 3 seeds, 24 runs.
 
 | ratio | truck k=5 | drjohnson k=5 | truck k=20 | drjohnson k=20 |
 |---|---|---|---|---|
@@ -125,7 +125,7 @@ The effect is *stronger* indoors, and on better evidence:
   improves −0.011 alongside it.
 
 The two non-significant k = 20 cells (100 %, 200 %) are the only places the
-pattern softens — and LPIPS is worse there at *every* ratio, 200 % included, so
+pattern softens, and LPIPS is worse there at *every* ratio, 200 % included, so
 the one positive PSNR cell is not a counterexample so much as a metric
 disagreement.
 
@@ -143,7 +143,7 @@ Scaling, for reference (not comparable to truck — see below):
 
 **Resolution caveat.** drjohnson trains at `--resolution 4`, truck at `2`: a
 230-view drjohnson run at half resolution exceeds the 4 GB card and thrashes
-(5 s/iter against 18 it/s — a 17× slowdown). Absolute PSNR is therefore *not*
+(5 s/iter against 18 it/s, a 17× slowdown). Absolute PSNR is therefore *not*
 comparable between the two scenes. Every delta in the table above is computed
 within a scene against its own same-seed baseline, which is unaffected by the
 resolution choice. All 34 drjohnson runs use the same resolution, so the
@@ -154,13 +154,13 @@ scene's internal scaling curve is self-consistent.
 The explanation above predicts something that could fail. If the harm comes from
 inconsistency rather than from augmentation as such, then an intervention
 supplying geometric constraint *without inventing a viewpoint* should never
-cross over — it has no contradictory geometry to accumulate.
+cross over: it has no contradictory geometry to accumulate.
 
 Monocular depth regularisation is that intervention: a depth network predicts an
 inverse-depth map per real training photo, anchored to scene scale against the
 sparse COLMAP points that view observes (median R² 0.964). No camera is
-invented, no pixel fabricated. Synthetic views get no depth supervision —
-estimating depth from a fabricated image to constrain geometry would be
+invented, no pixel fabricated. Synthetic views get no depth supervision,
+since estimating depth from a fabricated image to constrain geometry would be
 circular.
 
 A 3×2×2 factorial (subset size × outpainting × depth prior), 3 seeds, paired:
@@ -175,15 +175,15 @@ A 3×2×2 factorial (subset size × outpainting × depth prior), 3 seeds, paired
 The prediction holds. Coverage crosses over; constraint does not. The depth
 prior is positive and statistically separated at *every* subset size, including
 k=20 where outpainting costs 0.618 dB. The two interventions differ in exactly
-one respect — whether a camera that never existed is invented — and only the one
+one respect: whether a camera that never existed is invented. Only the one
 that invents a camera reverses sign.
 
 The shape agrees too: the prior's benefit *decays* (+0.259 → +0.163 → +0.155),
 exactly as diminishing returns on constraint predict. It simply never turns
 negative, because there is no contradiction term to overtake it.
 
-They also compound. At k=5 the combination reaches **+0.714 dB — the largest
-improvement anywhere in this study** — with a positive interaction at all three
+They also compound. At k=5 the combination reaches **+0.714 dB**, the largest
+improvement anywhere in this study, with a positive interaction at all three
 subset sizes. They repair different deficiencies: outpainting supplies
 peripheral *content* no real view recorded; the prior supplies *constraint* on
 geometry already observed.
@@ -201,7 +201,7 @@ metrics where outpainting buys PSNR while degrading SSIM, and costs +6.6% Gaussi
 
 #### It also outlasts augmentation
 
-Train to 30,000 iterations and the two part company — which is the sharpest
+Train to 30,000 iterations and the two part company. This is the sharpest
 test the account has faced, and it was predicted before the runs:
 
 | k=5, paired | 7,000 | 30,000 |
@@ -215,8 +215,8 @@ optimiser more contradictory data to memorise as training lengthens. A depth
 constraint invents nothing, so it has no contradiction to accumulate.
 
 A third training length was measured to check that 7,000 is not a flattering
-choice. Outpainting at k=5 decays monotonically — +0.285 at 7,000, +0.045 at
-15,000, −0.078 at 30,000 — but the unaugmented baseline does not improve
+choice. Outpainting at k=5 decays monotonically (+0.285 at 7,000, +0.045 at
+15,000, −0.078 at 30,000), but the unaugmented baseline does not improve
 either: 15.20 → 15.22 → 15.04 dB across the same three points. Flat to 15,000
 and lower by 30,000 means few-shot splatting is over-training, not converging,
 so 7,000 is a fair operating point. The augmentation gain is still conditional
@@ -225,11 +225,11 @@ on it; the depth prior is not.
 **Two results that run against this**, both stated in the report rather than
 buried:
 
-- At k=20 the prior is +0.130 dB at 30,000 — no longer separated from
-  zero — and the combination stays negative (−0.372). The prior does not
+- At k=20 the prior is +0.130 dB at 30,000, no longer separated from
+  zero, and the combination stays negative (−0.372). The prior does not
   rescue augmentation once twenty real views already pin the geometry.
 - The super-additivity is single-scene. On drjohnson the interaction is
-  +0.075 ± 0.672 dB — additive within noise. What reproduces on both scenes
+  +0.075 ± 0.672 dB, additive within noise. What reproduces on both scenes
   is only the weaker claim: the interaction is never *negative*, which is what
   two interventions repairing the same deficiency would show.
 
@@ -289,7 +289,7 @@ CAPTURE.md              capturing a custom scene with COLMAP
 
 Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded),
 `gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (~15 GB),
-`scenes/` (symlink farms with absolute paths — regenerate them), and
+`scenes/` (symlink farms with absolute paths, regenerate them), and
 `results/` and `latex/`, which hold figures and write-ups built from
 `runs/*/results.json` by the scripts above.
 
@@ -520,7 +520,7 @@ Filenames encode the linkage the brief asks for:
 directory's `poses.json`.
 
 Stable Diffusion 1.5 inpainting runs at 704×392 with `variant="fp16"`,
-attention slicing and VAE slicing — 2.65 GB peak, which fits 4 GB only because
+attention slicing and VAE slicing: 2.65 GB peak, which fits 4 GB only because
 diffusion and 3DGS training never run concurrently.
 
 ---
@@ -561,7 +561,7 @@ diffusion and 3DGS training never run concurrently.
   sizes do not resolve where.
 - **Two scenes, one of them partial.** The crossover is confirmed on `truck`
   (outdoor object) and `drjohnson` (indoor room), but drjohnson was swept for
-  outpainting only, at k = 5 and k = 20 — the two ends of the crossover.
+  outpainting only, at k = 5 and k = 20, the two ends of the crossover.
   Inpainting and pose-guided were not repeated there, so "inpainting is flat"
   and "pose-guided always hurts" remain single-scene claims. drjohnson also
   runs at a different resolution (`-r 4`), so only within-scene deltas

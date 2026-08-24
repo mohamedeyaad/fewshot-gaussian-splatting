@@ -23,9 +23,17 @@ K = int(os.environ.get("K", 5))
 NF = int(os.environ.get("NF", 10))
 SEEDS = (0, 1, 2)
 
+# Which scene, and which iteration budget. Both were hardcoded to truck/7k,
+# so run_depth_reg.sh with SCENE=drjohnson trained six drjohnson runs and
+# then printed the TRUCK table underneath them - a summary that looked
+# entirely correct because nothing in it named a scene. Hence SUBJECT below.
+SCENE = os.environ.get("SCENE", "truck")
+OUTDIR = os.environ.get("OUTDIR", "runs")
+SUBJECT = f"{SCENE}, {OUTDIR}"
+
 
 def psnr(tag):
-    p = ROOT / "runs" / tag / "results.json"
+    p = ROOT / OUTDIR / tag / "results.json"
     if not p.exists():
         return None
     return json.loads(p.read_text())["metrics"]
@@ -40,15 +48,16 @@ def agg(v):
 
 def main():
     cells = {
-        "baseline":      "truck_k{K}_seed{s}_fps_fake0",
-        "+depth":        "truck_k{K}_seed{s}_fps_fake0_depth",
-        "+outpaint":     "truck_k{K}_seed{s}_fps_outpaint_fake{NF}",
-        "+both":         "truck_k{K}_seed{s}_fps_outpaint_fake{NF}_depth",
+        "baseline":      "{SCENE}_k{K}_seed{s}_fps_fake0",
+        "+depth":        "{SCENE}_k{K}_seed{s}_fps_fake0_depth",
+        "+outpaint":     "{SCENE}_k{K}_seed{s}_fps_outpaint_fake{NF}",
+        "+both":         "{SCENE}_k{K}_seed{s}_fps_outpaint_fake{NF}_depth",
     }
 
     got = {}
     for label, pat in cells.items():
-        got[label] = {s: psnr(pat.format(K=K, s=s, NF=NF)) for s in SEEDS}
+        got[label] = {s: psnr(pat.format(SCENE=SCENE, K=K, s=s, NF=NF))
+                      for s in SEEDS}
 
     missing = [f"{l} seed{s}" for l, d in got.items()
                for s, m in d.items() if m is None]
@@ -56,7 +65,8 @@ def main():
         print("missing runs: " + ", ".join(missing))
         print("(run src/run_depth_reg.sh first)\n")
 
-    print(f"=== depth regularisation at k={K}, {len(SEEDS)} seeds ===\n")
+    print(f"=== depth regularisation: {SUBJECT}, "
+          f"k={K}, {len(SEEDS)} seeds ===\n")
     print(f"{'condition':<14} {'PSNR':>16} {'vs baseline':>16} {'SSIM':>9} {'LPIPS':>9}")
     print("-" * 70)
 

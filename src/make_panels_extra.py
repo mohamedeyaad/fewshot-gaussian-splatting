@@ -24,7 +24,29 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import make_panels
 from make_panels import OUT, SEED, grid, load, psnr_of
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def at(runs_dir, iters):
+    """Read renders and per-view PSNR from a different sweep.
+
+    load() and psnr_of() resolve make_panels.RUNS and make_panels.ITER at
+    call time, so swapping the module globals redirects them. The 30,000
+    runs live in runs_30k/<tag>/test/ours_30000/ rather than the 7,000
+    defaults, and mixing the two would silently compare a 7k render
+    against a 30k number.
+    """
+    old_runs, old_iter = make_panels.RUNS, make_panels.ITER
+    make_panels.RUNS = ROOT / runs_dir
+    make_panels.ITER = iters
+    try:
+        yield
+    finally:
+        make_panels.RUNS, make_panels.ITER = old_runs, old_iter
 
 ROOT = Path(os.path.expanduser("~/fewshot_gs"))
 
@@ -126,18 +148,65 @@ def panel_crossover():
 
 
 def panel_depth():
+    """The 2x2 at k=5 and 7,000 iterations.
+
+    VIEWS was arbitrary here, which is the bug already fixed in
+    panel_selection: per-view deltas scatter several dB either side of a mean
+    worth a few tenths, so three fixed indices can illustrate the opposite of
+    the caption they sit under. Chosen against +both, the cell the figure is
+    actually about.
+    """
     b = f"truck_k5_seed{SEED}_fps_fake0"
+    both = f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}_depth"
+    dep = f"truck_k5_seed{SEED}_fps_fake0_depth"
+    out = f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}"
     cols = [
         ("ground truth", None),
         ("5 real only", b),
-        ("+ depth prior", f"truck_k5_seed{SEED}_fps_fake0_depth"),
-        ("+ outpainting", f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}"),
-        ("+ both", f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}_depth"),
+        ("+ depth prior", dep),
+        ("+ outpainting", out),
+        ("+ both", both),
     ]
-    rows, labels = cells(cols, VIEWS, b)
+    views = representative_views([(both, b), (dep, b)])
+    rows, labels = cells(cols, views, b,
+                         deltas_vs={dep: b, out: b, both: b})
     grid(rows, [c[0] for c in cols], OUT / "panel_depth.png",
-         "Depth regularisation at k=5: the two interventions compound "
-         "(+0.259, +0.285 alone; +0.714 together)", labels)
+         "Depth regularisation at k=5, 7,000 iterations: the two interventions "
+         "compound (+0.259 and +0.285 alone; +0.714 together).\n"
+         "Views chosen as those closest to the mean effect; per-view deltas shown.",
+         labels)
+
+
+def panel_depth_30k():
+    """The same 2x2 after 30,000 iterations - where the story changes.
+
+    At this budget outpainting on its own is worth -0.078 dB, indistinguishable
+    from zero: the benefit measured at 7,000 is gone. The depth prior is not
+    gone (+0.208), and the two together are worth +0.469 - more than the sum of
+    the parts, and more than either alone. The figure exists because that is a
+    claim about images, not just about a mean: the +outpainting column should
+    look no better than the baseline, while +both still does.
+    """
+    b = f"truck_k5_seed{SEED}_fps_fake0"
+    dep = f"truck_k5_seed{SEED}_fps_fake0_depth"
+    out = f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}"
+    both = f"truck_k5_seed{SEED}_fps_outpaint_fake{NF[5]}_depth"
+    cols = [
+        ("ground truth", None),
+        ("5 real only", b),
+        ("+ depth prior", dep),
+        ("+ outpainting", out),
+        ("+ both", both),
+    ]
+    with at("runs_30k", 30000):
+        views = representative_views([(both, b), (out, b)])
+        rows, labels = cells(cols, views, b,
+                             deltas_vs={dep: b, out: b, both: b})
+        grid(rows, [c[0] for c in cols], OUT / "panel_depth_30k.png",
+             "At 30,000 iterations outpainting alone is worth -0.078 dB (dead), "
+             "the depth prior still +0.208, and the two together +0.469.\n"
+             "Views chosen as those closest to the mean effect; per-view deltas shown.",
+             labels)
 
 
 def panel_scaling():
@@ -258,6 +327,7 @@ def panel_selection():
 if __name__ == "__main__":
     panel_crossover()
     panel_depth()
+    panel_depth_30k()
     panel_scaling()
     panel_control()
     panel_scene2()

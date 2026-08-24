@@ -171,26 +171,27 @@ quantities against the measured noise floor.
 \begin{table}[htbp]
   \centering
   \caption{Paired $\Delta$PSNR against the same seed's zero-synthetic
-  baseline. Rows are grouped by strategy; within each strategy the three lines
-  are $k = 5$, $10$ and $20$. Columns are the synthetic ratio. * marks a mean
-  exceeding its between-seed standard deviation.}
+  baseline, three seeds per cell. Columns are the synthetic ratio as a
+  percentage of the real subset size. * marks a mean exceeding its between-seed
+  standard deviation. At $k = 5$ and $k = 10$ the nominal 25\% and 50\% points
+  are fractional and were rounded down.}
   \label{tab:grid}
-  \begin{tabular}{lcccc}
+  \begin{tabular}{llcccc}
     \toprule
-    \textbf{Strategy} & \textbf{25\%} & \textbf{50\%} & \textbf{100\%}
-    & \textbf{200\%} \\
+    \textbf{Strategy} & $k$ & \textbf{25\%} & \textbf{50\%}
+    & \textbf{100\%} & \textbf{200\%} \\
     \midrule
-    Inpainting & -0.039 & -0.142\,* & -0.166\,* & +0.029 \\
-     & +0.014 & -0.142\,* & -0.213\,* & -0.141 \\
-     & -0.032 & -0.073\,* & -0.161\,* & -0.102\,* \\
+    \multirow{3}{*}{Inpainting} & 5 & -0.039 & -0.142\,* & -0.166\,* & +0.029 \\
+     & 10 & +0.014 & -0.142\,* & -0.213\,* & -0.141 \\
+     & 20 & -0.032 & -0.073\,* & -0.161\,* & -0.102\,* \\
     \addlinespace
-    Outpainting & +0.140\,* & +0.140\,* & +0.182\,* & +0.285\,* \\
-     & +0.172\,* & +0.013 & -0.423\,* & -0.003 \\
-     & -0.283\,* & -0.542\,* & -0.983\,* & -0.618\,* \\
+    \multirow{3}{*}{Outpainting} & 5 & +0.140\,* & +0.140\,* & +0.182\,* & +0.285\,* \\
+     & 10 & +0.172\,* & +0.013 & -0.423\,* & -0.003 \\
+     & 20 & -0.283\,* & -0.542\,* & -0.983\,* & -0.618\,* \\
     \addlinespace
-    Pose-guided & -0.309\,* & -0.375\,* & -0.719\,* & -1.013\,* \\
-     & -0.451\,* & -0.855\,* & -1.404\,* & -1.451\,* \\
-     & -1.017\,* & -1.528\,* & -1.729\,* & -1.884\,* \\
+    \multirow{3}{*}{Pose-guided} & 5 & -0.309\,* & -0.375\,* & -0.719\,* & -1.013\,* \\
+     & 10 & -0.451\,* & -0.855\,* & -1.404\,* & -1.451\,* \\
+     & 20 & -1.017\,* & -1.528\,* & -1.729\,* & -1.884\,* \\
     \addlinespace
     \bottomrule
   \end{tabular}

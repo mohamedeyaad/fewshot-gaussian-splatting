@@ -136,10 +136,11 @@ def main():
             for ratio in (25, 50, 100, 200):
                 r = get(key, k, ratio)
                 cells.append(d(r["d_psnr"], star=r["sig_psnr"]) if r else "---")
-        # three blocks of four, one per subset size
-        t2 += f"    {label} & " + " & ".join(cells[:4]) + r" \\" + "\n"
-        t2 += "     & " + " & ".join(cells[4:8]) + r" \\" + "\n"
-        t2 += "     & " + " & ".join(cells[8:12]) + r" \\" + "\n"
+        # one line per subset size, with k named rather than implied
+        t2 += (f"    \\multirow{{3}}{{*}}{{{label}}} & 5 & "
+               + " & ".join(cells[:4]) + r" \\" + "\n")
+        t2 += "     & 10 & " + " & ".join(cells[4:8]) + r" \\" + "\n"
+        t2 += "     & 20 & " + " & ".join(cells[8:12]) + r" \\" + "\n"
         t2 += "    \\addlinespace\n"
 
     # ---- Table 3: both required metrics, all three strategies, 200% ---------
@@ -477,14 +478,15 @@ quantities against the measured noise floor.
 \begin{{table}}[htbp]
   \centering
   \caption{{Paired $\Delta$PSNR against the same seed's zero-synthetic
-  baseline. Rows are grouped by strategy; within each strategy the three lines
-  are $k = 5$, $10$ and $20$. Columns are the synthetic ratio. * marks a mean
-  exceeding its between-seed standard deviation.}}
+  baseline, three seeds per cell. Columns are the synthetic ratio as a
+  percentage of the real subset size. * marks a mean exceeding its between-seed
+  standard deviation. At $k = 5$ and $k = 10$ the nominal 25\% and 50\% points
+  are fractional and were rounded down.}}
   \label{{tab:grid}}
-  \begin{{tabular}}{{lcccc}}
+  \begin{{tabular}}{{llcccc}}
     \toprule
-    \textbf{{Strategy}} & \textbf{{25\%}} & \textbf{{50\%}} & \textbf{{100\%}}
-    & \textbf{{200\%}} \\
+    \textbf{{Strategy}} & $k$ & \textbf{{25\%}} & \textbf{{50\%}}
+    & \textbf{{100\%}} & \textbf{{200\%}} \\
     \midrule
 {t2}    \bottomrule
   \end{{tabular}}

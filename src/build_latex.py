@@ -359,6 +359,10 @@ TEX = r"""\documentclass{{article}}
 \oreporttype{{Project Report}}
 \otitle{{Few-Shot Gaussian Splatting with Diffusion-Based Data Augmentation}}
 \oadvisor{{Prof. Fabio Solari, Prof. Manuela Chessa}}
+% \ostudent is a local addition to the department .sty; degrade quietly if the
+% template in use predates it rather than failing to compile.
+\providecommand{{\ostudent}}[1]{{}}
+\ostudent{{Mohamed Eyad}}
 \reportlayout%
 
 \title{{Few-Shot Gaussian Splatting with Diffusion-Based Data Augmentation}}

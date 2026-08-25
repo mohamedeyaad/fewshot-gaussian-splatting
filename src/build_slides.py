@@ -262,24 +262,34 @@ a{color:var(--accent)}
 <div class="deck" id="deck">
 
 <section class="slide on">
-  <div class="inner">
-    <div class="eyebrow">Università degli Studi di Genova &middot; DIBRIS
-    &middot; Virtual Reality for Robotics</div>
+  <div class="inner center">
+    <div class="eyebrow">Università degli Studi di Genova</div>
+    <p class="muted" style="margin:0; max-width:54ch">DIBRIS &middot; Dipartimento di
+    Informatica, Bioingegneria, Robotica e Ingegneria dei Sistemi</p>
+
+    <hr class="rule" style="width:100%">
+
+    <p class="muted" style="margin:0; font-size:.95em">Virtual Reality for Robotics
+    &middot; code 104737</p>
     <h1>Few-Shot Gaussian Splatting with<br>Diffusion-Based Data Augmentation</h1>
-    <p class="lead muted">When does a generated photograph help a 3D
-    reconstruction — and when does it start destroying one?</p>
-    <hr class="rule">
-    <div class="cols">
-      <div class="card"><div class="k num">{{NRUNS}}</div>
-        <div class="cap">training runs</div></div>
-      <div class="card"><div class="k num">2</div>
-        <div class="cap">scenes: an outdoor object and an indoor room</div></div>
-      <div class="card"><div class="k num">3</div>
-        <div class="cap">augmentation strategies, 4 ratios, 3 seeds</div></div>
-      <div class="card"><div class="k num">4</div>
-        <div class="cap">controls, plus a depth prior that tests the mechanism</div></div>
+    <p class="muted" style="margin:0; font-size:.95em">Project Report</p>
+
+    <hr class="rule" style="width:100%">
+
+    <div class="cols" style="width:100%; max-width:760px; text-align:left">
+      <div>
+        <div class="eyebrow">Candidate</div>
+        <p style="margin:.25em 0 0"><strong>Mohamed Eyad</strong></p>
+      </div>
+      <div>
+        <div class="eyebrow">Supervisors</div>
+        <p style="margin:.25em 0 0"><strong>Prof. Fabio Solari</strong><br>
+        <strong>Prof. Manuela Chessa</strong></p>
+      </div>
     </div>
-    <p class="muted" style="font-size:.9em">Mohamed Eyad &middot; Advisors: Prof. Fabio Solari, Prof. Manuela Chessa</p>
+
+    <p class="muted" style="margin:0; font-size:.9em">Genoa &middot; Academic Year
+    2025/2026</p>
   </div>
 </section>
 

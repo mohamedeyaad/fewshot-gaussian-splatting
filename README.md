@@ -181,6 +181,15 @@ scene's internal scaling curve is self-consistent.
 
 ### Testing the mechanism: a depth prior
 
+![How the depth prior works](figures/depth-mechanism.png)
+
+*Depth regularisation follows Chung et al., [Depth-Regularized Optimization for
+3D Gaussian Splatting in Few-Shot Images](https://arxiv.org/abs/2311.13398)
+(arXiv:2311.13398, 2023), and is used here as a control rather than as a
+contribution. The one thing this pipeline adds is the exclusion on the left:
+synthetic views receive no depth supervision at all.*
+
+
 ![Depth prior](figures/depth-prior.jpg)
 
 *A depth constraint invents no camera and no pixel, and stays positive at every
@@ -612,9 +621,11 @@ diffusion and 3DGS training never run concurrently.
   242 runs tractable on a 4 GB GPU. Thirty-six runs repeat key conditions at
   15,000 and 30,000 to check that the choice is not doing the work; the
   unaugmented baseline does not improve over that range either (15.20 → 15.22 →
-  15.04 dB). The full-data run reaches 25.23 dB against ≈ 25.4 dB published at
-  the full schedule, so the pipeline is validated, but absolute numbers sit
-  slightly below literature values.
+  15.04 dB). The full-data run reaches 25.23 dB, inside the ≈ 25.1–25.5 dB range
+  reported for this scene at the full 30,000-iteration schedule, so the
+  pipeline reproduces published quality. Those figures come from evaluations
+  at their own resolutions, so this is a sanity check rather than a like-for-
+  like comparison.
 - **Random selection was sampled, not swept.** Eighteen runs repeat the
   baseline and the 200 % outpainting cell with uniformly drawn subsets instead
   of farthest-point ones. Placement is worth 0.369 dB at k=10 and 0.675 dB at

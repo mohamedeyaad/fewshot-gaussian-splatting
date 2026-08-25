@@ -18,6 +18,12 @@ University of Genoa (UNIGE), robotics project.
 Scene: Tanks & Temples `truck`, 251 images, 32 held out and frozen across every
 run.
 
+![Pipeline](figures/pipeline.png)
+
+*Two lanes into one trainer: k real photographs on their own, or the same k
+plus a diffusion-generated set. Everything downstream is identical, so any
+difference in the held-out score belongs to the synthetic images.*
+
 ### What real photographs are worth
 
 | real views | PSNR | SSIM | LPIPS | Δ | per view |
@@ -58,10 +64,21 @@ run.
 Measured training noise floor is σ = 0.039 dB (≈ 0.055 dB paired), so these
 effects are real even where small.
 
+![Value of real photographs](figures/scaling.png)
+![Paired ratio curves](figures/ratio-curves.png)
+
+
 ### The finding
 
 Pose novelty explains all three behaviours. Order the strategies by how much
 new *camera pose* each invents:
+
+![The crossover](figures/crossover.jpg)
+
+*The same 200 % outpainting at 5 real views (top) and 20 (bottom). Views chosen
+as those closest to the mean effect; per-view deltas scatter widely either
+side.*
+
 
 | | new pose | new information | new contradiction | effect |
 |---|---|---|---|---|
@@ -78,6 +95,13 @@ The exchange rate: the best synthetic condition anywhere (+0.285 dB) is
 6.7× less valuable than simply taking five more photographs (+1.91 dB).
 
 ### The control: is diffusion to blame?
+
+![Warp-only control](figures/control.jpg)
+
+*The control warps to bit-identical poses and leaves the holes black, never
+loading Stable Diffusion. It is 2.49 dB worse, so the fabricated pixels are not
+what does the damage.*
+
 
 Pose-guided changes two things at once: the camera pose, and the ~10% of pixels
 diffusion invents to fill disocclusions. A control separates them: warp to
@@ -102,6 +126,12 @@ diffusion beating a low bar. The control proves diffusion is net positive,
 which rules it out as the cause. It does not prove the output is good.
 
 ### Does it generalise? A second scene
+
+![Second scene](figures/second-scene.jpg)
+
+*Deep Blending `drjohnson`: an indoor room, a different dataset, the same sign
+change.*
+
 
 Everything above is `truck`: one outdoor scene, one object. Deep Blending's
 `drjohnson` (230 views, indoor room) repeats the outpainting sweep at the two
@@ -150,6 +180,12 @@ resolution choice. All 34 drjohnson runs use the same resolution, so the
 scene's internal scaling curve is self-consistent.
 
 ### Testing the mechanism: a depth prior
+
+![Depth prior](figures/depth-prior.jpg)
+
+*A depth constraint invents no camera and no pixel, and stays positive at every
+subset size.*
+
 
 The explanation above predicts something that could fail. If the harm comes from
 inconsistency rather than from augmentation as such, then an intervention
@@ -259,21 +295,6 @@ OUTDIR=runs_30k K=20 NF=40 $VPY src/depth_compare.py        # k=20 at 30,000
 > [`src/check_depth_coverage.py`](src/check_depth_coverage.py) gates the sweep so
 > a plumbing fault can never again masquerade as a null result.
 
-## Reports
-
-The findings are in this README. The write-ups exist for the coursework
-submission and are generated from `runs/*/results.json`, never hand-edited:
-
-```bash
-$VPY src/build_brief.py     # -> results/report_brief.html   (~5 pages)
-$VPY src/build_report.py    # -> results/report.html         (full write-up)
-$VPY src/build_slides.py    # -> results/slides.html         (presentation)
-$VPY src/export_office.py   # -> .docx and .pptx conversions
-$VPY src/build_latex.py     # -> latex/report.tex
-```
-
----
-
 ## Repository layout
 
 ```
@@ -281,6 +302,7 @@ src/                    all pipeline code (see "Reproducing" below)
 patches/                the three required edits to upstream 3DGS
 subsets/                view-selection manifests + the frozen test split
 synthetic/              every generated image + poses.json (source-view linkage)
+figures/                the panels and plots this README argues with
 runs/*/results.json     raw metrics for all 242 runs - the experimental record
 build_rasterizer.sh     one-shot CUDA submodule build
 requirements.txt        Python dependencies
@@ -290,8 +312,8 @@ CAPTURE.md              capturing a custom scene with COLMAP
 Not committed (see `.gitignore`): `venv/` (7.5 GB), `data/` (1.4 GB, downloaded),
 `gaussian-splatting/` (upstream clone), `runs/` checkpoints and renders (~15 GB),
 `scenes/` (symlink farms with absolute paths, regenerate them), and
-`results/` and `latex/`, which hold figures and write-ups built from
-`runs/*/results.json` by the scripts above.
+`results/`, which holds the figures and tables rebuilt from
+`runs/*/results.json` by the analysis scripts.
 
 ---
 
@@ -446,7 +468,7 @@ bash src/run_30k_depth.sh       # 12 runs, ~5 h. The depth 2x2 at 30,000, to see
 # strategy, so in runs/ it would overwrite the 7,000-iteration baseline in
 # every paired key in the analysis.
 
-# 8. Analysis and deliverables.
+# 8. Analysis, tables and figures.
 $VPY src/collect_results.py   # -> results/summary.md, results/runs_raw.csv (all scenes)
 $VPY src/validate_runs.py     # four internal-consistency checks, all scenes
 $VPY src/crossover_table.py             # truck: the headline matrix, to stdout
@@ -454,10 +476,6 @@ $VPY src/crossover_table.py drjohnson   # the same matrix for the second scene
 $VPY src/plot_curves.py       # -> results/{curves_paired,scaling,curves_absolute}.png
 $VPY src/make_panels.py       # -> results/panel_*.png
 $VPY src/make_panels_extra.py # -> the panels make_panels.py does not cover
-$VPY src/build_report.py      # -> results/report.html (self-contained)
-$VPY src/build_brief.py       # -> results/report_brief.html (the ~5-page version)
-$VPY src/build_slides.py      # -> results/slides.html (presentation)
-$VPY src/export_office.py     # -> results/{report,report_full}.docx, presentation.pptx
 ```
 
 `validate_runs.py` is worth running after any sweep. It checks four things that
@@ -502,6 +520,11 @@ lands on the neighbour pose to 2.2e-16.
 
 ## The three strategies
 
+![Three strategies](figures/strategies.jpg)
+
+*Inpainting, outpainting and pose-guided at the same ratio and subset size.*
+
+
 Each is defined by how it obtains a camera pose for the synthetic image —
 that turns out to be what determines whether it helps or hurts.
 
@@ -526,6 +549,9 @@ diffusion and 3DGS training never run concurrently.
 ---
 
 ## Experimental design notes
+
+![Experiment grid](figures/experiment-grid.png)
+
 
 - **Frozen test set.** 32 views chosen by the LLFF `idx % 8` rule and held
   constant across all 242 runs. No synthetic image is ever derived from a test

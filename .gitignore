@@ -78,17 +78,23 @@ runs_15k/**
 logs/
 
 # ---------------------------------------------------------------------------
-# Generated deliverables. The brief asks for a repository of training and
-# evaluation scripts with a README carrying the findings; the write-ups are
-# coursework artefacts built from runs/*/results.json by src/build_*.py, so
-# committing them stores the same numbers twice and invites the two to
-# disagree. Rebuild: see the "Reports" section of README.md.
-#
-# latex/ also holds the course essay template (.sty and the UniGe/DIBRIS
-# marks), which is the department's to distribute, not this project's.
+# Working directories. results/ holds figures and tables rebuilt from
+# runs/*/results.json, so committing them would store the same numbers twice
+# and invite the two to disagree. latex/ holds the course essay template
+# (.sty and the UniGe/DIBRIS marks), which is the department's to distribute,
+# not this project's.
 # ---------------------------------------------------------------------------
 results/
 latex/
 
 # Overleaf upload bundle, built from latex/ which is itself ignored.
 fewshot_gs_latex.zip
+
+# Write-up drafting, not part of the pipeline.
+src/build_brief.py
+src/build_report.py
+src/build_slides.py
+src/build_latex.py
+src/check_latex.py
+src/export_office.py
+src/speaker_notes.py

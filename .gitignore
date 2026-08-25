@@ -90,11 +90,11 @@ latex/
 # Overleaf upload bundle, built from latex/ which is itself ignored.
 fewshot_gs_latex.zip
 
-# Write-up drafting, not part of the pipeline.
-src/build_brief.py
-src/build_report.py
-src/build_slides.py
-src/build_latex.py
+# Local drafting scripts, not part of the pipeline.
+src/build_*.py
+!src/build_scene.py
+!src/build_blender_scene.py
 src/check_latex.py
 src/export_office.py
 src/speaker_notes.py
+src/make_diagrams.py

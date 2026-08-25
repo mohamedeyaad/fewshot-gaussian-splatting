@@ -201,7 +201,7 @@ def main():
                   "derived_from": 1, "expand": s,
                   "note": "focal unchanged; principal point shifted by paste offset"}
         },
-        "config": {"model": MODEL, "steps": args.steps, "guidance": args.guidance,
+        "config": {"model": args.model, "steps": args.steps, "guidance": args.guidance,
                    "expand": s, "sd_size": [sd_w, sd_h],
                    "prompt": args.prompt, "negative_prompt": args.negative},
         "cost": {"seconds": round(elapsed, 1),

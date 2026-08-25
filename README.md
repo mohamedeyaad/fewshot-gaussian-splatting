@@ -535,6 +535,12 @@ lands on the neighbour pose to 2.2e-16.
 with a region regenerated; outpainting returns a larger canvas with invented
 periphery; pose-guided returns a viewpoint that was never photographed.*
 
+![Two checkpoints](figures/generators.jpg)
+
+*The same source photograph outpainted by Stable Diffusion 1.5 and by
+DreamShaper-8, an SD 1.5 finetune tuned for photorealism. DreamShaper produces
+the cleaner image and the worse reconstruction, in all seven matched cells.*
+
 ![Three strategies](figures/strategies.jpg)
 
 *And what each does to the reconstruction: held-out renders at the same ratio

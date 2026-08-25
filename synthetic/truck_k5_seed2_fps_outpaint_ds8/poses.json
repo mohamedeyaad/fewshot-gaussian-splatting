@@ -23,7 +23,7 @@
     }
   },
   "config": {
-    "model": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+    "model": "Lykon/dreamshaper-8-inpainting",
     "steps": 25,
     "guidance": 7.5,
     "expand": 1.25,

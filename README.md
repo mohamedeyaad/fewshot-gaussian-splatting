@@ -520,9 +520,16 @@ lands on the neighbour pose to 2.2e-16.
 
 ## The three strategies
 
+![What each strategy generates](figures/synthetic-examples.jpg)
+
+*The synthetic training images themselves. Inpainting returns the same frame
+with a region regenerated; outpainting returns a larger canvas with invented
+periphery; pose-guided returns a viewpoint that was never photographed.*
+
 ![Three strategies](figures/strategies.jpg)
 
-*Inpainting, outpainting and pose-guided at the same ratio and subset size.*
+*And what each does to the reconstruction: held-out renders at the same ratio
+and subset size.*
 
 
 Each is defined by how it obtains a camera pose for the synthetic image —

@@ -582,9 +582,10 @@ diffusion and 3DGS training never run concurrently.
   separate "diffusion specifically" from "any plausible fill".
 - **The control was run at k=10 only.** Whether diffusion stays net positive at
   k=5 and k=20 is untested.
-- **The crossover is bracketed, not located.** Outpainting is positive at k=5
-  and negative at k=20. The sign change lies somewhere between, but three subset
-  sizes do not resolve where.
+- **The crossover position depends on the ratio.** At the 200 % ratio k=10
+  sits at −0.003 dB, on zero, so the sign change is located there; at 100 % k=10
+  is already −0.423, so it falls between 5 and 10. Three subset sizes fix the
+  crossover for one ratio and bracket it for the others.
 - **Two scenes, one of them partial.** The crossover is confirmed on `truck`
   (outdoor object) and `drjohnson` (indoor room), but drjohnson was swept for
   outpainting only, at k = 5 and k = 20, the two ends of the crossover.
@@ -592,18 +593,27 @@ diffusion and 3DGS training never run concurrently.
   and "pose-guided always hurts" remain single-scene claims. drjohnson also
   runs at a different resolution (`-r 4`), so only within-scene deltas
   transfer, never absolute PSNR.
-- **One diffusion model.** SD 1.5 inpainting only, chosen for the 4 GB budget.
-  SDXL and FLUX do not fit. `src/check_alt_models.sh` enumerates the
-  alternatives that were considered, including the multi-view-consistent
-  generators (Zero123++, SV3D, ImageDream) that are arguably the actual fix for
-  what pose-guided augmentation is trying to do.
-- 7000 iterations, not the upstream 30000, to keep 242 runs tractable. The
-  full-data run reaches 25.23 dB against ≈ 25.4 dB published at full schedule,
-  so the pipeline is validated, but absolute numbers are slightly below
-  literature values.
-- **Random-selection subsets were never trained.** `select_subsets.py` writes
-  both `fps` and `random` manifests; only `fps` was swept. Comparing the two
-  would isolate how much view *placement* matters relative to view *count*.
+- **One architecture, two checkpoints.** The sweep uses SD 1.5 inpainting,
+  chosen for the 4 GB budget. DreamShaper-8 repeats 21 cells as a second
+  checkpoint and the harm reproduces, slightly stronger: at k=20 and the 200 %
+  ratio, −0.618 dB against −0.825. Both are SD 1.5 finetunes, so this tests the
+  checkpoint and not the architecture. SDXL and FLUX do not fit in 4 GB, and
+  neither do the multi-view-consistent generators (Zero123++, SV3D, ImageDream)
+  that are arguably the actual fix for what pose-guided augmentation attempts.
+  `src/check_alt_models.sh` enumerates what was considered.
+- **The main grid runs to 7,000 iterations, not the upstream 30,000**, to keep
+  242 runs tractable on a 4 GB GPU. Thirty-six runs repeat key conditions at
+  15,000 and 30,000 to check that the choice is not doing the work; the
+  unaugmented baseline does not improve over that range either (15.20 → 15.22 →
+  15.04 dB). The full-data run reaches 25.23 dB against ≈ 25.4 dB published at
+  the full schedule, so the pipeline is validated, but absolute numbers sit
+  slightly below literature values.
+- **Random selection was sampled, not swept.** Eighteen runs repeat the
+  baseline and the 200 % outpainting cell with uniformly drawn subsets instead
+  of farthest-point ones. Placement is worth 0.369 dB at k=10 and 0.675 dB at
+  k=20, and augmentation is *more* harmful on the worse-covered subsets
+  (−0.929 against −0.618 at k=20) — which the coverage account does not
+  obviously predict and which two subset sizes cannot settle.
 
 ---
 

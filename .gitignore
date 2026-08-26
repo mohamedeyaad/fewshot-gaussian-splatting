@@ -98,3 +98,7 @@ src/check_latex.py
 src/export_office.py
 src/speaker_notes.py
 src/make_diagrams.py
+
+# The compiled report. latex/ is ignored too, so what the repo carries is the
+# source that builds it, not the artefact; the PDF is submitted separately.
+/*.pdf

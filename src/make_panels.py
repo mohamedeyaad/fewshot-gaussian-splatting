@@ -28,7 +28,6 @@ OUT = ROOT / "results"
 OUT.mkdir(parents=True, exist_ok=True)
 ITER = 7000
 SEED = 0
-VIEWS = [3, 12, 21]          # a few spread through the 32 held-out cameras
 
 
 def render_dir(tag):
@@ -82,25 +81,81 @@ def grid(rows, col_titles, path, suptitle, row_labels=None):
     print(f"wrote {path}")
 
 
+def representative_views(pairs, n=3, pool=32):
+    """Pick views that behave like the average, and say so in the caption.
+
+    Per-view effects scatter far more widely than the mean: at k=20 the 200%
+    condition is worth -0.618 dB averaged over the held-out set, yet individual
+    cameras range from roughly -3 to +2. Three views chosen arbitrarily can
+    therefore contradict the very finding the figure is illustrating, which is
+    worse than useless in a report.
+
+    `pairs` is a list of (augmented_tag, baseline_tag). For each candidate view
+    we score how far its deltas sit from the mean delta of each pair, and keep
+    the views with the smallest total deviation - the least misleading
+    illustration of a result that is itself an average.
+    """
+    means = []
+    for aug, base in pairs:
+        ds = [psnr_of(aug, i) - psnr_of(base, i) for i in range(pool)
+              if psnr_of(aug, i) is not None and psnr_of(base, i) is not None]
+        means.append(sum(ds) / len(ds) if ds else 0.0)
+
+    scored = []
+    for i in range(pool):
+        err = 0.0
+        ok = True
+        for (aug, base), mu in zip(pairs, means):
+            pa, pb = psnr_of(aug, i), psnr_of(base, i)
+            if pa is None or pb is None:
+                ok = False
+                break
+            err += abs((pa - pb) - mu)
+        if ok:
+            scored.append((err, i))
+    scored.sort()
+    return sorted(i for _, i in scored[:n])
+
+
+def _cells(cols, views, base):
+    """One row per view, one column per condition, delta printed on each cell.
+
+    A bare PSNR invites the reader to rank columns by eye across rows, which
+    is exactly how three views can be read against the finding they
+    illustrate. The delta against the baseline is the number that matters.
+    """
+    rows, labels = [], []
+    for v in views:
+        row = []
+        for title, tag in cols:
+            if tag is None:
+                row.append((load(base, v, "gt"), "reference"))
+                continue
+            p = psnr_of(tag, v)
+            sub = f"PSNR {p:.2f}" if p is not None else ""
+            if tag != base and p is not None:
+                pb = psnr_of(base, v)
+                if pb is not None:
+                    sub += f"   {p - pb:+.2f}"
+            row.append((load(tag, v), sub))
+        rows.append(row)
+        # index into the 32 held-out cameras, NOT a photograph number
+        labels.append(f"held-out {v + 1}/32")
+    return rows, labels
+
+
 def panel_strategies():
     base = f"truck_k10_seed{SEED}_fps_fake0"
     cols = [("ground truth", None), ("10 real only", base)]
     for s in ("inpaint", "outpaint", "guided"):
         cols.append((s + "  +10 fake", f"truck_k10_seed{SEED}_fps_{s}_fake10"))
 
-    rows, labels = [], []
-    for v in VIEWS:
-        row = []
-        for title, tag in cols:
-            if tag is None:
-                row.append((load(base, v, "gt"), "reference"))
-            else:
-                p = psnr_of(tag, v)
-                row.append((load(tag, v), f"PSNR {p:.2f}" if p else ""))
-        rows.append(row)
-        labels.append(f"view {v}")
+    views = representative_views([(c[1], base) for c in cols[2:]])
+    rows, labels = _cells(cols, views, base)
     grid(rows, [c[0] for c in cols], OUT / "panel_strategies.png",
-         f"Held-out renderings at 100% synthetic ratio (truck, k=10, seed {SEED})",
+         f"Held-out renderings at 100% synthetic ratio (truck, k=10, seed {SEED}). "
+         f"Views closest to the mean effect;\nthe number under each cell is "
+         f"that view's difference from the 10-real baseline.",
          labels)
 
 
@@ -110,17 +165,8 @@ def panel_ratio(strategy):
     for n in (2, 5, 10, 20):
         cols.append((f"{n} fake ({n*10}%)",
                      f"truck_k10_seed{SEED}_fps_{strategy}_fake{n}"))
-    rows, labels = [], []
-    for v in VIEWS:
-        row = []
-        for title, tag in cols:
-            if tag is None:
-                row.append((load(base, v, "gt"), "reference"))
-            else:
-                p = psnr_of(tag, v)
-                row.append((load(tag, v), f"PSNR {p:.2f}" if p else ""))
-        rows.append(row)
-        labels.append(f"view {v}")
+    views = representative_views([(c[1], base) for c in cols[2:]])
+    rows, labels = _cells(cols, views, base)
     grid(rows, [c[0] for c in cols], OUT / f"panel_ratio_{strategy}.png",
          f"{strategy}: increasing synthetic ratio (truck, k=10, seed {SEED})",
          labels)

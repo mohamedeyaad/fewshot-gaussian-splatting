@@ -25,7 +25,8 @@ import os
 from pathlib import Path
 
 import make_panels
-from make_panels import OUT, SEED, grid, load, psnr_of
+from make_panels import (OUT, SEED, grid, load, psnr_of,
+                         representative_views)
 
 from contextlib import contextmanager
 
@@ -80,44 +81,9 @@ def cells(cols, views, gt_from, deltas_vs=None):
                     sub += f"   {p - pb:+.2f}"
             row.append((load(tag, v), sub))
         rows.append(row)
-        labels.append(f"view {v}")
+        # index into the 32 held-out cameras, NOT a photograph number
+        labels.append(f"held-out {v + 1}/32")
     return rows, labels
-
-
-def representative_views(pairs, n=3, pool=32):
-    """Pick views that behave like the average, and say so in the caption.
-
-    Per-view effects scatter far more widely than the mean: at k=20 the 200%
-    condition is worth -0.618 dB averaged over the held-out set, yet individual
-    cameras range from roughly -3 to +2. Three views chosen arbitrarily can
-    therefore contradict the very finding the figure is illustrating, which is
-    worse than useless in a report.
-
-    `pairs` is a list of (augmented_tag, baseline_tag). For each candidate view
-    we score how far its deltas sit from the mean delta of each pair, and keep
-    the views with the smallest total deviation - the least misleading
-    illustration of a result that is itself an average.
-    """
-    means = []
-    for aug, base in pairs:
-        ds = [psnr_of(aug, i) - psnr_of(base, i) for i in range(pool)
-              if psnr_of(aug, i) is not None and psnr_of(base, i) is not None]
-        means.append(sum(ds) / len(ds) if ds else 0.0)
-
-    scored = []
-    for i in range(pool):
-        err = 0.0
-        ok = True
-        for (aug, base), mu in zip(pairs, means):
-            pa, pb = psnr_of(aug, i), psnr_of(base, i)
-            if pa is None or pb is None:
-                ok = False
-                break
-            err += abs((pa - pb) - mu)
-        if ok:
-            scored.append((err, i))
-    scored.sort()
-    return sorted(i for _, i in scored[:n])
 
 
 def panel_crossover():
